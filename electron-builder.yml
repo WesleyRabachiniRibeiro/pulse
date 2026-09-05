@@ -1,0 +1,21 @@
+appId: com.pulse.installer
+productName: Pulse
+copyright: Pulse
+
+directories:
+  output: D:/Pulse-build
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: portable
+      arch:
+        - x64
+
+portable:
+  artifactName: Pulse-${version}-portable.exe

@@ -1,0 +1,44 @@
+:root {
+  --bg-page: #07060e;
+  --bg-window: #0c0a16;
+  --bg-chrome: #110f1d;
+  --bg-card: #151222;
+  --bg-field: #171327;
+  --bg-subtle: #191527;
+
+  --border: #221c33;
+  --border-card: #282141;
+  --border-field: #2e2748;
+  --border-wire: #251f38;
+
+  --tx: #edeaf8;
+  --tx-2: #aba3c6;
+  --tx-3: #9a93b8;
+  --tx-4: #8f87b0;
+  --tx-5: #8078a3;
+  --tx-6: #5a5280;
+
+  --grad-a: #a855f7;
+  --grad-b: #3b82f6;
+  --grad-txt-a: #c084fc;
+  --grad-txt-b: #60a5fa;
+  --grad-button: linear-gradient(120deg, var(--grad-a), var(--grad-b));
+  --grad-text: linear-gradient(120deg, var(--grad-txt-a), var(--grad-txt-b));
+
+  --ok: #4ade80;
+  --warning: #fbbf24;
+  --blocker: #f87171;
+  --restart: #a78bfa;
+  --focus: #8fb4ff;
+
+  --font: 'Outfit', system-ui, -apple-system, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 14px;
+
+  --titlebar-h: 44px;
+  --rail-w: 212px;
+}

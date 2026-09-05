@@ -1,0 +1,79 @@
+.bar {
+  height: var(--titlebar-h);
+  flex: 0 0 var(--titlebar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 16px;
+  background: var(--bg-chrome);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  padding: 4px 8px 4px 0;
+  cursor: pointer;
+  border-radius: var(--r-md);
+  -webkit-app-region: no-drag;
+}
+
+.identity:hover .name {
+  color: #fff;
+}
+
+.brand {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.version {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--tx-3);
+}
+
+.controls {
+  display: flex;
+  height: var(--titlebar-h);
+  -webkit-app-region: no-drag;
+}
+
+.control {
+  width: 46px;
+  height: var(--titlebar-h);
+  background: transparent;
+  border: 0;
+  color: var(--tx-3);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.control:hover {
+  background: var(--bg-card);
+  color: var(--tx);
+}
+
+.ajuda {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close:hover {
+  background: #c2354a;
+  color: #fff;
+}

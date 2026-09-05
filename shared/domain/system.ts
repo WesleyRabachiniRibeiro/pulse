@@ -1,0 +1,1 @@
+export const SECONDS_UNTIL_RESTART = 30
