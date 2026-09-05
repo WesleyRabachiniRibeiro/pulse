@@ -13,9 +13,23 @@ files:
 win:
   icon: build/icon.ico
   target:
+    - target: nsis
+      arch:
+        - x64
     - target: portable
       arch:
         - x64
+
+nsis:
+  artifactName: Pulse-${version}-setup.exe
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Pulse
+  installerLanguages:
+    - pt_BR
 
 portable:
   artifactName: Pulse-${version}-portable.exe
