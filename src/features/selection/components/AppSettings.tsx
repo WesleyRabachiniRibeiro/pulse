@@ -425,8 +425,8 @@ export function AppSettings({
                 <span className={s.optionBody}>
                   <span className={s.optionName}>Abrir no fim para importar meus dados</span>
                   <span className={s.optionHint}>
-                    o Firefox abre direto no assistente de importação; os outros abrem normalmente
-                    e oferecem isso na primeira execução
+                    o Firefox abre direto no assistente; Chrome, Opera e Brave não deixam abrir essa
+                    tela por fora, então o Pulse mostra o endereço e copia para você colar
                   </span>
                 </span>
                 <span className={s.optionCategory}>DADOS</span>

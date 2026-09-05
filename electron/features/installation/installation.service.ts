@@ -1,3 +1,4 @@
+import { clipboard } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdir } from 'node:fs/promises'
 import { PROGRAM_BY_ID, type Program } from '@shared/domain/catalog'
@@ -883,6 +884,21 @@ function chooseDefaultBrowser(items: readonly Item[]): Item | null {
   return (marked.length > 0 ? marked : browsers).at(-1) ?? null
 }
 
+function emptyResult(): NonNullable<Item['result']> {
+  return {
+    extensions: 0,
+    extensionsRequested: 0,
+    git: false,
+    gitLogin: false,
+    gamesAccepted: [],
+    gamesRefused: [],
+    gamesPending: [],
+    pagesOpened: [],
+    riotInstalled: [],
+    riotFailed: [],
+  }
+}
+
 async function finishBrowsers(): Promise<void> {
   if (!run) return
 
@@ -894,20 +910,7 @@ async function finishBrowsers(): Promise<void> {
       emitState()
 
       const outcome = await makeDefault(program)
-      winner.result = {
-        extensions: 0,
-        extensionsRequested: 0,
-        git: false,
-        gitLogin: false,
-        gamesAccepted: [],
-        gamesRefused: [],
-        gamesPending: [],
-        pagesOpened: [],
-        riotInstalled: [],
-        riotFailed: [],
-        ...winner.result,
-        madeDefault: outcome,
-      }
+      winner.result = { ...emptyResult(), ...winner.result, madeDefault: outcome }
       winner.detail = 'Pronto para usar'
       emitState()
 
@@ -922,21 +925,38 @@ async function finishBrowsers(): Promise<void> {
     }
   }
 
+  const addresses: string[] = []
+
   for (const item of run.items) {
     if (item.status !== 'done' || !item.settings?.openAfter) continue
     const program = PROGRAM_BY_ID.get(item.id)
     if (!program) continue
     const abriu = await openOnce(program)
-    if (abriu === 'already-running') {
+
+    if (abriu.result === 'already-running') {
       note(
-        `${program.name}: já estava aberto, então a tela de importação não aparece. Feche-o e abra de novo para importar.`,
+        `${program.name}: já estava aberto, então o assistente de importação não aparece. Feche-o e abra de novo para importar.`,
         'error',
       )
-    } else if (abriu === 'opened') {
-      note(`${program.name}: aberto para você trazer os seus dados`, 'ok')
+    } else if (abriu.result === 'opened' && abriu.address) {
+      addresses.push(abriu.address)
+      item.result = { ...emptyResult(), ...item.result, importAddress: abriu.address }
+      note(
+        `${program.name}: aberto. Para importar, abra ${abriu.address} na barra de endereço dele.`,
+        'ok',
+      )
+    } else if (abriu.result === 'opened') {
+      item.result = { ...emptyResult(), ...item.result, importWizard: true }
+      note(`${program.name}: aberto direto no assistente de importação`, 'ok')
     } else {
       note(`${program.name}: não deu para abrir`, 'error')
     }
+    emitState()
+  }
+
+  if (addresses.length === 1 && addresses[0]) {
+    clipboard.writeText(addresses[0])
+    note('o endereço da importação está na área de transferência, é só colar', 'info')
   }
 }
 

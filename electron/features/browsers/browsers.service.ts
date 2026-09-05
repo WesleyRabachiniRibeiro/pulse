@@ -84,8 +84,33 @@ function wait(ms: number): Promise<void> {
 
 export type DefaultResult = 'yes' | 'asked' | 'failed'
 
+function fileName(exe: string): string {
+  const cut = Math.max(exe.lastIndexOf('\\'), exe.lastIndexOf('/'))
+  return exe.slice(cut + 1).replace(/\.exe$/i, '')
+}
+
+interface ImportRoute {
+  file: RegExp
+  wizardArg?: string
+  address?: string
+}
+
+const IMPORT_ROUTES: readonly ImportRoute[] = [
+  { file: /^firefox$/i, wizardArg: '-migration' },
+  { file: /^chrome$/i, address: 'chrome://settings/importData' },
+  { file: /^brave$/i, address: 'brave://settings/importData' },
+  { file: /^opera(\b|_)/i, address: 'opera://settings/importData' },
+  { file: /^msedge$/i, address: 'edge://settings/profiles/importBrowsingData' },
+  { file: /^vivaldi$/i, address: 'vivaldi://settings/importData' },
+]
+
+function importRoute(exe: string): ImportRoute | null {
+  const name = fileName(exe)
+  return IMPORT_ROUTES.find((r) => r.file.test(name)) ?? null
+}
+
 async function isRunning(exe: string): Promise<boolean> {
-  const file = exe.slice(exe.lastIndexOf('\\') + 1).replace(/\.exe$/i, '')
+  const file = fileName(exe)
   const out = await powershell(
     `$p = Get-Process -Name '${file.replace(/'/g, "''")}' -ErrorAction SilentlyContinue
 if ($p) { 'sim' } else { 'nao' }`,
@@ -110,14 +135,24 @@ export async function makeDefault(program: Program): Promise<DefaultResult> {
 
 export type OpenResult = 'opened' | 'already-running' | 'failed'
 
-export async function openOnce(program: Program): Promise<OpenResult> {
+export interface OpenOutcome {
+  result: OpenResult
+  address: string | null
+}
+
+export async function openOnce(program: Program): Promise<OpenOutcome> {
   const browser = await findBrowser(program)
   const exe = browser ? executable(browser.exe) : null
-  if (!exe) return 'failed'
+  if (!exe) return { result: 'failed', address: null }
 
-  const wizard = /firefox/i.test(exe)
-  const running = await isRunning(exe)
+  const route = importRoute(exe)
 
-  await launch(exe, wizard && !running ? ['-migration'] : [])
-  return running && wizard ? 'already-running' : 'opened'
+  if (route?.wizardArg) {
+    const running = await isRunning(exe)
+    await launch(exe, running ? [] : [route.wizardArg])
+    return { result: running ? 'already-running' : 'opened', address: null }
+  }
+
+  await launch(exe, [])
+  return { result: 'opened', address: route?.address ?? null }
 }

@@ -1,1 +1,7 @@
-export { findBrowser, makeDefault, openOnce, type DefaultResult } from './browsers.service'
+export {
+  findBrowser,
+  makeDefault,
+  openOnce,
+  type DefaultResult,
+  type OpenOutcome,
+} from './browsers.service'

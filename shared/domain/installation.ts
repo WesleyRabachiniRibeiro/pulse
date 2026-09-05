@@ -41,6 +41,8 @@ export const itemSchema = z.object({
       riotFailed: z.array(z.string()),
       gitLogin: z.boolean(),
       madeDefault: z.enum(['yes', 'asked', 'failed']).optional(),
+      importAddress: z.string().optional(),
+      importWizard: z.boolean().optional(),
     })
     .optional(),
 })
@@ -286,6 +288,10 @@ export function settingsResultLines(item: Item): string[] {
   if (result.gamesAccepted.length > 0) lines.push(`Steam baixando: ${result.gamesAccepted.join(', ')}`)
   if (result.gamesRefused.length > 0) lines.push(`recusado por você: ${result.gamesRefused.join(', ')}`)
   if (result.gamesPending.length > 0) lines.push(`ficou para depois: ${result.gamesPending.join(', ')}`)
+  if (result.importWizard) lines.push('aberto no assistente de importação')
+  if (result.importAddress) {
+    lines.push(`para importar seus dados, abra ${result.importAddress} no navegador`)
+  }
   if (result.pagesOpened.length > 0) {
     lines.push(`página aberta para baixar: ${result.pagesOpened.join(', ')}`)
   }
