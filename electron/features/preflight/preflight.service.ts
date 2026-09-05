@@ -66,8 +66,9 @@ $wg  = try { (winget --version) -replace '^v','' } catch { $null }
 $adm = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 [pscustomobject]@{
   product      = [string]$k.ProductName
-  version      = [string]$k.DisplayVersion
+  version      = if ($k.DisplayVersion) { [string]$k.DisplayVersion } else { [string]$k.ReleaseId }
   build        = [int]$k.CurrentBuild
+  revision     = [int]$k.UBR
   admin        = [bool]$adm
   winget       = if ($wg) { [string]$wg } else { $null }
   hypervisor   = [bool]$cs.HypervisorPresent
@@ -79,6 +80,7 @@ interface SystemFacts {
   product: string
   version: string
   build: number
+  revision: number
   admin: boolean
   winget: string | null
   hypervisor: boolean
@@ -107,16 +109,25 @@ async function hasInternet(): Promise<boolean> {
   }
 }
 
+function windowsName(f: SystemFacts): string {
+  const product = f.product.replace(/^Microsoft\s+/i, '').trim()
+  const family = f.build >= 22000 ? 'Windows 11' : f.build >= 10240 ? 'Windows 10' : ''
+  const edition = product.replace(/^Windows\s+\d+\s*/i, '').trim()
+  const base = family && !/server/i.test(product) ? `${family} ${edition}`.trim() : product
+  return `${base} ${f.version}`.trim() || 'Windows'
+}
+
 function checkWindows(f: SystemFacts): Check {
-  const name = `${f.product} ${f.version}`.trim()
+  const name = windowsName(f)
+  const build = f.revision ? `${f.build}.${f.revision}` : `${f.build}`
   if (f.build >= MINIMUM_BUILD) {
-    return { id: 'windows', status: 'ok', title: name, detail: `build ${f.build} · compatível` }
+    return { id: 'windows', status: 'ok', title: name, detail: `build ${build} · compatível` }
   }
   return {
     id: 'windows',
     status: 'blocker',
     title: name,
-    detail: `build ${f.build} · precisa de ${MINIMUM_BUILD} ou maior`,
+    detail: `build ${build} · precisa de ${MINIMUM_BUILD} ou maior`,
     fix: 'Atualize o Windows pelo Windows Update e abra o Pulse de novo.',
   }
 }
