@@ -65,27 +65,6 @@ export const TIBIA_CLIENTS: readonly SettingsOption[] = [
     url: 'https://www.tibia.com/support/?subtopic=downloads',
   },
   {
-    id: 'rubinot',
-    name: 'RubinOT',
-    hint: 'servidor brasileiro, evolução rápida e conteúdo próprio',
-    category: 'Brasileiros',
-    url: 'https://rubinot.com.br/download',
-  },
-  {
-    id: 'pokexgames',
-    name: 'PokeXGames',
-    hint: 'Pokémon no motor do Tibia, comunidade brasileira',
-    category: 'Brasileiros',
-    url: 'https://www.pokexgames.com/',
-  },
-  {
-    id: 'tibiantis',
-    name: 'Tibiantis',
-    hint: 'versão 7.7, regras antigas e evolução lenta',
-    category: 'Old school',
-    url: 'https://tibiantis.online/?page=download',
-  },
-  {
     id: 'medivia',
     name: 'Medivia Online',
     hint: 'nasceu de um servidor privado e virou jogo próprio',

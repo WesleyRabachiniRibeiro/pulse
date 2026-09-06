@@ -44,17 +44,6 @@ export const CATALOG: readonly Program[] = [
   { id: 'riot', name: 'Riot Client', winget: 'RiotGames.LeagueOfLegends.BR', version: '138.0.0', mb: 76, category: 'games', hints: ['riot client', 'league of legends'], settingsKind: 'riot' },
   { id: 'battlenet', name: 'Battle.net', winget: 'Blizzard.BattleNet', version: '1.19.3', mb: 90, category: 'games', hints: ['battle.net'] },
   { id: 'roblox', name: 'Roblox', winget: 'Roblox.Roblox', version: '0.726', mb: 120, category: 'games', hints: ['roblox player'] },
-  {
-    id: 'hydra',
-    name: 'Hydra',
-    winget: 'HydraLauncher.Hydra',
-    version: '4.1.3',
-    mb: 120,
-    category: 'games',
-    hints: ['hydra'],
-    notice:
-      'O Pulse só instala o Hydra pelo winget, a partir do pacote publicado pelo autor. Ele não vem com nenhuma fonte configurada, e o Pulse não responde pelo programa nem pelo conteúdo que você acessar por ele.',
-  },
   { id: 'gog', name: 'GOG Galaxy', winget: 'GOG.Galaxy', version: '2.1.8', mb: 260, category: 'games', hints: ['gog galaxy'] },
   { id: 'hytale', name: 'Hytale Launcher', winget: 'HypixelStudios.Hytale', version: '2026.08.28', mb: 90, category: 'games', hints: ['hytale'] },
   { id: 'eaapp', name: 'EA app', winget: 'ElectronicArts.EADesktop', version: '13.783', mb: 180, category: 'games', hints: ['ea app', 'ea desktop'] },
