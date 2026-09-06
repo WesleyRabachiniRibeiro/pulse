@@ -4,6 +4,7 @@
   "version": "0.1.1",
   "description": "Sets up a new PC in one pass: pick the programs, install them all in sequence.",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {

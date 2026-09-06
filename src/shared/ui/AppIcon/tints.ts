@@ -27,7 +27,6 @@ export const TINTS: Record<string, string> = {
   eaapp: '#E06A6A',
   ubisoft: '#6FB6E8',
   tibia: '#E0B25C',
-  hydra: '#E06A8A',
   stremio: '#9B7BE8',
   hytale: '#8FA8D8',
   go: '#4FC3E0',
