@@ -42,7 +42,6 @@ export const CATALOG: readonly Program[] = [
   { id: 'epic', name: 'Epic Games', winget: 'EpicGames.EpicGamesLauncher', version: '1.3.193', mb: 210, category: 'games', hints: ['epic games launcher'] },
   { id: 'minecraft', name: 'Minecraft Launcher', winget: 'Mojang.MinecraftLauncher', version: '2.0.0', mb: 45, category: 'games', hints: ['minecraft launcher'] },
   { id: 'riot', name: 'Riot Client', winget: 'RiotGames.LeagueOfLegends.BR', version: '138.0.0', mb: 76, category: 'games', hints: ['riot client', 'league of legends'], settingsKind: 'riot' },
-  { id: 'curseforge', name: 'CurseForge', winget: 'Overwolf.CurseForge', version: '0.220.1', mb: 120, category: 'games', hints: ['curseforge'] },
   { id: 'battlenet', name: 'Battle.net', winget: 'Blizzard.BattleNet', version: '1.19.3', mb: 90, category: 'games', hints: ['battle.net'] },
   { id: 'roblox', name: 'Roblox', winget: 'Roblox.Roblox', version: '0.726', mb: 120, category: 'games', hints: ['roblox player'] },
   {
@@ -66,6 +65,8 @@ export const CATALOG: readonly Program[] = [
   { id: 'discord', name: 'Discord', winget: 'Discord.Discord', version: '1.0.9256', mb: 92, category: 'media', hints: ['discord'] },
   { id: 'spotify', name: 'Spotify', winget: 'Spotify.Spotify', version: '1.2.98', mb: 140, category: 'media', hints: ['spotify'] },
   { id: 'telegram', name: 'Telegram', winget: 'Telegram.TelegramDesktop', version: '7.2.5', mb: 55, category: 'media', hints: ['telegram desktop', 'telegram'] },
+  { id: 'teamspeak', name: 'TeamSpeak 3', winget: 'TeamSpeakSystems.TeamSpeakClient', version: '3.6.2', mb: 70, category: 'media', hints: ['teamspeak'] },
+  { id: 'teams', name: 'Microsoft Teams', winget: 'Microsoft.Teams', version: '26198.304', mb: 130, category: 'media', hints: ['microsoft teams'] },
   {
     id: 'stremio',
     name: 'Stremio',
@@ -78,6 +79,18 @@ export const CATALOG: readonly Program[] = [
       'O Pulse só instala o Stremio pelo winget, a partir do pacote publicado pelo autor. Nenhum complemento vem junto, e o Pulse não responde pelo programa nem pelo conteúdo que você acessar por ele.',
   },
   { id: 'obs', name: 'OBS Studio', winget: 'OBSProject.OBSStudio', version: '32.2.1', mb: 150, category: 'media', hints: ['obs studio'] },
+  { id: 'acrobat', name: 'Acrobat Reader', winget: 'Adobe.Acrobat.Reader.64-bit', version: '26.002', mb: 300, category: 'media', hints: ['acrobat reader', 'adobe acrobat'] },
+  {
+    id: 'adobecc',
+    name: 'Adobe Creative Cloud',
+    winget: 'Adobe.CreativeCloud',
+    version: '6.10.0',
+    mb: 500,
+    category: 'media',
+    hints: ['adobe creative cloud'],
+    notice:
+      'O Pulse instala o painel da Adobe, não os programas dela. Photoshop, Illustrator, Premiere e os outros são baixados de dentro do painel, depois que você entra na sua conta e com uma assinatura ativa. A Adobe não publica esses programas para instalação automática, então essa parte fica com você.',
+  },
   { id: 'linkedin', name: 'LinkedIn', winget: '9WZDNCRFJ4Q7', source: 'msstore', version: 'da Store', mb: 24, category: 'media', hints: ['linkedin'] },
 
   { id: 'vscode', name: 'VS Code', winget: 'Microsoft.VisualStudioCode', version: '1.136.1', mb: 108, category: 'dev', hints: ['microsoft visual studio code'], settingsKind: 'vscode' },
@@ -144,7 +157,7 @@ export const BUNDLES: readonly Bundle[] = [
   { name: 'Essencial', ids: ['chrome', 'discord', 'spotify'] },
   {
     name: 'Setup gamer',
-    ids: ['operagx', 'steam', 'epic', 'battlenet', 'minecraft', 'riot', 'curseforge', 'discord', 'spotify'],
+    ids: ['operagx', 'steam', 'epic', 'battlenet', 'minecraft', 'riot', 'discord', 'spotify'],
   },
   {
     name: 'Trabalho e código',
