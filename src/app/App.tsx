@@ -24,7 +24,7 @@ import {
 } from '@/features/preferences'
 import s from './App.module.css'
 
-const VERSION = '0.1.0'
+const VERSION = __APP_VERSION__
 
 export function App() {
   useLoadPreferences()
