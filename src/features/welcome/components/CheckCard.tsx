@@ -14,13 +14,13 @@ export function CheckCard({ check }: { check: Check }) {
   )
 }
 
-export function CheckCardSkeleton() {
+export function CheckCardSkeleton({ label }: { label?: string }) {
   return (
     <div className={s.card} data-status="checking">
       <div className={s.dot} aria-hidden />
       <div className={s.body}>
-        <div className={s.title}>Verificando…</div>
-        <div className={s.detail}>aguarde</div>
+        <div className={s.title}>{label ?? 'Verificando…'}</div>
+        <div className={s.detail}>verificando…</div>
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ import {
   PROGRAM_BY_ID,
   type PackageVersion,
 } from '@shared/domain/catalog'
+import type { FreshInput } from '@shared/ipc/contracts'
 
 const exec = promisify(execFile)
 
@@ -191,7 +192,7 @@ export async function listAutostartEntries(): Promise<AutostartEntry[]> {
   }
 }
 
-export async function listAutostart(): Promise<{ id: string; state: AutostartState }[]> {
+async function readAutostart(): Promise<{ id: string; state: AutostartState }[]> {
   const entries = await listAutostartEntries()
   const found = new Map<string, AutostartState>()
 
@@ -210,11 +211,11 @@ export async function listAutostart(): Promise<{ id: string; state: AutostartSta
 }
 
 export async function isInstalled(id: string): Promise<boolean> {
-  const ids = await listInstalled().catch((): string[] => [])
+  const ids = await readInstalled().catch((): string[] => [])
   return ids.includes(id)
 }
 
-export async function listInstalled(): Promise<string[]> {
+async function readInstalledNames(): Promise<string[]> {
   const encoded = Buffer.from(INSTALLED_SCRIPT, 'utf16le').toString('base64')
   const { stdout } = await exec(
     'powershell.exe',
@@ -225,4 +226,56 @@ export async function listInstalled(): Promise<string[]> {
   const raw: unknown = JSON.parse(stdout)
   const names = Array.isArray(raw) ? raw.filter((n): n is string => typeof n === 'string') : []
   return installedIds(names)
+}
+
+const REUSE_MS = 120_000
+
+let lastInstalled: { at: number; ids: string[] } | null = null
+let installedRead: Promise<string[]> | null = null
+
+let lastAutostart: { at: number; list: { id: string; state: AutostartState }[] } | null = null
+let autostartRead: Promise<{ id: string; state: AutostartState }[]> | null = null
+
+function readInstalled(): Promise<string[]> {
+  installedRead ??= readInstalledNames()
+    .then((ids) => {
+      lastInstalled = { at: Date.now(), ids }
+      return ids
+    })
+    .finally(() => {
+      installedRead = null
+    })
+  return installedRead
+}
+
+export function listInstalled(input: FreshInput = {}): Promise<string[]> {
+  if (!input.fresh && lastInstalled && Date.now() - lastInstalled.at < REUSE_MS) {
+    return Promise.resolve(lastInstalled.ids)
+  }
+  return readInstalled()
+}
+
+export function listAutostart(): Promise<{ id: string; state: AutostartState }[]> {
+  if (lastAutostart && Date.now() - lastAutostart.at < REUSE_MS) {
+    return Promise.resolve(lastAutostart.list)
+  }
+  autostartRead ??= readAutostart()
+    .then((list) => {
+      lastAutostart = { at: Date.now(), list }
+      return list
+    })
+    .finally(() => {
+      autostartRead = null
+    })
+  return autostartRead
+}
+
+export function forgetCatalog(): void {
+  lastInstalled = null
+  lastAutostart = null
+}
+
+export function warmCatalog(): void {
+  void listInstalled().catch(() => undefined)
+  void listAutostart().catch(() => undefined)
 }

@@ -25,10 +25,11 @@ export async function reloadAutostart(): Promise<void> {
   }
 }
 
-export function useWatchAutostart(trigger: unknown): void {
+export function useWatchAutostart(trigger: unknown, enabled: boolean): void {
   useEffect(() => {
+    if (!enabled) return
     void reloadAutostart()
-  }, [trigger])
+  }, [trigger, enabled])
 }
 
 export function useAutostart(): Readonly<Record<string, AutostartState>> {

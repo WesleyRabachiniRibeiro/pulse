@@ -3,10 +3,17 @@ import { formatMb, totalSizeMb } from '@shared/domain/catalog'
 import { TitleBar } from '@/shared/ui/TitleBar/TitleBar'
 import { StepRail } from '@/shared/ui/StepRail/StepRail'
 import { Home } from '@/features/home'
-import { Welcome } from '@/features/welcome'
+import {
+  Welcome,
+  startPreflight,
+  usePreflightDrive,
+  usePreflightSettled,
+  useWatchPreflight,
+} from '@/features/welcome'
 import { Selection, useSelection, useWatchAutostart, useWatchInstalled } from '@/features/selection'
 import { Installation, useRun, useWatchInstallation } from '@/features/installation'
 import { Summary } from '@/features/summary'
+import { Splash } from '@/features/splash'
 import { Tour, useAbrirNaPrimeiraVez, useTourStore } from '@/features/tour'
 import {
   savePreference,
@@ -20,30 +27,49 @@ const VERSION = '0.1.0'
 
 export function App() {
   useLoadPreferences()
+  useWatchPreflight()
   const carregado = usePreferencesLoaded()
   const prefs = usePreferences()
+  const verificado = usePreflightSettled()
+  const [aberturaTerminou, setAberturaTerminou] = useState(false)
 
-  if (!carregado) return <div className={s.page} />
+  useEffect(() => {
+    if (carregado) startPreflight(prefs.drive ?? undefined)
+  }, [carregado, prefs.drive])
 
-  return <Shell driveSalvo={prefs.drive ?? null} />
+  return (
+    <>
+      {carregado ? <Shell driveSalvo={prefs.drive ?? null} /> : <div className={s.page} />}
+      {!aberturaTerminou && (
+        <Splash liberado={carregado && verificado} onDone={() => setAberturaTerminou(true)} />
+      )}
+    </>
+  )
 }
 
 function Shell({ driveSalvo }: { driveSalvo: string | null }) {
   const [step, setStep] = useState(0)
   const [drive, setDrive] = useState<string | null>(driveSalvo)
   const selected = useSelection((st) => st.selected)
+  const driveVerificado = usePreflightDrive()
 
   useWatchInstallation()
   const run = useRun()
 
-  useWatchInstalled(run?.finishedAt ?? null)
-  useWatchAutostart(run?.finishedAt ?? null)
+  const passouDaVerificacao = step >= 2
+
+  useWatchInstalled(run?.finishedAt ?? null, passouDaVerificacao)
+  useWatchAutostart(run?.finishedAt ?? null, passouDaVerificacao)
   useAbrirNaPrimeiraVez()
 
   const totalMb = totalSizeMb(selected)
   const size = selected.size === 0 ? 'nada escolhido ainda' : `${formatMb(totalMb)} para baixar`
 
   const available = [1, ...(drive ? [2] : []), ...(run ? [3] : []), ...(run?.finishedAt ? [4] : [])]
+
+  useEffect(() => {
+    if (driveVerificado !== undefined) setDrive(driveVerificado)
+  }, [driveVerificado])
 
   useEffect(() => {
     if (!drive && step === 2) setStep(1)
@@ -82,9 +108,7 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
             {step === 0 && <Home onStart={() => setStep(1)} />}
             {step === 1 && (
               <Welcome
-                currentDrive={drive ?? undefined}
                 queueOn={run && !run.finishedAt ? run.drive : null}
-                onDriveReady={setDrive}
                 onNext={() => setStep(2)}
               />
             )}

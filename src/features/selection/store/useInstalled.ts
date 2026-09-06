@@ -30,9 +30,9 @@ export const useInstalledStore = create<InstalledStore>((set) => ({
   markFailed: () => set({ loaded: true, failed: true }),
 }))
 
-export async function reloadInstalled(): Promise<void> {
+export async function reloadInstalled(fresh = false): Promise<void> {
   try {
-    const ids = await bridge.invoke('catalog:installed', undefined)
+    const ids = await bridge.invoke('catalog:installed', { fresh })
     useInstalledStore.getState().set(ids)
   } catch {
     useInstalledStore.getState().markFailed()
@@ -41,14 +41,15 @@ export async function reloadInstalled(): Promise<void> {
 
 export function onUninstalled(id: string): void {
   useInstalledStore.getState().markRemoved(id)
-  void reloadInstalled()
-  setTimeout(() => void reloadInstalled(), 6000)
+  void reloadInstalled(true)
+  setTimeout(() => void reloadInstalled(true), 6000)
 }
 
-export function useWatchInstalled(trigger: unknown): void {
+export function useWatchInstalled(trigger: unknown, enabled: boolean): void {
   useEffect(() => {
+    if (!enabled) return
     void reloadInstalled()
-  }, [trigger])
+  }, [trigger, enabled])
 }
 
 export function useInstalled(): ReadonlySet<string> {

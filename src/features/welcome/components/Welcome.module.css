@@ -100,9 +100,15 @@
   transition: border-color 0.16s, color 0.16s;
 }
 
-.secondary:hover {
+.secondary:hover:not(:disabled) {
   border-color: var(--tx-5);
   color: var(--tx);
+}
+
+.secondary:disabled {
+  color: var(--tx-6);
+  border-color: var(--border-card);
+  cursor: not-allowed;
 }
 
 .note {

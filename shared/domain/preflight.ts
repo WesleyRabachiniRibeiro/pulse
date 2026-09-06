@@ -49,6 +49,22 @@ export const preflightInputSchema = z.object({
 })
 export type PreflightInput = z.infer<typeof preflightInputSchema>
 
+export const preflightPartialSchema = z.object({
+  token: z.number(),
+  checks: z.array(checkSchema).optional(),
+  drives: z.array(driveSchema).optional(),
+})
+export type PreflightPartial = z.infer<typeof preflightPartialSchema>
+
+export const CHECK_ORDER: readonly CheckId[] = [
+  'windows',
+  'admin',
+  'winget',
+  'internet',
+  'drive',
+  'virtualization',
+]
+
 export const RECOMMENDED_SPACE_GB = 20
 export const MINIMUM_SPACE_GB = 5
 

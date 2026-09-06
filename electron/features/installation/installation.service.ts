@@ -3,7 +3,7 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdir } from 'node:fs/promises'
 import { PROGRAM_BY_ID, type Program } from '@shared/domain/catalog'
 import { RIOT_BY_ID, TIBIA_BY_ID, type Settings } from '@shared/domain/settings'
-import { isInstalled, quietUninstallCommands } from '../catalog/catalog.service'
+import { forgetCatalog, isInstalled, quietUninstallCommands } from '../catalog/catalog.service'
 import { hasManifest, isSignedIn } from '../steam/steam.service'
 import { makeDefault, openOnce } from '../browsers'
 import { listDrives } from '../preflight/preflight.service'
@@ -997,6 +997,7 @@ async function processQueue(): Promise<void> {
     }
   } finally {
     running = false
+    forgetCatalog()
     if (run) {
       if (!canceled) await finishBrowsers()
       run.finishedAt = new Date().toISOString()
@@ -1166,6 +1167,7 @@ export async function uninstall(id: string): Promise<UninstallResult> {
   )
 
   if (output.code === 0) {
+    forgetCatalog()
     if (await disappeared(id)) {
       note(`${program.name}: desinstalado`, 'ok')
       return { ok: true, verified: true }

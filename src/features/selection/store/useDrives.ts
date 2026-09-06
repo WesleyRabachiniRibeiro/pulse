@@ -19,7 +19,7 @@ export function useWatchDrives(): void {
   useEffect(() => {
     let alive = true
     void bridge
-      .invoke('preflight:drives', undefined)
+      .invoke('preflight:drives', {})
       .then((drives) => {
         if (alive) useDrivesStore.getState().set(drives)
       })

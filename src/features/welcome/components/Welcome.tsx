@@ -1,20 +1,26 @@
-import { useEffect } from 'react'
-import { usePreflight } from '../hooks/usePreflight'
+import { CHECK_ORDER, type CheckId } from '@shared/domain/preflight'
+import { chooseDrive, reloadPreflight, usePreflightBusy, usePreflightState } from '../store/usePreflight'
 import { CheckCard, CheckCardSkeleton } from './CheckCard'
 import { DrivePicker, DrivePickerSkeleton } from './DrivePicker'
 import s from './Welcome.module.css'
 
 interface Props {
   onNext: () => void
-  onDriveReady: (drive: string | null) => void
-  currentDrive?: string
   queueOn?: string | null
 }
 
-const EXPECTED_CHECKS = 6
+const CHECK_LABELS: Record<CheckId, string> = {
+  windows: 'Versão do Windows',
+  admin: 'Permissão de administrador',
+  winget: 'Instalador do Windows',
+  internet: 'Conexão com a internet',
+  drive: 'Espaço livre',
+  virtualization: 'Virtualização',
+}
 
-export function Welcome({ onNext, onDriveReady, currentDrive, queueOn }: Props) {
-  const { state, chooseDrive } = usePreflight(currentDrive)
+export function Welcome({ onNext, queueOn }: Props) {
+  const state = usePreflightState()
+  const verificando = usePreflightBusy()
 
   const cleared = state.phase === 'ready' && state.data.overall !== 'blocker'
 
@@ -36,19 +42,6 @@ export function Welcome({ onNext, onDriveReady, currentDrive, queueOn }: Props) 
   })()
 
   const alert = state.phase === 'choosing' || (state.phase === 'ready' && state.data.overall === 'blocker')
-
-  const result =
-    state.phase === 'ready'
-      ? cleared
-        ? state.data.chosenDrive
-        : null
-      : state.phase === 'error'
-        ? null
-        : undefined
-
-  useEffect(() => {
-    if (result !== undefined) onDriveReady(result)
-  }, [result, onDriveReady])
 
   return (
     <div className={s.screen}>
@@ -94,15 +87,32 @@ export function Welcome({ onNext, onDriveReady, currentDrive, queueOn }: Props) 
         </div>
       ) : state.phase === 'checking' || state.phase === 'ready' ? (
         <div className={s.grid} data-tour="checks">
-          {state.phase === 'ready'
-            ? state.data.checks.map((c) => <CheckCard key={c.id} check={c} />)
-            : Array.from({ length: EXPECTED_CHECKS }, (_, i) => <CheckCardSkeleton key={i} />)}
+          {CHECK_ORDER.map((id) => {
+            const found =
+              state.phase === 'ready'
+                ? state.data.checks.find((c) => c.id === id)
+                : state.parciais.find((c) => c.id === id)
+
+            return found ? (
+              <CheckCard key={id} check={found} />
+            ) : (
+              <CheckCardSkeleton key={id} label={CHECK_LABELS[id]} />
+            )
+          })}
         </div>
       ) : null}
 
       <div className={s.actions}>
         <button className={s.primary} onClick={onNext} disabled={!cleared}>
           Escolher programas
+        </button>
+
+        <button
+          className={s.secondary}
+          onClick={() => void reloadPreflight(true)}
+          disabled={verificando}
+        >
+          Verificar de novo
         </button>
 
         <span className={`${s.note} ${alert ? s.noteBlocker : ''}`}>{note}</span>

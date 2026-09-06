@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { packageVersionSchema } from '../domain/catalog'
-import { driveSchema, preflightInputSchema, preflightSchema } from '../domain/preflight'
+import {
+  driveSchema,
+  preflightInputSchema,
+  preflightPartialSchema,
+  preflightSchema,
+} from '../domain/preflight'
 import {
   idInputSchema,
   requestsInputSchema,
@@ -11,9 +16,14 @@ import { steamGameSchema, steamLibrarySchema, steamSearchInputSchema } from '../
 import { preferencesSchema } from '../domain/preferences'
 import { gitSchema } from '../domain/settings'
 
+export const freshInputSchema = z.object({
+  fresh: z.boolean().optional(),
+})
+export type FreshInput = z.infer<typeof freshInputSchema>
+
 export const ipcContracts = {
   'preflight:drives': {
-    input: z.void(),
+    input: freshInputSchema,
     output: z.array(driveSchema),
   },
   'preflight:run': {
@@ -21,7 +31,7 @@ export const ipcContracts = {
     output: preflightSchema,
   },
   'catalog:installed': {
-    input: z.void(),
+    input: freshInputSchema,
     output: z.array(z.string()),
   },
   'prefs:read': {
@@ -116,6 +126,7 @@ export const ipcChannels = Object.keys(ipcContracts) as IpcChannel[]
 
 export const ipcEvents = {
   'installation:event': runSchema,
+  'preflight:event': preflightPartialSchema,
 } as const
 
 export type IpcEvents = typeof ipcEvents
