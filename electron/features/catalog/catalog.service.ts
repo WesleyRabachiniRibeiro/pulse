@@ -146,7 +146,10 @@ $approval = Get-Item 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explo
 $approved = @()
 if ($approval) { $approved = @($approval.GetValueNames()) }
 
-@(foreach ($key in $runKeys) {
+$appModel = 'HKCU:\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\SystemAppData'
+
+@(
+foreach ($key in $runKeys) {
   $item = Get-Item $key
   if (-not $item) { continue }
   foreach ($name in $item.GetValueNames()) {
@@ -163,7 +166,20 @@ if ($approval) { $approved = @($approval.GetValueNames()) }
       enabled = [bool]$enabled
     }
   }
-}) | ConvertTo-Json -Compress
+}
+
+foreach ($package in @(Get-ChildItem $appModel)) {
+  foreach ($task in @(Get-ChildItem $package.PSPath)) {
+    $state = $task.GetValue('State')
+    if ($null -eq $state) { continue }
+    [pscustomobject]@{
+      name    = [string]$package.PSChildName
+      value   = ''
+      enabled = ([int]$state -eq 2 -or [int]$state -eq 4)
+    }
+  }
+}
+) | ConvertTo-Json -Compress
 `
 
 export interface AutostartEntry {
