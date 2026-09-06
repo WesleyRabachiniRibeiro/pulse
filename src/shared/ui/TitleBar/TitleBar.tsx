@@ -1,6 +1,7 @@
 import { LuCircleHelp } from 'react-icons/lu'
 import { bridge } from '@/shared/lib/bridge'
 import { useTourStore } from '@/features/tour'
+import { UpdatePill } from '@/features/updates'
 import logo from '@/shared/assets/logo.png'
 import s from './TitleBar.module.css'
 
@@ -19,6 +20,8 @@ export function TitleBar({ version, onHome }: Props) {
       </button>
 
       <div className={s.controls}>
+        <UpdatePill />
+
         <button
           className={`${s.control} ${s.ajuda}`}
           data-tour="ajuda"

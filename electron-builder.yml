@@ -10,6 +10,11 @@ files:
   - out/**/*
   - package.json
 
+publish:
+  provider: github
+  owner: WesleyRabachiniRibeiro
+  repo: pulse
+
 win:
   icon: build/icon.ico
   target:

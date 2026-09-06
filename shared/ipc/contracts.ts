@@ -15,6 +15,7 @@ import {
 import { steamGameSchema, steamLibrarySchema, steamSearchInputSchema } from '../domain/steam'
 import { preferencesSchema } from '../domain/preferences'
 import { gitSchema } from '../domain/settings'
+import { updateStateSchema } from '../domain/update'
 
 export const freshInputSchema = z.object({
   fresh: z.boolean().optional(),
@@ -29,6 +30,14 @@ export const ipcContracts = {
   'preflight:run': {
     input: preflightInputSchema,
     output: preflightSchema,
+  },
+  'update:state': {
+    input: z.void(),
+    output: updateStateSchema,
+  },
+  'update:install': {
+    input: z.void(),
+    output: z.void(),
   },
   'catalog:installed': {
     input: freshInputSchema,
@@ -127,6 +136,7 @@ export const ipcChannels = Object.keys(ipcContracts) as IpcChannel[]
 export const ipcEvents = {
   'installation:event': runSchema,
   'preflight:event': preflightPartialSchema,
+  'update:event': updateStateSchema,
 } as const
 
 export type IpcEvents = typeof ipcEvents

@@ -9,6 +9,7 @@ import { registerCatalog } from '../features/catalog'
 import { registerSystem } from '../features/system'
 import { registerSteam } from '../features/steam'
 import { registerPreferences } from '../features/preferences'
+import { registerUpdates } from '../features/updates'
 import { nameForWindows } from '../features/alerts'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
@@ -78,6 +79,7 @@ void app.whenReady().then(() => {
   registerSystem()
   registerSteam()
   registerPreferences()
+  registerUpdates()
   createWindow()
 
   app.on('activate', () => {

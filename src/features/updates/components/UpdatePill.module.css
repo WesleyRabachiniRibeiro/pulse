@@ -1,0 +1,26 @@
+.quiet {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--tx-5);
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #fff;
+  background: var(--grad-button);
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-left: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.16s;
+  -webkit-app-region: no-drag;
+}
+
+.pill:hover {
+  filter: brightness(1.12);
+}

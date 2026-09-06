@@ -14,6 +14,7 @@ import { Selection, useSelection, useWatchAutostart, useWatchInstalled } from '@
 import { Installation, useRun, useWatchInstallation } from '@/features/installation'
 import { Summary } from '@/features/summary'
 import { Splash } from '@/features/splash'
+import { useWatchUpdate } from '@/features/updates'
 import { Tour, useAbrirNaPrimeiraVez, useTourStore } from '@/features/tour'
 import {
   savePreference,
@@ -28,6 +29,7 @@ const VERSION = '0.1.0'
 export function App() {
   useLoadPreferences()
   useWatchPreflight()
+  useWatchUpdate()
   const carregado = usePreferencesLoaded()
   const prefs = usePreferences()
   const verificado = usePreflightSettled()
