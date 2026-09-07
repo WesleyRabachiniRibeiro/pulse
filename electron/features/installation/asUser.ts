@@ -169,13 +169,7 @@ ${RUNNER}
 const CREATE_PROCESS_BASE = -2000
 const CREATE_PROCESS_FLOOR = CREATE_PROCESS_BASE - 0xffff
 
-/**
- * Traduz as falhas do próprio mecanismo, que não vêm do comando pedido.
- *
- * O código de saída do winget é um HRESULT como 0x8A150030, que vira um inteiro
- * bem negativo. Por isso a faixa da falha de criação é fechada nos dois lados:
- * sem isso todo erro do winget virava "o Windows recusou criar o processo".
- */
+/** Traduz as falhas do próprio mecanismo, que não vêm do comando pedido. */
 export function runnerFailure(code: number): string | null {
   if (code === -1007) {
     return 'o comando passou do tempo e não terminou'
