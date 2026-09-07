@@ -9,7 +9,7 @@ import { makeDefault, openOnce } from '../browsers'
 import { listDrives } from '../preflight/preflight.service'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
 import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './tools'
-import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
+import { isElevated, runAsInteractiveUser, runnerFailure, uacEnabled } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import {
   canEnqueue,
@@ -765,6 +765,14 @@ function wait(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
+function quoted(part: string): string {
+  return /[\s"]/.test(part) ? `"${part.replace(/(\\*)"/g, '$1$1\\"')}"` : part
+}
+
+function commandLine(parts: readonly string[]): string {
+  return parts.map(quoted).join(' ')
+}
+
 const PERMISSION_ATTEMPTS = 3
 
 function waitForPermission(id: string): Promise<boolean> {
@@ -889,6 +897,28 @@ async function install(target: Item): Promise<void> {
     output = await runWinget(target.id, wingetArgs(), follow, target.drive)
   }
 
+  let refusedAdmin: string | null = null
+
+  if (!gaveUp() && output.code !== 0 && refusesElevation(output.text) && (await isElevated())) {
+    target.status = 'installing'
+    target.percent = 0
+    target.detail = 'Instalando pela sua sessão do Windows'
+    emitState()
+    note(`${program.name}: o instalador recusa administrador, indo pela sua sessão`, 'step')
+
+    const user = await runAsInteractiveUser(commandLine(['winget', ...wingetArgs()]))
+    const failure = runnerFailure(user.code)
+
+    if (failure) {
+      note(`${program.name}: não deu para instalar pela sua sessão, ${failure}`, 'error')
+      refusedAdmin = (await uacEnabled())
+        ? `O instalador do ${program.name} não roda com o Pulse aberto como administrador, e a instalação pela sua sessão do Windows não deu certo, porque ${failure}. Feche o app e abra de novo sem "Executar como administrador".`
+        : `O instalador do ${program.name} não roda com o Pulse aberto como administrador. Como o Controle de Conta de Usuário está desligado neste Windows, todo processo da sua conta já nasce como administrador, e reabrir o app não muda isso. Ligue o Controle de Conta de Usuário ou instale o ${program.name} pelo site oficial.`
+    } else {
+      output = user
+    }
+  }
+
   let asked = 0
   while (
     !gaveUp() &&
@@ -964,6 +994,7 @@ async function install(target: Item): Promise<void> {
   const noSpace = await fullDiskWarning(target.drive)
   target.error =
     noSpace ??
+    refusedAdmin ??
     adminFailure(output.code, program.name) ??
     errorMessage(output.code, output.text, program.name)
   target.finishedAt = new Date().toISOString()
@@ -1297,7 +1328,7 @@ async function runUninstall(id: string): Promise<UninstallResult> {
   // Elevado, o winget recusa desinstalar pacote de escopo de usuário. Como o
   // Pulse roda como administrador, a remoção sai pela sessão da pessoa.
   const output = (await isElevated())
-    ? await runAsInteractiveUser(['winget', ...args].join(' '))
+    ? await runAsInteractiveUser(commandLine(['winget', ...args]))
     : await runWinget(`uninstall:${id}`, args, () => {})
 
   const failure = runnerFailure(output.code)
