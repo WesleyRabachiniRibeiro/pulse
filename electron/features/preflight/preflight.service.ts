@@ -153,9 +153,6 @@ export function warmDrives(): void {
 export async function drivesForScreen(input: FreshInput = {}): Promise<Drive[]> {
   if (!input.fresh && lastDrives && Date.now() - lastDrives.at < REUSE_MS) return lastDrives.drives
 
-  // A segunda leitura, a que sabe dizer SSD ou HDD, pode chegar antes desta
-  // linha quando os dois JSON caem juntos. Guardar a primeira por cima apagaria
-  // o tipo de disco.
   const detailed: { drives: Drive[] | null } = { drives: null }
 
   const drives = await readDrives((enriched) => {

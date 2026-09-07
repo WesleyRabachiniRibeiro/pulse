@@ -11,10 +11,6 @@ $user = (Get-ItemProperty 'HKCU:\\Environment' -Name Path).Path
 
 const POWERSHELL_LIMIT_MS = 60_000
 
-/**
- * O cano da saída de erro precisa ser esvaziado. Ninguém lê o que vai por ele,
- * e cheio ele trava o processo filho na escrita, sem nada para destravar.
- */
 export function powershellOut(script: string, timeoutMs = POWERSHELL_LIMIT_MS): Promise<string> {
   const encoded = Buffer.from(script, 'utf16le').toString('base64')
   return new Promise((resolve) => {

@@ -254,9 +254,6 @@ let installedRead: { generation: number; reading: Promise<string[]> } | null = n
 let lastAutostart: { at: number; list: Autostart[] } | null = null
 let autostartRead: { generation: number; reading: Promise<Autostart[]> } | null = null
 
-// Uma leitura começada antes do esquecimento traz o computador de antes, e
-// guardá-la depois seria dar por atual um retrato vencido. A geração separa as
-// duas: quem nasceu na geração passada não escreve no cache nem é reaproveitado.
 let generation = 0
 
 function readInstalled(): Promise<string[]> {

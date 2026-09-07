@@ -1052,9 +1052,6 @@ async function processQueue(): Promise<void> {
     forgetCatalog()
     try {
       if (run) {
-        // Abrir os navegadores demora, e a fila ainda não acabou enquanto isso.
-        // Baixar a bandeira aqui deixaria uma segunda fila começar por cima
-        // desta, e esta ainda anunciaria o fim no meio da outra.
         if (!canceled) await finishBrowsers()
         more = !canceled && run.items.some((i) => i.status === 'queued')
         if (!more) {
