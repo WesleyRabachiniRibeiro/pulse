@@ -16,12 +16,7 @@ import { requestsToAppend, type Request } from '@shared/domain/installation'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { useAutostart } from '../store/useAutostart'
 import { useDrives, useWatchDrives } from '../store/useDrives'
-import {
-  onUninstalled,
-  useInstalled,
-  useInstalledFailed,
-  useInstalledLoaded,
-} from '../store/useInstalled'
+import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
 import { useSelection } from '../store/useSelection'
 import { useTourStore } from '@/features/tour'
 import { AppSettings } from './AppSettings'
@@ -122,7 +117,6 @@ export function Selection({ drive, onGoToInstallation }: Props) {
         currentAutostart={autostart[programInSettings.id] ?? null}
         onChangeDrive={setDrive}
         onChangeSettings={setSettings}
-        onUninstalled={() => onUninstalled(programInSettings.id)}
         onApplyNow={() => void applyAlone(programInSettings.id)}
         onBack={() => setInSettings(null)}
       />

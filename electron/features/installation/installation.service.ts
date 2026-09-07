@@ -1203,7 +1203,20 @@ async function disappeared(id: string, waitMs = DISAPPEAR_WAIT_MS): Promise<bool
   return false
 }
 
-export async function uninstall(id: string): Promise<UninstallResult> {
+const uninstalling = new Map<string, Promise<UninstallResult>>()
+
+export function uninstall(id: string): Promise<UninstallResult> {
+  const running = uninstalling.get(id)
+  if (running) return running
+
+  const task = runUninstall(id).finally(() => {
+    uninstalling.delete(id)
+  })
+  uninstalling.set(id, task)
+  return task
+}
+
+async function runUninstall(id: string): Promise<UninstallResult> {
   const program = PROGRAM_BY_ID.get(id)
   if (!program) return { ok: false, verified: false, error: 'Programa fora do catálogo.' }
 
