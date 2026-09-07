@@ -9,6 +9,7 @@ import { makeDefault, openOnce } from '../browsers'
 import { listDrives } from '../preflight/preflight.service'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
 import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './tools'
+import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import {
   canEnqueue,
   clock,
@@ -1175,19 +1176,31 @@ export async function uninstall(id: string): Promise<UninstallResult> {
     }
   }
 
-  const output = await runWinget(
-    `uninstall:${id}`,
-    [
-      'uninstall',
-      '--id',
-      program.winget,
-      '--exact',
-      '--silent',
-      '--accept-source-agreements',
-      '--disable-interactivity',
-    ],
-    () => {},
-  )
+  const args = [
+    'uninstall',
+    '--id',
+    program.winget,
+    '--exact',
+    '--silent',
+    '--accept-source-agreements',
+    '--disable-interactivity',
+  ]
+
+  // Elevado, o winget recusa desinstalar pacote de escopo de usuário. Como o
+  // Pulse roda como administrador, a remoção sai pela sessão da pessoa.
+  const output = (await isElevated())
+    ? await runAsInteractiveUser(['winget', ...args].join(' '))
+    : await runWinget(`uninstall:${id}`, args, () => {})
+
+  const failure = runnerFailure(output.code)
+  if (failure) {
+    note(`${program.name}: falhou ao desinstalar, ${failure}`, 'error')
+    return {
+      ok: false,
+      verified: false,
+      error: `O Pulse não conseguiu remover o ${program.name} pela sua sessão do Windows, porque ${failure}. Desinstale por "Aplicativos instalados" do Windows.`,
+    }
+  }
 
   if (output.code === 0) {
     forgetCatalog()
