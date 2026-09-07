@@ -13,6 +13,12 @@ import { formatGb, type Drive } from '@shared/domain/preflight'
 import type { SteamGame } from '@shared/domain/steam'
 import { bridge } from '@/shared/lib/bridge'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
+import {
+  uninstallProgram,
+  useUninstalled,
+  useUninstalling,
+  useUninstallError,
+} from '../store/useUninstall'
 import s from './AppSettings.module.css'
 import { SteamGames } from './SteamGames'
 import { PackageVersions } from './PackageVersions'
@@ -27,7 +33,6 @@ interface Props {
   settings: Settings
   onChangeDrive: (id: string, drive: string | null) => void
   onChangeSettings: (id: string, settings: Settings) => void
-  onUninstalled: () => void
   onApplyNow: () => void
   onBack: () => void
 }
@@ -75,16 +80,15 @@ export function AppSettings({
   settings,
   onChangeDrive,
   onChangeSettings,
-  onUninstalled,
   onApplyNow,
   onBack,
 }: Props) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('Tudo')
   const [confirming, setConfirming] = useState(false)
-  const [removing, setRemoving] = useState(false)
-  const [removed, setRemoved] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const removing = useUninstalling(program.id)
+  const removed = useUninstalled(program.id)
+  const error = useUninstallError(program.id)
   const [gitDaMaquina, setGitDaMaquina] = useState<GitConfig | null>(null)
 
   const kind = program.settingsKind
@@ -162,25 +166,9 @@ export function AppSettings({
     onChangeSettings(program.id, { ...settings, git: { ...git, [field]: value } })
   }
 
-  async function remove() {
-    setError(null)
-    setRemoving(true)
-    try {
-      const r = await bridge.invoke('installation:uninstall', { id: program.id })
-      setConfirming(false)
-
-      if (r.verified) {
-        setRemoved(true)
-        onUninstalled()
-        return
-      }
-
-      setError(r.error ?? 'Não foi possível desinstalar.')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Não foi possível desinstalar.')
-    } finally {
-      setRemoving(false)
-    }
+  function remove() {
+    setConfirming(false)
+    void uninstallProgram(program.id)
   }
 
   return (
@@ -536,19 +524,27 @@ export function AppSettings({
 
             {error && <p className={s.error}>{error}</p>}
 
-            {confirming ? (
+            {removing ? (
+              <div className={s.confirm}>
+                <span className={s.confirmText}>
+                  A desinstalação está em andamento e continua mesmo se você sair desta tela.
+                </span>
+                <button type="button" className={s.danger} disabled>
+                  Desinstalando e conferindo…
+                </button>
+              </div>
+            ) : confirming ? (
               <div className={s.confirm}>
                 <span className={s.confirmText}>
                   Desinstalar o {program.name} agora? Ele sai da lista de instalados.
                 </span>
-                <button type="button" className={s.danger} onClick={remove} disabled={removing}>
-                  {removing ? 'Desinstalando e conferindo…' : 'Sim, desinstalar'}
+                <button type="button" className={s.danger} onClick={remove}>
+                  Sim, desinstalar
                 </button>
                 <button
                   type="button"
                   className={s.secondary}
                   onClick={() => setConfirming(false)}
-                  disabled={removing}
                 >
                   Deixar como está
                 </button>
