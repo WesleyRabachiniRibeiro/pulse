@@ -925,29 +925,11 @@ function emptyResult(): NonNullable<Item['result']> {
 async function finishBrowsers(): Promise<void> {
   if (!run) return
 
-  const winner = chooseDefaultBrowser(run.items)
-  if (winner) {
-    const program = PROGRAM_BY_ID.get(winner.id)
-    if (program) {
-      winner.detail = 'Pedindo para ser o navegador padrão'
-      emitState()
-
-      const outcome = await makeDefault(program)
-      winner.result = { ...emptyResult(), ...winner.result, madeDefault: outcome }
-      winner.detail = 'Pronto para usar'
-      emitState()
-
-      note(
-        outcome === 'yes'
-          ? `${program.name}: agora é o navegador padrão`
-          : outcome === 'asked'
-            ? `${program.name}: o Windows abriu a tela para você confirmar como padrão`
-            : `${program.name}: não deu para pedir para ser o padrão`,
-        outcome === 'failed' ? 'error' : 'ok',
-      )
-    }
-  }
-
+  // A importação vem antes de pedir o padrão de propósito. Pedir o padrão
+  // lança o navegador, e o Firefox só abre o assistente de importação quando
+  // não há instância rodando: com uma aberta, ele repassa o comando para ela e
+  // ignora o -migration. Invertido, o Pulse acusava o usuário de ter deixado
+  // uma janela aberta que ele mesmo tinha acabado de abrir.
   const addresses: string[] = []
 
   for (const item of run.items) {
@@ -980,6 +962,29 @@ async function finishBrowsers(): Promise<void> {
   if (addresses.length === 1 && addresses[0]) {
     clipboard.writeText(addresses[0])
     note('o endereço da importação está na área de transferência, é só colar', 'info')
+  }
+
+  const winner = chooseDefaultBrowser(run.items)
+  if (winner) {
+    const program = PROGRAM_BY_ID.get(winner.id)
+    if (program) {
+      winner.detail = 'Pedindo para ser o navegador padrão'
+      emitState()
+
+      const outcome = await makeDefault(program)
+      winner.result = { ...emptyResult(), ...winner.result, madeDefault: outcome }
+      winner.detail = 'Pronto para usar'
+      emitState()
+
+      note(
+        outcome === 'yes'
+          ? `${program.name}: agora é o navegador padrão`
+          : outcome === 'asked'
+            ? `${program.name}: o Windows abriu a tela para você confirmar como padrão`
+            : `${program.name}: não deu para pedir para ser o padrão`,
+        outcome === 'failed' ? 'error' : 'ok',
+      )
+    }
   }
 }
 
