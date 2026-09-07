@@ -104,13 +104,14 @@ public static class PulseUserRunner
       return -2000 - reason;
     }
 
-    WaitForSingleObject(info.Process, (uint)timeoutMs);
+    uint waited = WaitForSingleObject(info.Process, (uint)timeoutMs);
 
     uint code;
     if (!GetExitCodeProcess(info.Process, out code)) code = 0xFFFFFFFF;
 
     CloseHandle(info.Process); CloseHandle(info.Thread);
     CloseHandle(copy); CloseHandle(token); CloseHandle(process);
+    if (waited != 0) return -1007;
     return unchecked((int)code);
   }
 }
@@ -152,7 +153,7 @@ ${RUNNER}
 
   // O Add-Type às vezes imprime avisos antes do retorno, então vale a última
   // linha que seja só um número.
-  const raw = await powershellOut(script)
+  const raw = await powershellOut(script, timeoutMs + 30_000)
   const numbers = raw
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -176,6 +177,9 @@ const CREATE_PROCESS_FLOOR = CREATE_PROCESS_BASE - 0xffff
  * sem isso todo erro do winget virava "o Windows recusou criar o processo".
  */
 export function runnerFailure(code: number): string | null {
+  if (code === -1007) {
+    return 'o comando passou do tempo e não terminou'
+  }
   if (code === -1006) {
     return 'o Controle de Conta de Usuário está desligado neste Windows, e sem ele todo processo da sua conta roda como administrador'
   }

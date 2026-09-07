@@ -107,6 +107,8 @@ function readDrives(onEnriched?: (drives: Drive[]) => void): Promise<Drive[]> {
       onEnriched?.(drives)
     }
 
+    child.stderr?.resume()
+
     child.stdout?.setEncoding('utf8')
     child.stdout?.on('data', (chunk: string) => {
       buffer += chunk
@@ -151,10 +153,18 @@ export function warmDrives(): void {
 export async function drivesForScreen(input: FreshInput = {}): Promise<Drive[]> {
   if (!input.fresh && lastDrives && Date.now() - lastDrives.at < REUSE_MS) return lastDrives.drives
 
+  // A segunda leitura, a que sabe dizer SSD ou HDD, pode chegar antes desta
+  // linha quando os dois JSON caem juntos. Guardar a primeira por cima apagaria
+  // o tipo de disco.
+  const detailed: { drives: Drive[] | null } = { drives: null }
+
   const drives = await readDrives((enriched) => {
+    detailed.drives = enriched
     lastDrives = { at: Date.now(), drives: enriched }
     publishPartial({ drives: enriched })
   })
+
+  if (detailed.drives) return detailed.drives
 
   lastDrives = { at: Date.now(), drives }
   return drives
