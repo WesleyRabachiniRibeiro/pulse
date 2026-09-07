@@ -9,7 +9,7 @@ $user = (Get-ItemProperty 'HKCU:\\Environment' -Name Path).Path
 @($machine, $user) -join ';'
 `
 
-function powershellOut(script: string): Promise<string> {
+export function powershellOut(script: string): Promise<string> {
   const encoded = Buffer.from(script, 'utf16le').toString('base64')
   return new Promise((resolve) => {
     const child = spawn(
