@@ -246,22 +246,51 @@ async function readInstalledNames(): Promise<string[]> {
 
 const REUSE_MS = 120_000
 
-let lastInstalled: { at: number; ids: string[] } | null = null
-let installedRead: Promise<string[]> | null = null
+type Autostart = { id: string; state: AutostartState }
 
-let lastAutostart: { at: number; list: { id: string; state: AutostartState }[] } | null = null
-let autostartRead: Promise<{ id: string; state: AutostartState }[]> | null = null
+let lastInstalled: { at: number; ids: string[] } | null = null
+let installedRead: { generation: number; reading: Promise<string[]> } | null = null
+
+let lastAutostart: { at: number; list: Autostart[] } | null = null
+let autostartRead: { generation: number; reading: Promise<Autostart[]> } | null = null
+
+// Uma leitura começada antes do esquecimento traz o computador de antes, e
+// guardá-la depois seria dar por atual um retrato vencido. A geração separa as
+// duas: quem nasceu na geração passada não escreve no cache nem é reaproveitado.
+let generation = 0
 
 function readInstalled(): Promise<string[]> {
-  installedRead ??= readInstalledNames()
+  if (installedRead?.generation === generation) return installedRead.reading
+
+  const mine = generation
+  const reading = readInstalledNames()
     .then((ids) => {
-      lastInstalled = { at: Date.now(), ids }
+      if (mine === generation) lastInstalled = { at: Date.now(), ids }
       return ids
     })
     .finally(() => {
-      installedRead = null
+      if (installedRead?.reading === reading) installedRead = null
     })
-  return installedRead
+
+  installedRead = { generation: mine, reading }
+  return reading
+}
+
+function readAutostartOnce(): Promise<Autostart[]> {
+  if (autostartRead?.generation === generation) return autostartRead.reading
+
+  const mine = generation
+  const reading = readAutostart()
+    .then((list) => {
+      if (mine === generation) lastAutostart = { at: Date.now(), list }
+      return list
+    })
+    .finally(() => {
+      if (autostartRead?.reading === reading) autostartRead = null
+    })
+
+  autostartRead = { generation: mine, reading }
+  return reading
 }
 
 export function listInstalled(input: FreshInput = {}): Promise<string[]> {
@@ -271,22 +300,15 @@ export function listInstalled(input: FreshInput = {}): Promise<string[]> {
   return readInstalled()
 }
 
-export function listAutostart(): Promise<{ id: string; state: AutostartState }[]> {
+export function listAutostart(): Promise<Autostart[]> {
   if (lastAutostart && Date.now() - lastAutostart.at < REUSE_MS) {
     return Promise.resolve(lastAutostart.list)
   }
-  autostartRead ??= readAutostart()
-    .then((list) => {
-      lastAutostart = { at: Date.now(), list }
-      return list
-    })
-    .finally(() => {
-      autostartRead = null
-    })
-  return autostartRead
+  return readAutostartOnce()
 }
 
 export function forgetCatalog(): void {
+  generation++
   lastInstalled = null
   lastAutostart = null
 }

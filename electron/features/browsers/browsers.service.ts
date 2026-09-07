@@ -27,6 +27,8 @@ export interface RegisteredBrowser {
   progId: string
 }
 
+const POWERSHELL_LIMIT_MS = 25_000
+
 function powershell(script: string): Promise<string> {
   const encoded = Buffer.from(script, 'utf16le').toString('base64')
   return new Promise((resolve) => {
@@ -37,8 +39,16 @@ function powershell(script: string): Promise<string> {
     )
     let out = ''
     child.stdout?.on('data', (b: Buffer) => (out += b.toString('utf8')))
-    child.on('error', () => resolve(''))
-    child.on('close', () => resolve(out.trim()))
+    child.stderr?.resume()
+
+    const giveUp = setTimeout(() => child.kill(), POWERSHELL_LIMIT_MS)
+    const finish = (value: string): void => {
+      clearTimeout(giveUp)
+      resolve(value)
+    }
+
+    child.on('error', () => finish(''))
+    child.on('close', () => finish(out.trim()))
   })
 }
 

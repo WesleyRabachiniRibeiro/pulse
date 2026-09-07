@@ -9,7 +9,13 @@ $user = (Get-ItemProperty 'HKCU:\\Environment' -Name Path).Path
 @($machine, $user) -join ';'
 `
 
-export function powershellOut(script: string): Promise<string> {
+const POWERSHELL_LIMIT_MS = 60_000
+
+/**
+ * O cano da saída de erro precisa ser esvaziado. Ninguém lê o que vai por ele,
+ * e cheio ele trava o processo filho na escrita, sem nada para destravar.
+ */
+export function powershellOut(script: string, timeoutMs = POWERSHELL_LIMIT_MS): Promise<string> {
   const encoded = Buffer.from(script, 'utf16le').toString('base64')
   return new Promise((resolve) => {
     const child = spawn(
@@ -19,8 +25,16 @@ export function powershellOut(script: string): Promise<string> {
     )
     let output = ''
     child.stdout?.on('data', (b: Buffer) => (output += b.toString('utf8')))
-    child.on('error', () => resolve(''))
-    child.on('close', () => resolve(output.trim()))
+    child.stderr?.resume()
+
+    const giveUp = setTimeout(() => child.kill(), timeoutMs)
+    const finish = (value: string): void => {
+      clearTimeout(giveUp)
+      resolve(value)
+    }
+
+    child.on('error', () => finish(''))
+    child.on('close', () => finish(output.trim()))
   })
 }
 

@@ -41,6 +41,8 @@ let canceled = false
 const canceledItems = new Set<string>()
 let startTime = 0
 let lastStateAt = 0
+const openedAfterRun = new Set<string>()
+let defaultBrowser: string | null = null
 
 function emitState(now = true): void {
   if (!run) return
@@ -322,6 +324,8 @@ async function requestSteamGame(appid: string): Promise<SteamAnswer> {
   return (await hasManifest(appid)) ? 'confirmed' : 'timeout'
 }
 
+const SCRIPT_LIMIT_MS = 25_000
+
 function steamDialogOpen(): Promise<boolean> {
   const script = `
 $ErrorActionPreference = 'SilentlyContinue'
@@ -368,8 +372,16 @@ if ($found) { Write-Output 'open' } else { Write-Output 'closed' }
     )
     let output = ''
     child.stdout?.on('data', (b: Buffer) => (output += b.toString('utf8')))
-    child.on('error', () => resolve(false))
-    child.on('close', () => resolve(output.includes('open')))
+    child.stderr?.resume()
+
+    const giveUp = setTimeout(() => child.kill(), SCRIPT_LIMIT_MS)
+    const finish = (value: boolean): void => {
+      clearTimeout(giveUp)
+      resolve(value)
+    }
+
+    child.on('error', () => finish(false))
+    child.on('close', () => finish(output.includes('open')))
   })
 }
 
@@ -450,12 +462,20 @@ if ($turnOn) { Write-Output 'on' } else { Write-Output 'off' }
     )
     let output = ''
     child.stdout?.on('data', (b: Buffer) => (output += b.toString('utf8')))
-    child.on('error', () => resolve('no-entry'))
+    child.stderr?.resume()
+
+    const giveUp = setTimeout(() => child.kill(), SCRIPT_LIMIT_MS)
+    const finish = (value: AutostartResult): void => {
+      clearTimeout(giveUp)
+      resolve(value)
+    }
+
+    child.on('error', () => finish('no-entry'))
     child.on('close', () => {
-      if (output.includes('no-entry')) resolve('no-entry')
-      else if (output.includes('on')) resolve('on')
-      else if (output.includes('off')) resolve('off')
-      else resolve('no-entry')
+      if (output.includes('no-entry')) finish('no-entry')
+      else if (output.includes('on')) finish('on')
+      else if (output.includes('off')) finish('off')
+      else finish('no-entry')
     })
   })
 }
@@ -935,8 +955,10 @@ async function finishBrowsers(): Promise<void> {
 
   for (const item of run.items) {
     if (item.status !== 'done' || !item.settings?.openAfter) continue
+    if (openedAfterRun.has(item.id)) continue
     const program = PROGRAM_BY_ID.get(item.id)
     if (!program) continue
+    openedAfterRun.add(item.id)
     const abriu = await openOnce(program)
 
     if (abriu.result === 'already-running') {
@@ -966,9 +988,10 @@ async function finishBrowsers(): Promise<void> {
   }
 
   const winner = chooseDefaultBrowser(run.items)
-  if (winner) {
+  if (winner && winner.id !== defaultBrowser) {
     const program = PROGRAM_BY_ID.get(winner.id)
     if (program) {
+      defaultBrowser = winner.id
       winner.detail = 'Pedindo para ser o navegador padrão'
       emitState()
 
@@ -994,6 +1017,7 @@ async function processQueue(): Promise<void> {
   running = true
 
   const active = new Set<Promise<void>>()
+  let more = false
 
   try {
     for (;;) {
@@ -1025,15 +1049,25 @@ async function processQueue(): Promise<void> {
       await Promise.race(active)
     }
   } finally {
-    running = false
     forgetCatalog()
-    if (run) {
-      if (!canceled) await finishBrowsers()
-      run.finishedAt = new Date().toISOString()
-      run.canceling = false
-      emitState()
-      note(canceled ? 'instalação cancelada' : 'fila encerrada', canceled ? 'error' : 'ok')
+    try {
+      if (run) {
+        // Abrir os navegadores demora, e a fila ainda não acabou enquanto isso.
+        // Baixar a bandeira aqui deixaria uma segunda fila começar por cima
+        // desta, e esta ainda anunciaria o fim no meio da outra.
+        if (!canceled) await finishBrowsers()
+        more = !canceled && run.items.some((i) => i.status === 'queued')
+        if (!more) {
+          run.finishedAt = new Date().toISOString()
+          run.canceling = false
+          emitState()
+          note(canceled ? 'instalação cancelada' : 'fila encerrada', canceled ? 'error' : 'ok')
+        }
+      }
+    } finally {
+      running = false
     }
+    if (more) void processQueue()
   }
 }
 
@@ -1046,6 +1080,8 @@ export function start(requests: readonly Request[], drive: string): Run {
 
   canceled = false
   canceledItems.clear()
+  openedAfterRun.clear()
+  defaultBrowser = null
   startTime = Date.now()
   run = {
     drive,
