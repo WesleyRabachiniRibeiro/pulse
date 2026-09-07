@@ -6,6 +6,7 @@ import {
   cancel,
   cancelItem,
   currentState,
+  grantPermission,
   retry,
   start,
   subscribe,
@@ -19,6 +20,7 @@ export function registerInstallation(): void {
   register('installation:cancel', () => cancel())
   register('installation:cancelItem', (input) => cancelItem(input.id))
   register('installation:retry', (input) => retry(input.id))
+  register('installation:grant', (input) => grantPermission(input.id))
   register('installation:uninstall', (input) => uninstall(input.id))
 
   subscribe((run) => {

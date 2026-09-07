@@ -30,5 +30,9 @@ export function useInstallation() {
     void bridge.invoke('installation:retry', { id })
   }, [])
 
-  return { run, running, elapsed, cancel, cancelItem, retry }
+  const grant = useCallback((id: string) => {
+    void bridge.invoke('installation:grant', { id })
+  }, [])
+
+  return { run, running, elapsed, cancel, cancelItem, retry, grant }
 }

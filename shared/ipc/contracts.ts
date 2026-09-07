@@ -87,6 +87,10 @@ export const ipcContracts = {
     input: idInputSchema,
     output: z.void(),
   },
+  'installation:grant': {
+    input: idInputSchema,
+    output: z.void(),
+  },
   'installation:uninstall': {
     input: idInputSchema,
     output: z.object({

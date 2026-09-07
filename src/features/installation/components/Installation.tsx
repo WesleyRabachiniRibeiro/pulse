@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { PROGRAM_BY_ID } from '@shared/domain/catalog'
 import {
+  anyoneNeedingPermission,
   anyoneWaiting,
   clock,
   isActive,
@@ -30,6 +31,7 @@ function headline(run: Run): string {
   const { done, failed, canceled, remaining } = tally(run.items)
 
   if (run.canceling) return 'Encerrando o que estava rodando…'
+  if (anyoneNeedingPermission(run.items)) return 'Um programa precisa da sua permissão'
   if (anyoneWaiting(run.items)) return 'A Steam está esperando você'
   if (!run.finishedAt) return `Instalando ${plural(remaining, 'programa', 'programas')}`
   if (failed > 0) {
@@ -46,7 +48,7 @@ function phase(run: Run): string {
 }
 
 export function Installation({ onChooseMore, onSeeSummary }: Props) {
-  const { run, running, elapsed, cancel, cancelItem, retry } = useInstallation()
+  const { run, running, elapsed, cancel, cancelItem, retry, grant } = useInstallation()
   const [showLog, setShowLog] = useState(false)
   const logEnd = useRef<HTMLDivElement>(null)
 
@@ -143,6 +145,7 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
                   generalDrive={run.drive}
                   onRetry={retry}
                   onCancel={cancelItem}
+                  onGrant={grant}
                 />
               ))}
             </section>

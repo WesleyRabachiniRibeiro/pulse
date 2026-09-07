@@ -23,6 +23,7 @@ export const itemSchema = z.object({
   error: z.string().optional(),
   driveIgnored: z.boolean().optional(),
   canceling: z.boolean().optional(),
+  needsPermission: z.boolean().optional(),
   needsRestart: z.boolean().optional(),
   settings: settingsSchema.optional(),
   startedAt: z.string().optional(),
@@ -107,6 +108,14 @@ export function anyoneWaiting(items: readonly Item[]): boolean {
   return items.some(isWaiting)
 }
 
+export function needsPermission(item: Item): boolean {
+  return item.needsPermission === true
+}
+
+export function anyoneNeedingPermission(items: readonly Item[]): boolean {
+  return items.some(needsPermission)
+}
+
 export function isFinished(item: Item): boolean {
   return item.status === 'done' || item.status === 'failed' || item.status === 'canceled'
 }
@@ -127,7 +136,8 @@ export type ItemStage = (typeof ITEM_STAGES)[number]['id']
 export function stageOf(item: Item): ItemStage | null {
   if (item.status === 'downloading') return 'download'
   if (item.status === 'installing') return 'install'
-  if (item.status === 'configuring' || item.status === 'waiting') return 'settings'
+  if (item.status === 'waiting') return needsPermission(item) ? 'install' : 'settings'
+  if (item.status === 'configuring') return 'settings'
   if (item.status === 'done') return 'ready'
   return null
 }

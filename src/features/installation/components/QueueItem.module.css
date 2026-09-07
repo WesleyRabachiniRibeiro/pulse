@@ -140,6 +140,10 @@
 }
 
 .wait {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
   margin-top: 12px;
   padding: 12px 14px;
   background: #221a0f;
@@ -148,9 +152,27 @@
 }
 
 .waitText {
+  flex: 1;
+  min-width: 220px;
   font-size: 13px;
   line-height: 1.5;
   color: #ffdfa8;
+}
+
+.grant {
+  border: 1px solid #6b5a25;
+  background: transparent;
+  color: #ffdfa8;
+  border-radius: 9px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.16s;
+}
+
+.grant:hover {
+  border-color: #9a8235;
 }
 
 .track {
