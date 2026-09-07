@@ -1159,9 +1159,10 @@ export interface UninstallResult {
 }
 
 const DISAPPEAR_WAIT_MS = 25_000
+const LATE_CHECK_MS = 6_000
 
-async function disappeared(id: string): Promise<boolean> {
-  const limit = Date.now() + DISAPPEAR_WAIT_MS
+async function disappeared(id: string, waitMs = DISAPPEAR_WAIT_MS): Promise<boolean> {
+  const limit = Date.now() + waitMs
   while (Date.now() < limit) {
     if (!(await isInstalled(id))) return true
     await wait(2500)
@@ -1220,6 +1221,15 @@ export async function uninstall(id: string): Promise<UninstallResult> {
       verified: false,
       error: `O winget concluiu, mas o ${program.name} ainda aparece instalado. Alguns desinstaladores continuam trabalhando em segundo plano, e outros não terminam com o programa aberto. Feche-o e confira em instantes.`,
     }
+  }
+
+  forgetCatalog()
+  if (await disappeared(id, LATE_CHECK_MS)) {
+    note(
+      `${program.name}: desinstalado, embora o winget tenha encerrado com ${hex(output.code)}`,
+      'ok',
+    )
+    return { ok: true, verified: true }
   }
 
   const ownUninstallers = await quietUninstallCommands(id).catch((): string[] => [])
