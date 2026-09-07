@@ -10,6 +10,7 @@ import { listDrives } from '../preflight/preflight.service'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
 import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './tools'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
+import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import {
   canEnqueue,
   clock,
@@ -39,6 +40,7 @@ const processes = new Map<string, ChildProcess>()
 let running = false
 let canceled = false
 const canceledItems = new Set<string>()
+const permissionWaiters = new Map<string, (granted: boolean) => void>()
 let startTime = 0
 let lastStateAt = 0
 const openedAfterRun = new Set<string>()
@@ -173,7 +175,7 @@ function errorMessage(code: number, output: string, name: string): string {
     return `A permissão do Windows para instalar o ${name} foi recusada. Tente de novo e responda Sim na janela do Windows.`
   }
   if (needsAdmin(code, output)) {
-    return 'O instalador precisou de permissão de administrador e não conseguiu. Abra o Pulse como administrador e tente de novo.'
+    return `O instalador do ${name} precisou de permissão de administrador e não recebeu. Tente de novo e clique em "Conceder permissão" quando o Pulse pedir.`
   }
   const last = output
     .split('\n')
@@ -763,6 +765,33 @@ function wait(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
+const PERMISSION_ATTEMPTS = 3
+
+function waitForPermission(id: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const settle = (granted: boolean): void => {
+      if (!permissionWaiters.has(id)) return
+      permissionWaiters.delete(id)
+      clearTimeout(timer)
+      resolve(granted)
+    }
+    const timer = setTimeout(() => settle(false), WAIT_LIMIT_MS)
+    permissionWaiters.set(id, settle)
+  })
+}
+
+export function grantPermission(id: string): void {
+  permissionWaiters.get(id)?.(true)
+}
+
+function releasePermission(id?: string): void {
+  if (id) {
+    permissionWaiters.get(id)?.(false)
+    return
+  }
+  for (const settle of [...permissionWaiters.values()]) settle(false)
+}
+
 async function install(target: Item): Promise<void> {
   const program = PROGRAM_BY_ID.get(target.id)
   if (!program) {
@@ -828,12 +857,12 @@ async function install(target: Item): Promise<void> {
   const gaveUp = () => canceled || canceledItems.has(target.id)
 
   const destination = destinationFor(program, target.drive)
-  let output = await runWinget(
-    target.id,
-    args(program, destination, packageId, workloadOverride(target.settings, destination)),
-    follow,
-    target.drive,
-  )
+  const wingetArgs = (): string[] => {
+    const where = target.driveIgnored ? undefined : destination
+    return args(program, where, packageId, workloadOverride(target.settings, where))
+  }
+
+  let output = await runWinget(target.id, wingetArgs(), follow, target.drive)
 
   if (output.code !== 0 && destination && refusedDrive(output.text) && !gaveUp()) {
     target.driveIgnored = true
@@ -841,12 +870,7 @@ async function install(target: Item): Promise<void> {
     target.status = 'downloading'
     target.percent = 0
     emitState()
-    output = await runWinget(
-      target.id,
-      args(program, undefined, packageId, workloadOverride(target.settings)),
-      follow,
-      target.drive,
-    )
+    output = await runWinget(target.id, wingetArgs(), follow, target.drive)
   }
 
   for (let attempt = 1; attempt < MSI_ATTEMPTS; attempt++) {
@@ -862,12 +886,39 @@ async function install(target: Item): Promise<void> {
     target.percent = 0
     target.detail = 'Começando o download'
     emitState()
-    output = await runWinget(
-      target.id,
-      args(program, target.driveIgnored ? undefined : destination, packageId, workloadOverride(target.settings, target.driveIgnored ? undefined : destination)),
-      follow,
-      target.drive,
-    )
+    output = await runWinget(target.id, wingetArgs(), follow, target.drive)
+  }
+
+  let asked = 0
+  while (
+    !gaveUp() &&
+    output.code !== 0 &&
+    asked < PERMISSION_ATTEMPTS &&
+    (needsAdmin(output.code, output.text) || output.code === REFUSED_BY_USER)
+  ) {
+    asked++
+    target.status = 'waiting'
+    target.needsPermission = true
+    target.percent = 0
+    target.detail =
+      output.code === REFUSED_BY_USER
+        ? 'Permissão recusada. Conceda para continuar'
+        : 'Precisa da sua permissão de administrador'
+    emitState()
+    note(`${program.name}: esperando você conceder permissão de administrador`, 'step')
+
+    const granted = await waitForPermission(target.id)
+    delete target.needsPermission
+
+    if (!granted || gaveUp()) break
+
+    target.status = 'installing'
+    target.percent = 0
+    target.detail = 'Instalando com permissão de administrador'
+    emitState()
+    note(`${program.name}: instalando com permissão de administrador`, 'step')
+
+    output = await runAsAdmin('winget', wingetArgs())
   }
 
   if (gaveUp()) {
@@ -911,7 +962,10 @@ async function install(target: Item): Promise<void> {
   target.percent = 100
   target.detail = 'Não instalado'
   const noSpace = await fullDiskWarning(target.drive)
-  target.error = noSpace ?? errorMessage(output.code, output.text, program.name)
+  target.error =
+    noSpace ??
+    adminFailure(output.code, program.name) ??
+    errorMessage(output.code, output.text, program.name)
   target.finishedAt = new Date().toISOString()
   emitState()
   note(`${program.name}: falhou com ${hex(output.code)}`, 'error')
@@ -1163,6 +1217,7 @@ export function cancel(): void {
   run.canceling = true
   emitState()
   note('cancelando: encerrando os instaladores em andamento', 'error')
+  releasePermission()
   killProcess()
 }
 
@@ -1182,6 +1237,7 @@ export function cancelItem(id: string): void {
   target.canceling = true
   target.detail = 'Cancelando…'
   emitState()
+  releasePermission(id)
   killProcess(id)
 }
 
@@ -1313,6 +1369,7 @@ export function retry(id: string): void {
   target.percent = 0
   target.detail = 'Na fila'
   delete target.error
+  delete target.needsPermission
   run.finishedAt = null
   emitState()
   void processQueue()

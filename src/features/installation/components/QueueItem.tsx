@@ -4,6 +4,7 @@ import {
   driveLabel,
   isActive,
   isWaiting,
+  needsPermission,
   type Item,
   type ItemStatus,
 } from '@shared/domain/installation'
@@ -28,9 +29,10 @@ interface Props {
   generalDrive: string
   onRetry: (id: string) => void
   onCancel: (id: string) => void
+  onGrant: (id: string) => void
 }
 
-export function QueueItem({ item, generalDrive, onRetry, onCancel }: Props) {
+export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Props) {
   const program = PROGRAM_BY_ID.get(item.id)
   const name = program?.name ?? item.id
   const canRetry = item.status === 'failed' || item.status === 'canceled'
@@ -84,7 +86,20 @@ export function QueueItem({ item, generalDrive, onRetry, onCancel }: Props) {
         </>
       )}
 
-      {isWaiting(item) && (
+      {needsPermission(item) && (
+        <div className={s.wait}>
+          <span className={s.waitText}>
+            O instalador do {name} precisa de permissão de administrador. Ao conceder, o Windows
+            abre a janela de confirmação e a instalação continua daqui. Os outros programas da fila
+            seguem normalmente.
+          </span>
+          <button type="button" className={s.grant} onClick={() => onGrant(item.id)}>
+            Conceder permissão
+          </button>
+        </div>
+      )}
+
+      {isWaiting(item) && !needsPermission(item) && (
         <div className={s.wait}>
           <span className={s.waitText}>
             Este item só continua depois que você resolver isso na janela da Steam. Os outros
