@@ -10,6 +10,7 @@ import {
 } from '@shared/domain/settings'
 import { formatMb, type Program } from '@shared/domain/catalog'
 import { LOCALES, type InstallScope } from '@shared/domain/winget'
+import { EDITOR_TWEAKS } from '@shared/domain/editor'
 import { formatGb, type Drive } from '@shared/domain/preflight'
 import type { SteamGame } from '@shared/domain/steam'
 import { bridge } from '@/shared/lib/bridge'
@@ -516,6 +517,51 @@ export function AppSettings({
                   </button>
                 ))
               )}
+            </div>
+          </section>
+        )}
+
+        {kind === 'vscode' && (
+          <section className={s.section}>
+            <div className={s.label}>COMO O EDITOR SE COMPORTA</div>
+            <p className={s.description}>
+              O Pulse grava isso no settings.json do editor, na sua pasta de usuário. Se o arquivo
+              já tiver comentário ou estiver fora do formato JSON, o Pulse não encosta nele e avisa
+              no resumo, para não estragar o que você já ajustou.
+            </p>
+
+            <div className={s.options}>
+              {EDITOR_TWEAKS.map((tweak) => {
+                const on = (settings.editorTweaks ?? []).includes(tweak.id)
+                return (
+                  <button
+                    key={tweak.id}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={on}
+                    className={s.option}
+                    onClick={() => {
+                      const current = settings.editorTweaks ?? []
+                      const next = on
+                        ? current.filter((x) => x !== tweak.id)
+                        : [...current, tweak.id]
+                      onChangeSettings(program.id, {
+                        ...settings,
+                        editorTweaks: next.length > 0 ? next : undefined,
+                      })
+                    }}
+                  >
+                    <span className={s.box} aria-hidden>
+                      {on ? '✓' : ''}
+                    </span>
+                    <span className={s.optionBody}>
+                      <span className={s.optionName}>{tweak.name}</span>
+                      <span className={s.optionHint}>{tweak.hint}</span>
+                    </span>
+                    <span className={s.optionCategory}>{tweak.category.toUpperCase()}</span>
+                  </button>
+                )
+              })}
             </div>
           </section>
         )}

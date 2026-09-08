@@ -137,6 +137,7 @@ export const settingsSchema = z.object({
   desktopShortcut: z.boolean().optional(),
   autostart: z.boolean().optional(),
   extensions: z.array(z.string()).optional(),
+  editorTweaks: z.array(z.string()).optional(),
   games: z.array(steamGameSchema).optional(),
   git: gitSchema.optional(),
   tibia: z.array(z.string()).optional(),
@@ -212,6 +213,10 @@ export function settingsSummary(settings: Settings | undefined): string | null {
   if (settings.desktopShortcut === false) parts.push('sem atalho na área de trabalho')
 
   if (extensions) parts.push(`${extensions} ${extensions === 1 ? 'extensão' : 'extensões'}`)
+  const editorTweaks = settings.editorTweaks?.length ?? 0
+  if (editorTweaks) {
+    parts.push(`${editorTweaks} ${editorTweaks === 1 ? 'ajuste do editor' : 'ajustes do editor'}`)
+  }
   if (games.length > 0 && games.length <= 2) parts.push(games.map((g) => g.name).join(' e '))
   else if (games.length > 2) parts.push(`${games.length} jogos`)
   const tibia = settings.tibia?.length ?? 0

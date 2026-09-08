@@ -41,6 +41,7 @@ export const itemSchema = z.object({
       gamesPending: z.array(z.string()),
       autostart: z.enum(['on', 'off', 'no-entry']).optional(),
       shortcut: z.enum(['created', 'removed', 'kept', 'not-found', 'failed']).optional(),
+      editor: z.enum(['written', 'nothing', 'unreadable', 'failed']).optional(),
       pagesOpened: z.array(z.string()),
       riotInstalled: z.array(z.string()),
       riotFailed: z.array(z.string()),
@@ -266,6 +267,11 @@ export function settingsResultLines(item: Item): string[] {
         : `${result.extensions} de ${result.extensionsRequested} extensões instaladas`,
     )
   }
+  if (result.editor === 'written') lines.push('ajustes do editor gravados')
+  if (result.editor === 'unreadable') {
+    lines.push('o settings.json do editor tem comentário ou está fora do formato, não mexi nele')
+  }
+  if (result.editor === 'failed') lines.push('não deu para gravar os ajustes do editor')
   if (result.git) lines.push('Git configurado')
   if (result.gitLogin) lines.push('login do GitHub guardado pelo Windows')
   if (result.madeDefault === 'yes') lines.push('agora é o navegador padrão')

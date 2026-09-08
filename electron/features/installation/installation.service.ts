@@ -14,6 +14,7 @@ import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
+import { applyEditorTweaks, type EditorResult } from './editor'
 import {
   canEnqueue,
   clock,
@@ -493,6 +494,26 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
       }
       note(`${program.name}: ${done} de ${extensions.length} extensões instaladas`, 'ok')
     }
+  }
+
+  const editorTweaks = settings.editorTweaks ?? []
+  if (editorTweaks.length > 0) {
+    target.detail = 'Gravando os ajustes do editor'
+    emitState()
+
+    const written = await applyEditorTweaks(program.id, editorTweaks).catch(
+      (): EditorResult => 'failed',
+    )
+    result.editor = written
+    emitState()
+
+    const said: Record<EditorResult, string> = {
+      written: `${program.name}: ${editorTweaks.length} ajustes gravados no settings.json`,
+      nothing: `${program.name}: nenhum ajuste do editor para gravar`,
+      unreadable: `${program.name}: o settings.json tem comentário ou está fora do formato, deixei como estava`,
+      failed: `${program.name}: não deu para gravar o settings.json`,
+    }
+    note(said[written], written === 'written' ? 'ok' : 'error')
   }
 
   const git = settings.git

@@ -184,7 +184,7 @@ export const BUILTIN_PROGRAMS: readonly Program[] = [
   { id: 'sublimetext', name: 'Sublime Text', winget: 'SublimeHQ.SublimeText.4', version: '4', mb: 40, category: 'dev', hints: ['sublime text'] },
   { id: 'neovim', name: 'Neovim', winget: 'Neovim.Neovim', version: '0.12.5', mb: 40, category: 'dev', hints: ['neovim'] },
   { id: 'notepadpp', name: 'Notepad++', winget: 'Notepad++.Notepad++', version: '8.9.8', mb: 20, category: 'dev', hints: ['notepad++'] },
-  { id: 'cursor', name: 'Cursor', winget: 'Anysphere.Cursor', version: '3.19.7', mb: 400, category: 'dev', hints: ['cursor'] },
+  { id: 'cursor', name: 'Cursor', winget: 'Anysphere.Cursor', version: '3.19.7', mb: 400, category: 'dev', hints: ['cursor'], settingsKind: 'vscode' },
   { id: 'zed', name: 'Zed', winget: 'ZedIndustries.Zed', version: '1.18.1', mb: 130, category: 'dev', hints: ['zed'] },
   { id: 'dotnet', name: '.NET SDK', winget: 'Microsoft.DotNet.SDK.9', version: '9', mb: 320, category: 'dev', hints: ['microsoft .net sdk'] },
   { id: 'rust', name: 'Rust', winget: 'Rustlang.Rustup', version: '1.29.1', mb: 20, category: 'dev', hints: ['rustup'] },

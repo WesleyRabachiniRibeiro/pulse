@@ -847,7 +847,8 @@
       "category": "dev",
       "hints": [
         "cursor"
-      ]
+      ],
+      "settingsKind": "vscode"
     },
     {
       "id": "zed",
