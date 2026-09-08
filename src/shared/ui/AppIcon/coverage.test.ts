@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -12,13 +12,25 @@ const files = readdirSync(iconsDir).filter((name) => name.endsWith('.svg'))
 const withIcon = new Set(files.map((name) => name.replace(/\.svg$/, '')))
 const ids = BUILTIN_PROGRAMS.map((p) => p.id)
 
-describe('todo programa do catálogo tem ícone', () => {
-  it('nenhum cai no monograma de duas letras', () => {
+const awaiting: string[] = JSON.parse(readFileSync(join(iconsDir, 'awaiting.json'), 'utf8')).ids
+
+describe('ícone de cada programa do catálogo', () => {
+  it('só fica sem ícone quem está na lista de espera', () => {
     const semIcone = ids.filter((id) => !withIcon.has(id))
-    expect(semIcone).toEqual([])
+    expect(semIcone.sort()).toEqual([...awaiting].sort())
   })
 
-  it('nenhum fica cinza por falta de cor', () => {
+  it('quem já ganhou ícone sai da lista de espera', () => {
+    const jaTem = awaiting.filter((id) => withIcon.has(id))
+    expect(jaTem).toEqual([])
+  })
+
+  it('a lista de espera não guarda programa que saiu do catálogo', () => {
+    const sumiu = awaiting.filter((id) => !ids.includes(id))
+    expect(sumiu).toEqual([])
+  })
+
+  it('todo programa tem cor, mesmo o que ainda mostra o monograma', () => {
     const semTint = ids.filter((id) => !TINTS[id])
     expect(semTint).toEqual([])
   })

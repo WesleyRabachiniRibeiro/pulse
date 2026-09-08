@@ -960,6 +960,205 @@
       "hints": [
         "kubectl"
       ]
+    },
+    {
+      "id": "edge",
+      "name": "Microsoft Edge",
+      "winget": "Microsoft.Edge",
+      "version": "151.0.4129",
+      "mb": 160,
+      "category": "browsers",
+      "hints": [
+        "microsoft edge"
+      ]
+    },
+    {
+      "id": "office",
+      "name": "Microsoft Office",
+      "winget": "Microsoft.Office",
+      "version": "16.0.20228",
+      "mb": 4000,
+      "category": "office",
+      "hints": [
+        "microsoft 365 apps",
+        "microsoft office"
+      ]
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "winget": "SlackTechnologies.Slack",
+      "version": "4.51.191",
+      "mb": 180,
+      "category": "office",
+      "hints": [
+        "slack"
+      ]
+    },
+    {
+      "id": "powertoys",
+      "name": "PowerToys",
+      "winget": "Microsoft.PowerToys",
+      "version": "0.101",
+      "mb": 220,
+      "category": "utilities",
+      "hints": [
+        "powertoys"
+      ]
+    },
+    {
+      "id": "everything",
+      "name": "Everything",
+      "winget": "voidtools.Everything",
+      "version": "1.4.1",
+      "mb": 5,
+      "category": "utilities",
+      "hints": [
+        "everything"
+      ]
+    },
+    {
+      "id": "rufus",
+      "name": "Rufus",
+      "winget": "Rufus.Rufus",
+      "version": "4.15",
+      "mb": 2,
+      "category": "utilities",
+      "hints": [
+        "rufus"
+      ]
+    },
+    {
+      "id": "winrar",
+      "name": "WinRAR",
+      "winget": "RARLab.WinRAR",
+      "version": "7.23",
+      "mb": 12,
+      "category": "utilities",
+      "hints": [
+        "winrar"
+      ]
+    },
+    {
+      "id": "windirstat",
+      "name": "WinDirStat",
+      "winget": "WinDirStat.WinDirStat",
+      "version": "2.8.0",
+      "mb": 10,
+      "category": "utilities",
+      "hints": [
+        "windirstat"
+      ]
+    },
+    {
+      "id": "handbrake",
+      "name": "HandBrake",
+      "winget": "HandBrake.HandBrake",
+      "version": "1.11.2",
+      "mb": 120,
+      "category": "creative",
+      "hints": [
+        "handbrake"
+      ]
+    },
+    {
+      "id": "amazongames",
+      "name": "Amazon Games",
+      "winget": "Amazon.Games",
+      "version": "3.0.9700",
+      "mb": 130,
+      "category": "games",
+      "hints": [
+        "amazon games"
+      ]
+    },
+    {
+      "id": "logitechghub",
+      "name": "Logitech G HUB",
+      "winget": "Logitech.GHUB",
+      "version": "2026.4",
+      "mb": 350,
+      "category": "games",
+      "hints": [
+        "logitech g hub"
+      ]
+    },
+    {
+      "id": "putty",
+      "name": "PuTTY",
+      "winget": "PuTTY.PuTTY",
+      "version": "0.84",
+      "mb": 4,
+      "category": "dev",
+      "hints": [
+        "putty"
+      ]
+    },
+    {
+      "id": "winscp",
+      "name": "WinSCP",
+      "winget": "WinSCP.WinSCP",
+      "version": "6.5.6",
+      "mb": 30,
+      "category": "dev",
+      "hints": [
+        "winscp"
+      ]
+    },
+    {
+      "id": "powershell",
+      "name": "PowerShell 7",
+      "winget": "Microsoft.PowerShell",
+      "version": "7.6.5",
+      "mb": 110,
+      "category": "dev",
+      "hints": [
+        "powershell 7"
+      ]
+    },
+    {
+      "id": "ohmyposh",
+      "name": "Oh My Posh",
+      "winget": "JanDeDobbeleer.OhMyPosh",
+      "version": "31.2.1",
+      "mb": 60,
+      "category": "dev",
+      "hints": [
+        "oh my posh"
+      ]
+    },
+    {
+      "id": "awscli",
+      "name": "AWS CLI",
+      "winget": "Amazon.AWSCLI",
+      "version": "2.36.40",
+      "mb": 90,
+      "category": "dev",
+      "hints": [
+        "aws command line interface"
+      ]
+    },
+    {
+      "id": "azurecli",
+      "name": "Azure CLI",
+      "winget": "Microsoft.AzureCLI",
+      "version": "2.90.0",
+      "mb": 130,
+      "category": "dev",
+      "hints": [
+        "microsoft azure cli"
+      ]
+    },
+    {
+      "id": "wsl",
+      "name": "WSL",
+      "winget": "Microsoft.WSL",
+      "version": "2.7.13",
+      "mb": 130,
+      "category": "dev",
+      "hints": [
+        "windows subsystem for linux"
+      ]
     }
   ],
   "bundles": [
