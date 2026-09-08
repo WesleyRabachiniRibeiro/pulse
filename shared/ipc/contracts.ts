@@ -15,6 +15,7 @@ import {
 import { steamGameSchema, steamLibrarySchema, steamSearchInputSchema } from '../domain/steam'
 import { preferencesSchema } from '../domain/preferences'
 import { profileSchema } from '../domain/profile'
+import { tweakInputSchema, tweakStateSchema } from '../domain/windows'
 import { gitSchema } from '../domain/settings'
 import { updateStateSchema } from '../domain/update'
 
@@ -119,6 +120,14 @@ export const ipcContracts = {
   'steam:search': {
     input: steamSearchInputSchema,
     output: z.array(steamGameSchema),
+  },
+  'windows:tweaks': {
+    input: z.void(),
+    output: z.array(tweakStateSchema),
+  },
+  'windows:setTweak': {
+    input: tweakInputSchema,
+    output: z.array(tweakStateSchema),
   },
   'system:restart': {
     input: z.void(),
