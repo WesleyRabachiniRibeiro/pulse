@@ -1,7 +1,7 @@
 import { clipboard } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdir } from 'node:fs/promises'
-import { PROGRAM_BY_ID, type Program } from '@shared/domain/catalog'
+import { getProgram, type Program } from '@shared/domain/catalog'
 import { RIOT_BY_ID, TIBIA_BY_ID, type Settings } from '@shared/domain/settings'
 import { forgetCatalog, isInstalled, quietUninstallCommands } from '../catalog/catalog.service'
 import { hasManifest, isSignedIn } from '../steam/steam.service'
@@ -756,7 +756,7 @@ function releasePermission(id?: string): void {
 }
 
 async function install(target: Item): Promise<void> {
-  const program = PROGRAM_BY_ID.get(target.id)
+  const program = getProgram(target.id)
   if (!program) {
     target.status = 'failed'
     target.detail = 'Não instalado'
@@ -936,7 +936,7 @@ async function install(target: Item): Promise<void> {
 
 function chooseDefaultBrowser(items: readonly Item[]): Item | null {
   const browsers = items
-    .filter((i) => i.status === 'done' && PROGRAM_BY_ID.get(i.id)?.category === 'browsers')
+    .filter((i) => i.status === 'done' && getProgram(i.id)?.category === 'browsers')
     .sort((a, b) => Date.parse(a.finishedAt ?? '') - Date.parse(b.finishedAt ?? ''))
 
   if (browsers.length === 0) return null
@@ -973,7 +973,7 @@ async function finishBrowsers(): Promise<void> {
   for (const item of run.items) {
     if (item.status !== 'done' || !item.settings?.openAfter) continue
     if (openedAfterRun.has(item.id)) continue
-    const program = PROGRAM_BY_ID.get(item.id)
+    const program = getProgram(item.id)
     if (!program) continue
     openedAfterRun.add(item.id)
     const abriu = await openOnce(program)
@@ -1006,7 +1006,7 @@ async function finishBrowsers(): Promise<void> {
 
   const winner = chooseDefaultBrowser(run.items)
   if (winner && winner.id !== defaultBrowser) {
-    const program = PROGRAM_BY_ID.get(winner.id)
+    const program = getProgram(winner.id)
     if (program) {
       defaultBrowser = winner.id
       winner.detail = 'Pedindo para ser o navegador padrão'
@@ -1192,7 +1192,7 @@ export function cancelItem(id: string): void {
     target.status = 'canceled'
     target.detail = 'Cancelado antes de começar'
     emitState()
-    note(`${PROGRAM_BY_ID.get(id)?.name ?? id}: tirado da fila`, 'error')
+    note(`${getProgram(id)?.name ?? id}: tirado da fila`, 'error')
     return
   }
 
@@ -1236,7 +1236,7 @@ export function uninstall(id: string): Promise<UninstallResult> {
 }
 
 async function runUninstall(id: string): Promise<UninstallResult> {
-  const program = PROGRAM_BY_ID.get(id)
+  const program = getProgram(id)
   if (!program) return { ok: false, verified: false, error: 'Programa fora do catálogo.' }
 
   if (!program.winget) {

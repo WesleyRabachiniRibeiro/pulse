@@ -1,4 +1,4 @@
-import { PROGRAM_BY_ID } from '@shared/domain/catalog'
+import { useProgram } from '@/features/catalog'
 import {
   canCancel,
   driveLabel,
@@ -33,7 +33,7 @@ interface Props {
 }
 
 export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Props) {
-  const program = PROGRAM_BY_ID.get(item.id)
+  const program = useProgram(item.id)
   const name = program?.name ?? item.id
   const canRetry = item.status === 'failed' || item.status === 'canceled'
 

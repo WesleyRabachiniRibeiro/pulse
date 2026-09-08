@@ -1,5 +1,5 @@
 import { app, BrowserWindow, nativeImage, Notification } from 'electron'
-import { PROGRAM_BY_ID } from '@shared/domain/catalog'
+import { getProgram } from '@shared/domain/catalog'
 import { anyoneWaiting, tally, type Item, type Run } from '@shared/domain/installation'
 
 const BADGE_FAILED = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAfklEQVR42r2TwQnAIAxFXcOJnMdJ3MKNeuggQntof/kSDw16KNEGPohJXkiMDoCzyK0EeABB5L8AGJwB4C6lSiz3QL3k/do2nCnhiLGKZ97RpyEakBnYErUEkkcAkl+VtegT8z1AYL+j5CaZSVgCMLdgHuKUZzQv0pRV/vc3PibDGLLxBhV4AAAAAElFTkSuQmCC'
@@ -8,7 +8,7 @@ const BADGE_WAITING = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAY
 type Alert = 'failed' | 'waiting' | null
 
 function nameOf(item: Item): string {
-  return PROGRAM_BY_ID.get(item.id)?.name ?? item.id
+  return getProgram(item.id)?.name ?? item.id
 }
 
 export function nameForWindows(): void {

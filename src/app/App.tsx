@@ -3,6 +3,7 @@ import { formatMb, totalSizeMb } from '@shared/domain/catalog'
 import { TitleBar } from '@/shared/ui/TitleBar/TitleBar'
 import { StepRail } from '@/shared/ui/StepRail/StepRail'
 import { Home } from '@/features/home'
+import { useWatchCatalog } from '@/features/catalog'
 import {
   Welcome,
   startPreflight,
@@ -35,6 +36,7 @@ const VERSION = __APP_VERSION__
 export function App() {
   useLoadPreferences()
   useLoadSelection()
+  useWatchCatalog()
   useWatchPreflight()
   useWatchUpdate()
   const carregado = usePreferencesLoaded()

@@ -4,7 +4,8 @@ import {
   entryMatchesProgram,
   installedIds,
   nameMatchesProgram,
-  PROGRAM_BY_ID,
+  getProgram,
+  getPrograms,
   sortVersions,
   type PackageVersion,
 } from '@shared/domain/catalog'
@@ -25,7 +26,7 @@ $names += @(try { Get-StartApps | ForEach-Object { [string]$_.Name } } catch { @
 `
 
 export async function listVersions(id: string): Promise<PackageVersion[]> {
-  const program = PROGRAM_BY_ID.get(id)
+  const program = getProgram(id)
   if (!program?.family) return []
 
   const { prefix, pattern } = program.family
@@ -89,7 +90,7 @@ function silentCommand(entry: UninstallEntry): string | null {
 }
 
 export async function quietUninstallCommands(id: string): Promise<string[]> {
-  const program = PROGRAM_BY_ID.get(id)
+  const program = getProgram(id)
   if (!program) return []
 
   const encoded = Buffer.from(UNINSTALL_SCRIPT, 'utf16le').toString('base64')
@@ -196,7 +197,7 @@ async function readAutostart(): Promise<{ id: string; state: AutostartState }[]>
   const entries = await listAutostartEntries()
   const found = new Map<string, AutostartState>()
 
-  for (const program of PROGRAM_BY_ID.values()) {
+  for (const program of getPrograms()) {
     for (const entry of entries) {
       if (!entry?.name) continue
       if (!entryMatchesProgram(entry.name, entry.value ?? '', program)) continue

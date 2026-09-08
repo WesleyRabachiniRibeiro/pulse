@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { formatMb, PROGRAM_BY_ID } from '@shared/domain/catalog'
+import { formatMb, getProgram } from '@shared/domain/catalog'
+import { usePrograms } from '@/features/catalog'
 import {
   anyNeedsRestart,
   driveLabel,
@@ -40,6 +41,7 @@ function duration(seconds: number): string {
 
 export function Summary({ onChooseMore, onSeeInstallation }: Props) {
   const run = useRun()
+  usePrograms()
   const [restarting, setRestarting] = useState(false)
   const [left, setLeft] = useState(SECONDS_UNTIL_RESTART)
 
@@ -70,13 +72,13 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
   const groups = groupSummary(run.items)
   const { done } = tally(run.items)
   const ready = run.items.filter((i) => i.status === 'done')
-  const installedMb = ready.reduce((t, i) => t + (PROGRAM_BY_ID.get(i.id)?.mb ?? 0), 0)
+  const installedMb = ready.reduce((t, i) => t + (getProgram(i.id)?.mb ?? 0), 0)
   const hasRestart = anyNeedsRestart(run.items)
 
   const byDrive = [
     ...ready
       .reduce((map, i) => {
-        const mb = PROGRAM_BY_ID.get(i.id)?.mb ?? 0
+        const mb = getProgram(i.id)?.mb ?? 0
         return map.set(i.drive, (map.get(i.drive) ?? 0) + mb)
       }, new Map<string, number>())
       .entries(),
@@ -150,7 +152,7 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
 
             <div className={s.rows}>
               {group.lines.map((line) => {
-                const program = PROGRAM_BY_ID.get(line.id)
+                const program = getProgram(line.id)
                 const name = program?.name ?? line.id
                 return (
                   <div key={line.id} className={s.row} data-kind={group.kind}>

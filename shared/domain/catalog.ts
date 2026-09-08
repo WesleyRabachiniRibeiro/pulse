@@ -1,38 +1,58 @@
 import { z } from 'zod'
-import type { SettingsKind } from './settings'
+import { settingsKindSchema } from './settings'
 
-export type CategoryId = 'browsers' | 'games' | 'media' | 'dev'
+export type CategoryId = string
 
-export interface Category {
-  id: CategoryId
-  name: string
-}
+export const categorySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+})
+export type Category = z.infer<typeof categorySchema>
 
-export interface Program {
-  id: string
-  name: string
-  winget?: string
-  source?: 'msstore' | 'pages'
-  version: string
-  mb: number
-  category: CategoryId
-  hints: readonly string[]
-  notice?: string
-  settingsKind?: SettingsKind
-  family?: {
-    prefix: string
-    pattern: string
-  }
-}
+export const programSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  winget: z.string().min(1).optional(),
+  source: z.enum(['msstore', 'pages']).optional(),
+  version: z.string(),
+  mb: z.number().min(0),
+  category: z.string().min(1),
+  hints: z.array(z.string()),
+  notice: z.string().optional(),
+  settingsKind: settingsKindSchema.optional(),
+  family: z
+    .object({
+      prefix: z.string().min(1),
+      pattern: z.string().min(1),
+    })
+    .optional(),
+})
+export type Program = z.infer<typeof programSchema>
 
-export const CATEGORIES: readonly Category[] = [
+export const bundleSchema = z.object({
+  name: z.string().min(1),
+  ids: z.array(z.string()),
+})
+export type Bundle = z.infer<typeof bundleSchema>
+
+export const CATALOG_VERSION = 1
+
+export const catalogSchema = z.object({
+  version: z.literal(CATALOG_VERSION),
+  categories: z.array(categorySchema).min(1),
+  programs: z.array(programSchema).min(1),
+  bundles: z.array(bundleSchema).optional(),
+})
+export type Catalog = z.infer<typeof catalogSchema>
+
+export const BUILTIN_CATEGORIES: readonly Category[] = [
   { id: 'browsers', name: 'NAVEGADORES' },
   { id: 'games', name: 'GAMES' },
   { id: 'media', name: 'COMUNICAÇÃO E MÍDIA' },
   { id: 'dev', name: 'DESENVOLVIMENTO' },
 ]
 
-export const CATALOG: readonly Program[] = [
+export const BUILTIN_PROGRAMS: readonly Program[] = [
   { id: 'chrome', name: 'Google Chrome', winget: 'Google.Chrome', version: '152.0.7977', mb: 118, category: 'browsers', hints: ['google chrome'], settingsKind: 'browser' },
   { id: 'firefox', name: 'Mozilla Firefox', winget: 'Mozilla.Firefox', version: '155.0.1', mb: 62, category: 'browsers', hints: ['mozilla firefox'], settingsKind: 'browser' },
   { id: 'brave', name: 'Brave', winget: 'Brave.Brave', version: '152.1.94', mb: 145, category: 'browsers', hints: ['brave'], settingsKind: 'browser' },
@@ -127,8 +147,6 @@ export const CATALOG: readonly Program[] = [
   { id: 'blender', name: 'Blender', winget: 'BlenderFoundation.Blender', version: '5.2.1', mb: 380, category: 'dev', hints: ['blender'] },
 ]
 
-export const PROGRAM_BY_ID: ReadonlyMap<string, Program> = new Map(CATALOG.map((p) => [p.id, p]))
-
 export const packageVersionSchema = z.object({
   winget: z.string(),
   name: z.string(),
@@ -158,12 +176,9 @@ export function sortVersions(versions: readonly PackageVersion[]): PackageVersio
   return [...versions].sort((a, b) => compareVersions(b, a))
 }
 
-export interface Bundle {
-  name: string
-  ids: readonly string[]
-}
+export const EVERYTHING_BUNDLE = 'Tudo'
 
-export const BUNDLES: readonly Bundle[] = [
+export const BUILTIN_BUNDLES: readonly Bundle[] = [
   { name: 'Essencial', ids: ['chrome', 'discord', 'spotify'] },
   {
     name: 'Setup gamer',
@@ -173,8 +188,73 @@ export const BUNDLES: readonly Bundle[] = [
     name: 'Trabalho e código',
     ids: ['chrome', 'vscode', 'gitbash', 'node', 'python', 'postman', 'claude', 'claudecode', 'docker', 'discord'],
   },
-  { name: 'Tudo', ids: CATALOG.map((p) => p.id) },
 ]
+
+export const BUILTIN_CATALOG: Catalog = {
+  version: CATALOG_VERSION,
+  categories: [...BUILTIN_CATEGORIES],
+  programs: [...BUILTIN_PROGRAMS],
+  bundles: [...BUILTIN_BUNDLES],
+}
+
+interface Registry {
+  catalog: Catalog
+  byId: Map<string, Program>
+  bundles: readonly Bundle[]
+}
+
+function build(catalog: Catalog): Registry {
+  const programs = catalog.programs.filter((p) =>
+    catalog.categories.some((c) => c.id === p.category),
+  )
+  const byId = new Map(programs.map((p) => [p.id, p]))
+
+  const known = (id: string): boolean => byId.has(id)
+  const listed = (catalog.bundles ?? [])
+    .filter((b) => b.name !== EVERYTHING_BUNDLE)
+    .map((b) => ({ name: b.name, ids: b.ids.filter(known) }))
+    .filter((b) => b.ids.length > 0)
+
+  return {
+    catalog: { ...catalog, programs },
+    byId,
+    bundles: [...listed, { name: EVERYTHING_BUNDLE, ids: programs.map((p) => p.id) }],
+  }
+}
+
+let registry = build(BUILTIN_CATALOG)
+
+export function setCatalog(catalog: Catalog): void {
+  registry = build(catalog)
+}
+
+export function resetCatalog(): void {
+  registry = build(BUILTIN_CATALOG)
+}
+
+export function getCatalog(): Catalog {
+  return registry.catalog
+}
+
+export function getPrograms(): readonly Program[] {
+  return registry.catalog.programs
+}
+
+export function getCategories(): readonly Category[] {
+  return registry.catalog.categories
+}
+
+export function getBundles(): readonly Bundle[] {
+  return registry.bundles
+}
+
+export function getProgram(id: string): Program | undefined {
+  return registry.byId.get(id)
+}
+
+export function hasProgram(id: string): boolean {
+  return registry.byId.has(id)
+}
 
 export function formatMb(mb: number): string {
   if (mb >= 1024) {
@@ -185,7 +265,7 @@ export function formatMb(mb: number): string {
 
 export function totalSizeMb(ids: Iterable<string>): number {
   let total = 0
-  for (const id of ids) total += PROGRAM_BY_ID.get(id)?.mb ?? 0
+  for (const id of ids) total += getProgram(id)?.mb ?? 0
   return total
 }
 
@@ -202,10 +282,11 @@ function normalize(text: string): string {
 
 export function filterCatalog(term: string): readonly Program[] {
   const needle = normalize(term.trim())
-  if (!needle) return CATALOG
+  const programs = getPrograms()
+  if (!needle) return programs
 
-  const categoryNames = new Map(CATEGORIES.map((c) => [c.id, normalize(c.name)]))
-  return CATALOG.filter(
+  const categoryNames = new Map(getCategories().map((c) => [c.id, normalize(c.name)]))
+  return programs.filter(
     (p) =>
       normalize(p.name).includes(needle) ||
       (categoryNames.get(p.category) ?? '').includes(needle),
@@ -245,7 +326,7 @@ export function installedIds(installedNames: readonly string[]): string[] {
     let longest = 0
     let owners: string[] = []
 
-    for (const program of CATALOG) {
+    for (const program of getPrograms()) {
       for (const hint of program.hints) {
         if (!hintMatches(name, hint)) continue
         if (hint.length > longest) {
@@ -260,7 +341,7 @@ export function installedIds(installedNames: readonly string[]): string[] {
     for (const owner of owners) found.add(owner)
   }
 
-  return CATALOG.filter((p) => found.has(p.id)).map((p) => p.id)
+  return getPrograms().filter((p) => found.has(p.id)).map((p) => p.id)
 }
 
 export interface CategoryGroup {
@@ -269,7 +350,7 @@ export interface CategoryGroup {
 }
 
 export function groupByCategory(programs: readonly Program[]): readonly CategoryGroup[] {
-  return CATEGORIES.map((category) => ({
+  return getCategories().map((category) => ({
     category,
     programs: programs
       .filter((p) => p.category === category.id)

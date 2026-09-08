@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { packageVersionSchema } from '../domain/catalog'
+import { catalogSchema, packageVersionSchema } from '../domain/catalog'
 import {
   driveSchema,
   preflightInputSchema,
@@ -39,6 +39,10 @@ export const ipcContracts = {
   'update:install': {
     input: z.void(),
     output: z.void(),
+  },
+  'catalog:list': {
+    input: z.void(),
+    output: catalogSchema,
   },
   'catalog:installed': {
     input: freshInputSchema,
@@ -150,6 +154,7 @@ export const ipcEvents = {
   'installation:event': runSchema,
   'preflight:event': preflightPartialSchema,
   'update:event': updateStateSchema,
+  'catalog:event': catalogSchema,
 } as const
 
 export type IpcEvents = typeof ipcEvents

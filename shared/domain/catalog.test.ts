@@ -1,20 +1,30 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
-  CATALOG,
+  BUILTIN_CATALOG,
   bundleIsActive,
-  BUNDLES,
+  catalogSchema,
   entryMatchesProgram,
   estimatedMinutes,
+  EVERYTHING_BUNDLE,
   filterCatalog,
   formatMb,
+  getBundles,
+  getCategories,
+  getProgram,
+  getPrograms,
   groupByCategory,
+  hasProgram,
   installedIds,
   nameMatchesProgram,
-  PROGRAM_BY_ID,
+  resetCatalog,
+  setCatalog,
   sortVersions,
   totalSizeMb,
+  type Catalog,
   type PackageVersion,
 } from './catalog'
+
+afterEach(resetCatalog)
 
 function version(winget: string, name = winget, raw = '1.0'): PackageVersion {
   return { winget, name, version: raw, recommended: false }
@@ -22,18 +32,18 @@ function version(winget: string, name = winget, raw = '1.0'): PackageVersion {
 
 describe('catálogo', () => {
   it('não tem id repetido', () => {
-    expect(new Set(CATALOG.map((p) => p.id)).size).toBe(CATALOG.length)
+    expect(new Set(getPrograms().map((p) => p.id)).size).toBe(getPrograms().length)
   })
 
   it('tem winget ou é página', () => {
-    for (const program of CATALOG) {
+    for (const program of getPrograms()) {
       expect(Boolean(program.winget) || program.source === 'pages').toBe(true)
     }
   })
 
   it('só monta pacotes que existem nos combos', () => {
-    for (const bundle of BUNDLES) {
-      for (const id of bundle.ids) expect(PROGRAM_BY_ID.has(id)).toBe(true)
+    for (const bundle of getBundles()) {
+      for (const id of bundle.ids) expect(hasProgram(id)).toBe(true)
     }
   })
 })
@@ -84,8 +94,8 @@ describe('installedIds', () => {
 })
 
 describe('nameMatchesProgram e entryMatchesProgram', () => {
-  const chrome = PROGRAM_BY_ID.get('chrome')
-  const teams = PROGRAM_BY_ID.get('teams')
+  const chrome = getProgram('chrome')
+  const teams = getProgram('teams')
 
   it('casa o nome exato e o nome com sufixo', () => {
     expect(chrome && nameMatchesProgram('Google Chrome', chrome)).toBe(true)
@@ -107,7 +117,7 @@ describe('nameMatchesProgram e entryMatchesProgram', () => {
 
 describe('tamanhos e busca', () => {
   it('soma só o que existe', () => {
-    const chrome = PROGRAM_BY_ID.get('chrome')?.mb ?? 0
+    const chrome = getProgram('chrome')?.mb ?? 0
     expect(totalSizeMb(['chrome', 'nao-existe'])).toBe(chrome)
   })
 
@@ -124,7 +134,7 @@ describe('tamanhos e busca', () => {
   it('busca por nome e por categoria, sem acento', () => {
     expect(filterCatalog('chrome').map((p) => p.id)).toContain('chrome')
     expect(filterCatalog('desenvolvimento').every((p) => p.category === 'dev')).toBe(true)
-    expect(filterCatalog('  ')).toHaveLength(CATALOG.length)
+    expect(filterCatalog('  ')).toHaveLength(getPrograms().length)
   })
 
   it('agrupa sem categoria vazia', () => {
@@ -134,7 +144,7 @@ describe('tamanhos e busca', () => {
 })
 
 describe('bundleIsActive', () => {
-  const essencial = BUNDLES.find((b) => b.name === 'Essencial')
+  const essencial = getBundles().find((b) => b.name === 'Essencial')
 
   it('acende quando a seleção é exatamente o combo', () => {
     expect(essencial && bundleIsActive(essencial, new Set(essencial.ids))).toBe(true)
@@ -149,5 +159,115 @@ describe('bundleIsActive', () => {
     const ignore = new Set([essencial.ids[0] as string])
     const selected = new Set(essencial.ids.slice(1))
     expect(bundleIsActive(essencial, selected, ignore)).toBe(true)
+  })
+})
+
+describe('registro do catálogo', () => {
+  const other: Catalog = {
+    version: 1,
+    categories: [{ id: 'tools', name: 'FERRAMENTAS' }],
+    programs: [
+      {
+        id: 'sete-zip',
+        name: '7-Zip',
+        winget: '7zip.7zip',
+        version: '26.02',
+        mb: 5,
+        category: 'tools',
+        hints: ['7-zip'],
+      },
+    ],
+    bundles: [{ name: 'Compactar', ids: ['sete-zip'] }],
+  }
+
+  it('troca o catálogo inteiro', () => {
+    setCatalog(other)
+    expect(getPrograms().map((p) => p.id)).toEqual(['sete-zip'])
+    expect(getCategories().map((c) => c.id)).toEqual(['tools'])
+    expect(hasProgram('chrome')).toBe(false)
+    expect(getProgram('sete-zip')?.name).toBe('7-Zip')
+  })
+
+  it('volta para o embutido', () => {
+    setCatalog(other)
+    resetCatalog()
+    expect(hasProgram('chrome')).toBe(true)
+  })
+
+  it('descarta programa de categoria que não existe', () => {
+    setCatalog({
+      ...other,
+      programs: [
+        ...other.programs,
+        { id: 'orfao', name: 'Órfão', winget: 'x.y', version: '1', mb: 1, category: 'sumiu', hints: [] },
+      ],
+    })
+    expect(getPrograms().map((p) => p.id)).toEqual(['sete-zip'])
+  })
+
+  it('sempre monta o combo Tudo com o catálogo vigente', () => {
+    setCatalog(other)
+    const tudo = getBundles().find((b) => b.name === EVERYTHING_BUNDLE)
+    expect(tudo?.ids).toEqual(['sete-zip'])
+  })
+
+  it('tira do combo o id que não existe mais', () => {
+    setCatalog({ ...other, bundles: [{ name: 'Compactar', ids: ['sete-zip', 'sumiu'] }] })
+    expect(getBundles().find((b) => b.name === 'Compactar')?.ids).toEqual(['sete-zip'])
+  })
+
+  it('descarta combo que ficou sem nenhum programa', () => {
+    setCatalog({ ...other, bundles: [{ name: 'Vazio', ids: ['sumiu'] }] })
+    expect(getBundles().map((b) => b.name)).toEqual([EVERYTHING_BUNDLE])
+  })
+
+  it('a busca e o agrupamento seguem o catálogo trocado', () => {
+    setCatalog(other)
+    expect(filterCatalog('ferramentas').map((p) => p.id)).toEqual(['sete-zip'])
+    expect(groupByCategory(getPrograms()).map((g) => g.category.id)).toEqual(['tools'])
+  })
+
+  it('installedIds passa a reconhecer o catálogo trocado', () => {
+    setCatalog(other)
+    expect(installedIds(['7-Zip 26.02 (x64)'])).toEqual(['sete-zip'])
+    expect(installedIds(['Google Chrome'])).toEqual([])
+  })
+})
+
+describe('catalogSchema', () => {
+  it('aceita o catálogo embutido', () => {
+    expect(catalogSchema.safeParse(BUILTIN_CATALOG).success).toBe(true)
+  })
+
+  it('recusa versão de formato desconhecida', () => {
+    expect(catalogSchema.safeParse({ ...BUILTIN_CATALOG, version: 2 }).success).toBe(false)
+  })
+
+  it('recusa catálogo sem programa', () => {
+    expect(catalogSchema.safeParse({ ...BUILTIN_CATALOG, programs: [] }).success).toBe(false)
+  })
+
+  it('recusa catálogo sem categoria', () => {
+    expect(catalogSchema.safeParse({ ...BUILTIN_CATALOG, categories: [] }).success).toBe(false)
+  })
+
+  it('recusa programa sem id', () => {
+    expect(
+      catalogSchema.safeParse({
+        ...BUILTIN_CATALOG,
+        programs: [{ name: 'X', version: '1', mb: 1, category: 'dev', hints: [] }],
+      }).success,
+    ).toBe(false)
+  })
+
+  it('recusa settingsKind inventado', () => {
+    expect(
+      catalogSchema.safeParse({
+        ...BUILTIN_CATALOG,
+        programs: [
+          { id: 'x', name: 'X', version: '1', mb: 1, category: 'dev', hints: [], settingsKind: 'inventado' },
+        ],
+      }).success,
+    ).toBe(false)
   })
 })

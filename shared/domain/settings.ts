@@ -1,7 +1,16 @@
 import { z } from 'zod'
 import { steamGameSchema } from './steam'
 
-export type SettingsKind = 'vscode' | 'steam' | 'git' | 'tibia' | 'riot' | 'vs' | 'browser'
+export const settingsKindSchema = z.enum([
+  'vscode',
+  'steam',
+  'git',
+  'tibia',
+  'riot',
+  'vs',
+  'browser',
+])
+export type SettingsKind = z.infer<typeof settingsKindSchema>
 
 export interface SettingsOption {
   id: string

@@ -1,4 +1,5 @@
-import { CATALOG, formatMb, totalSizeMb } from '@shared/domain/catalog'
+import { formatMb, totalSizeMb } from '@shared/domain/catalog'
+import { usePrograms } from '@/features/catalog'
 import { useTourStore } from '@/features/tour'
 import logo from '@/shared/assets/logo.png'
 import s from './Home.module.css'
@@ -26,7 +27,8 @@ const CARTOES = [
 ]
 
 export function Home({ onStart }: Props) {
-  const total = totalSizeMb(CATALOG.map((p) => p.id))
+  const programs = usePrograms()
+  const total = totalSizeMb(programs.map((p) => p.id))
 
   return (
     <div className={s.screen}>
@@ -69,7 +71,7 @@ export function Home({ onStart }: Props) {
         </div>
 
         <div className={s.footnote}>
-          {CATALOG.length} programas no catálogo · {formatMb(total)} se você quisesse todos
+          {programs.length} programas no catálogo · {formatMb(total)} se você quisesse todos
         </div>
       </div>
     </div>

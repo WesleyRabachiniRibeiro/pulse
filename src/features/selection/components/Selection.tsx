@@ -3,15 +3,13 @@ import { LuSearch } from 'react-icons/lu'
 import { settingsSummary } from '@shared/domain/settings'
 import {
   bundleIsActive,
-  BUNDLES,
-  CATALOG,
   estimatedMinutes,
   filterCatalog,
   formatMb,
   groupByCategory,
-  PROGRAM_BY_ID,
   totalSizeMb,
 } from '@shared/domain/catalog'
+import { useBundles, useProgram, usePrograms } from '@/features/catalog'
 import { requestsToAppend, type Request } from '@shared/domain/installation'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { useAutostart } from '../store/useAutostart'
@@ -49,13 +47,15 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const installedFailed = useInstalledFailed()
   const drives = useDrives()
   const autostart = useAutostart()
+  const programs = usePrograms()
+  const bundles = useBundles()
 
   useWatchDrives()
     useEffect(() => {
     useTourStore.getState().definirContexto(inSettings ? 'ajustes' : 'grade')
   }, [inSettings])
 
-  const groups = useMemo(() => groupByCategory(filterCatalog(search)), [search])
+  const groups = useMemo(() => groupByCategory(filterCatalog(search)), [search, programs])
   const found = useMemo(() => groups.reduce((t, g) => t + g.programs.length, 0), [groups])
 
   const searching = search.trim().length > 0
@@ -63,7 +63,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const hasQueue = run !== null
   const checked: Request[] = useMemo(
     () =>
-      CATALOG.filter((p) => {
+      programs.filter((p) => {
         if (installed.has(p.id)) return Boolean(settingsByApp[p.id])
         if (p.source === 'pages') return selected.has(p.id) || Boolean(settingsByApp[p.id])
         return selected.has(p.id)
@@ -72,7 +72,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
         drive: drivesByApp[p.id] ?? drive,
         ...(settingsByApp[p.id] ? { settings: settingsByApp[p.id] } : {}),
       })),
-    [selected, installed, drivesByApp, settingsByApp, drive],
+    [programs, selected, installed, drivesByApp, settingsByApp, drive],
   )
   const fresh = useMemo(() => requestsToAppend(checked, run), [checked, run])
   const totalMb = totalSizeMb(fresh.map((r) => r.id))
@@ -104,7 +104,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
     }
   }
 
-  const programInSettings = inSettings ? PROGRAM_BY_ID.get(inSettings) : undefined
+  const programInSettings = useProgram(inSettings)
   if (programInSettings) {
     return (
       <AppSettings
@@ -138,7 +138,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
             aria-label="Buscar programas"
           />
           <span className={s.count}>
-            {searching ? `${found} resultados` : `${CATALOG.length} programas`}
+            {searching ? `${found} resultados` : `${programs.length} programas`}
           </span>
           {searching && (
             <button
@@ -154,7 +154,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
 
         <div className={s.bundles} data-tour="combos">
           <span className={s.bundlesLabel}>COMBOS</span>
-          {BUNDLES.map((b) => (
+          {bundles.map((b) => (
             <button
               key={b.name}
               type="button"
@@ -171,7 +171,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
       <div className={s.list}>
         {groups.length === 0 ? (
           <p className={s.empty}>
-            Nenhum programa com esse nome. O catálogo tem {CATALOG.length} — tente parte do nome,
+            Nenhum programa com esse nome. O catálogo tem {programs.length} — tente parte do nome,
             como “chrome” ou “code”.
           </p>
         ) : (

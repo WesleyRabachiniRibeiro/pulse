@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { settingsAreEmpty, settingsKey, settingsSchema } from './settings'
-import { PROGRAM_BY_ID } from './catalog'
+import { getProgram } from './catalog'
 
 export const itemStatusSchema = z.enum([
   'queued',
@@ -177,7 +177,7 @@ export function elapsedSeconds(run: Run, now: number = Date.now()): number {
 }
 
 function weight(item: Item): number {
-  return PROGRAM_BY_ID.get(item.id)?.mb ?? 100
+  return getProgram(item.id)?.mb ?? 100
 }
 
 export function itemPercent(item: Item): number {

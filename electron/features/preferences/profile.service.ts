@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { PROGRAM_BY_ID } from '@shared/domain/catalog'
+import { hasProgram } from '@shared/domain/catalog'
 import { cleanProfile, EMPTY_PROFILE, profileSchema, type Profile } from '@shared/domain/profile'
 
 function file(): string {
@@ -9,7 +9,7 @@ function file(): string {
 }
 
 function known(id: string): boolean {
-  return PROGRAM_BY_ID.has(id)
+  return hasProgram(id)
 }
 
 let cache: Profile | null = null

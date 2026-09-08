@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { PROGRAM_BY_ID } from './catalog'
+import { hasProgram } from './catalog'
 import { cleanProfile, EMPTY_PROFILE, profileIsEmpty, profileSchema, type Profile } from './profile'
 
-const known = (id: string): boolean => PROGRAM_BY_ID.has(id)
+const known = (id: string): boolean => hasProgram(id)
 
 function profile(partial: Partial<Profile> = {}): Profile {
   return { ...EMPTY_PROFILE, ...partial }
