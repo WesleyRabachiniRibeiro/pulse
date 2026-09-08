@@ -113,3 +113,23 @@ describe('opções universais', () => {
     expect(settingsSummary({ locale: 'de-DE' })).toBe('de-DE')
   })
 })
+
+describe('atalho na área de trabalho', () => {
+  it('querer e não querer são escolhas, ausente não é', () => {
+    expect(settingsAreEmpty({ desktopShortcut: true })).toBe(false)
+    expect(settingsAreEmpty({ desktopShortcut: false })).toBe(false)
+    expect(settingsAreEmpty({ desktopShortcut: undefined })).toBe(true)
+  })
+
+  it('as três situações têm assinaturas diferentes', () => {
+    const quer = settingsKey({ desktopShortcut: true })
+    const naoQuer = settingsKey({ desktopShortcut: false })
+    const tantoFaz = settingsKey({})
+    expect(new Set([quer, naoQuer, tantoFaz]).size).toBe(3)
+  })
+
+  it('o resumo do cartão distingue as duas escolhas', () => {
+    expect(settingsSummary({ desktopShortcut: true })).toBe('atalho na área de trabalho')
+    expect(settingsSummary({ desktopShortcut: false })).toBe('sem atalho na área de trabalho')
+  })
+})

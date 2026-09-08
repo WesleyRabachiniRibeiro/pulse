@@ -40,6 +40,7 @@ export const itemSchema = z.object({
       gamesRefused: z.array(z.string()),
       gamesPending: z.array(z.string()),
       autostart: z.enum(['on', 'off', 'no-entry']).optional(),
+      shortcut: z.enum(['created', 'removed', 'kept', 'not-found', 'failed']).optional(),
       pagesOpened: z.array(z.string()),
       riotInstalled: z.array(z.string()),
       riotFailed: z.array(z.string()),
@@ -270,6 +271,10 @@ export function settingsResultLines(item: Item): string[] {
   if (result.madeDefault === 'yes') lines.push('agora é o navegador padrão')
   if (result.madeDefault === 'asked') lines.push('confirme como padrão na janela do Windows')
   if (result.madeDefault === 'failed') lines.push('não deu para pedir para ser o padrão')
+  if (result.shortcut === 'created') lines.push('atalho criado na área de trabalho')
+  if (result.shortcut === 'removed') lines.push('atalho tirado da área de trabalho')
+  if (result.shortcut === 'not-found') lines.push('não achei atalho dele para copiar')
+  if (result.shortcut === 'failed') lines.push('não deu para mexer no atalho')
   if (result.autostart === 'on') lines.push('abre com o Windows')
   if (result.autostart === 'off') lines.push('não abre mais sozinho')
   if (result.autostart === 'no-entry') lines.push('não se cadastra na inicialização')

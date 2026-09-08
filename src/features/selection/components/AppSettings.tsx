@@ -307,6 +307,41 @@ export function AppSettings({
 
         {installsItself && (
           <section className={s.section}>
+            <div className={s.label}>ATALHO NA ÁREA DE TRABALHO</div>
+            <p className={s.description}>
+              Sem escolher nada, o Pulse deixa como o instalador deixou. O atalho é copiado do menu
+              Iniciar depois que o programa entra, então quem não aparece no menu Iniciar, como as
+              ferramentas de linha de comando, não tem o que copiar.
+            </p>
+
+            <div className={s.drives}>
+              {[
+                { value: true, name: 'Quero o atalho', note: 'copiado do menu Iniciar' },
+                { value: false, name: 'Não quero o atalho', note: 'se já existir, o Pulse apaga' },
+              ].map((option) => (
+                <button
+                  key={String(option.value)}
+                  type="button"
+                  className={s.drive}
+                  aria-pressed={settings.desktopShortcut === option.value}
+                  onClick={() =>
+                    onChangeSettings(program.id, {
+                      ...settings,
+                      desktopShortcut:
+                        settings.desktopShortcut === option.value ? undefined : option.value,
+                    })
+                  }
+                >
+                  <span className={s.driveName}>{option.name}</span>
+                  <span className={s.driveNote}>{option.note}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {installsItself && (
+          <section className={s.section}>
             <div className={s.label}>PARA QUEM VAI SER</div>
             <p className={s.description}>
               Sem escolher nada, o Pulse instala do jeito que o programa preferir. Para todos deste

@@ -13,6 +13,7 @@ import { installArgs, noApplicableInstaller, scopeLabel } from '@shared/domain/w
 import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './tools'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
+import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
 import {
   canEnqueue,
   clock,
@@ -529,6 +530,28 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
       emitState()
       note(`${program.name}: Git configurado`, 'ok')
     }
+  }
+
+  if (settings.desktopShortcut !== undefined) {
+    target.detail = settings.desktopShortcut
+      ? 'Criando o atalho na área de trabalho'
+      : 'Tirando o atalho da área de trabalho'
+    emitState()
+
+    const shortcut = await applyDesktopShortcut(program, settings.desktopShortcut).catch(
+      (): ShortcutResult => 'failed',
+    )
+    result.shortcut = shortcut
+    emitState()
+
+    const said: Record<ShortcutResult, string> = {
+      created: `${program.name}: atalho criado na área de trabalho`,
+      removed: `${program.name}: atalho tirado da área de trabalho`,
+      kept: `${program.name}: a área de trabalho já estava como você queria`,
+      'not-found': `${program.name}: não achei atalho dele no menu Iniciar para copiar`,
+      failed: `${program.name}: não deu para mexer no atalho`,
+    }
+    note(said[shortcut], shortcut === 'failed' || shortcut === 'not-found' ? 'error' : 'ok')
   }
 
   if (settings.autostart !== undefined) {

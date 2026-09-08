@@ -134,6 +134,7 @@ export const settingsSchema = z.object({
   scope: installScopeSchema.optional(),
   locale: z.string().optional(),
   interactive: z.boolean().optional(),
+  desktopShortcut: z.boolean().optional(),
   autostart: z.boolean().optional(),
   extensions: z.array(z.string()).optional(),
   games: z.array(steamGameSchema).optional(),
@@ -162,7 +163,7 @@ export function categoriesOf(options: readonly SettingsOption[]): string[] {
   return ['Tudo', ...seen]
 }
 
-const TRISTATE_FIELDS: readonly string[] = ['autostart']
+const TRISTATE_FIELDS: readonly string[] = ['autostart', 'desktopShortcut']
 
 function fieldMatters(key: string, value: unknown): boolean {
   if (value === undefined || value === null) return false
@@ -207,6 +208,8 @@ export function settingsSummary(settings: Settings | undefined): string | null {
   if (settings.scope) parts.push(scopeLabel(settings.scope))
   if (settings.locale) parts.push(LOCALE_BY_ID.get(settings.locale)?.name ?? settings.locale)
   if (settings.interactive) parts.push('instalador na tela')
+  if (settings.desktopShortcut === true) parts.push('atalho na área de trabalho')
+  if (settings.desktopShortcut === false) parts.push('sem atalho na área de trabalho')
 
   if (extensions) parts.push(`${extensions} ${extensions === 1 ? 'extensão' : 'extensões'}`)
   if (games.length > 0 && games.length <= 2) parts.push(games.map((g) => g.name).join(' e '))
