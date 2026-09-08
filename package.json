@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "catalog": "node scripts/build-catalog.mjs"
+    "catalog": "node scripts/build-catalog.mjs",
+    "catalog:check": "node scripts/check-catalog.mjs",
+    "icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
@@ -32,6 +34,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-icons": "5.7.0",
+    "simple-icons": "^16.30.0",
     "typescript": "5.9.3",
     "vite": "7.3.6",
     "vitest": "^3.2.7",
