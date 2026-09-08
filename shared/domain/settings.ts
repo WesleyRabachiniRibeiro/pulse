@@ -149,19 +149,39 @@ export function categoriesOf(options: readonly SettingsOption[]): string[] {
   return ['Tudo', ...seen]
 }
 
+const TRISTATE_FIELDS: readonly string[] = ['autostart']
+
+function fieldMatters(key: string, value: unknown): boolean {
+  if (value === undefined || value === null) return false
+  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === 'string') return value.trim().length > 0
+  if (typeof value === 'boolean') return value || TRISTATE_FIELDS.includes(key)
+  if (typeof value === 'object') {
+    return Object.entries(value).some(([inner, nested]) => fieldMatters(inner, nested))
+  }
+  return true
+}
+
 export function settingsAreEmpty(settings: Settings | undefined): boolean {
   if (!settings) return true
-  const noBrowser = !settings.makeDefault && !settings.openAfter
-  const noLists =
-    !settings.extensions?.length &&
-    !settings.games?.length &&
-    !settings.tibia?.length &&
-    !settings.riot?.length &&
-    !settings.workloads?.length
-  const noGit =
-    !settings.git || (!settings.git.name && !settings.git.email && !settings.git.saveLogin)
-  const noAutostart = settings.autostart === undefined
-  return noLists && noGit && noAutostart && noBrowser && !settings.packageId
+  return !Object.entries(settings).some(([key, value]) => fieldMatters(key, value))
+}
+
+export function settingsKey(settings: Settings | undefined): string {
+  return canonical(settings ?? {})
+}
+
+function canonical(value: unknown): string {
+  if (value === undefined || value === null) return 'null'
+  if (Array.isArray(value)) return `[${value.map(canonical).sort().join(',')}]`
+  if (typeof value === 'object') {
+    const fields = Object.entries(value)
+      .filter(([, nested]) => nested !== undefined)
+      .map(([key, nested]) => `${key}:${canonical(nested)}`)
+      .sort()
+    return `{${fields.join(',')}}`
+  }
+  return JSON.stringify(value)
 }
 
 export function settingsSummary(settings: Settings | undefined): string | null {

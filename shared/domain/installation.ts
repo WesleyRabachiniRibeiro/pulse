@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { settingsSchema, type Settings } from './settings'
+import { settingsAreEmpty, settingsKey, settingsSchema } from './settings'
 import { PROGRAM_BY_ID } from './catalog'
 
 export const itemStatusSchema = z.enum([
@@ -148,42 +148,12 @@ export function itemDuration(item: Item): number | null {
 }
 
 export function hasSettings(item: Item): boolean {
-  const settings = item.settings
-  if (!settings) return false
-  return Boolean(
-    settings.extensions?.length ||
-      settings.games?.length ||
-      settings.tibia?.length ||
-      settings.riot?.length ||
-      settings.workloads?.length ||
-      settings.makeDefault ||
-      settings.openAfter ||
-      settings.git,
-  )
-}
-
-function signature(settings: Settings | undefined): string {
-  if (!settings) return ''
-
-  const extensions = [...(settings.extensions ?? [])].sort().join(',')
-  const games = (settings.games ?? [])
-    .map((g) => g.appid)
-    .sort()
-    .join(',')
-  const tibia = [...(settings.tibia ?? [])].sort().join(',')
-  const riot = [...(settings.riot ?? [])].sort().join(',')
-  const workloads = [...(settings.workloads ?? [])].sort().join(',')
-  const browser = `${settings.makeDefault ?? false}|${settings.openAfter ?? false}`
-  const git = settings.git
-    ? `${settings.git.name}|${settings.git.email}|${settings.git.branch}|${settings.git.saveLogin ?? false}`
-    : ''
-
-  return `${extensions}#${games}#${tibia}#${riot}#${workloads}#${browser}#${git}`
+  return !settingsAreEmpty(item.settings)
 }
 
 export function requestChanged(request: Request, existing: Item): boolean {
   if (request.drive !== existing.drive) return true
-  return signature(request.settings) !== signature(existing.settings)
+  return settingsKey(request.settings) !== settingsKey(existing.settings)
 }
 
 export function canEnqueue(existing: Item | undefined, request?: Request): boolean {
@@ -361,4 +331,42 @@ export function groupSummary(items: readonly Item[]): readonly SummaryGroup[] {
 
 export function anyNeedsRestart(items: readonly Item[]): boolean {
   return items.some((i) => i.status === 'done' && i.needsRestart)
+}
+
+const UNITS: Record<string, number> = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 }
+
+const BYTES_RE = /(\d+(?:[.,]\d+)?)\s*(B|KB|MB|GB)?\s*\/\s*(\d+(?:[.,]\d+)?)\s*(B|KB|MB|GB)/i
+
+function toBytes(value: string, unit: string | undefined, fallback: string): number {
+  return Number(value.replace(',', '.')) * (UNITS[(unit ?? fallback).toLowerCase()] ?? 1)
+}
+
+const DIACRITICS = /[̀-ͯ]/g
+
+export function foldText(text: string): string {
+  return text.normalize('NFD').replace(DIACRITICS, '').toLowerCase()
+}
+
+export interface Progress {
+  percent?: number
+  phase?: 'downloading' | 'installing'
+}
+
+export function readProgress(line: string): Progress {
+  const text = foldText(line)
+  const progress: Progress = {}
+
+  const found = BYTES_RE.exec(line)
+  if (found?.[1] && found[3] && found[4]) {
+    const current = toBytes(found[1], found[2], found[4])
+    const total = toBytes(found[3], found[4], found[4])
+    if (total > 0) progress.percent = Math.min(100, Math.round((current / total) * 100))
+  }
+
+  if (text.includes('baixand') || text.includes('download')) progress.phase = 'downloading'
+  if (text.includes('nstalando') || text.includes('nstalacao') || text.includes('nstalling')) {
+    progress.phase = 'installing'
+  }
+
+  return progress
 }

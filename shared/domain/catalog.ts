@@ -137,6 +137,27 @@ export const packageVersionSchema = z.object({
 })
 export type PackageVersion = z.infer<typeof packageVersionSchema>
 
+export function compareVersions(a: PackageVersion, b: PackageVersion): number {
+  const key = ({ winget, version }: PackageVersion): number[] => {
+    if (winget.toUpperCase().endsWith('.LTS')) return [Number.MAX_SAFE_INTEGER]
+    const fromId = winget.match(/\d+/g)
+    return (fromId ?? version.match(/\d+/g) ?? ['0']).map(Number)
+  }
+
+  const na = key(a)
+  const nb = key(b)
+
+  for (let i = 0; i < Math.max(na.length, nb.length); i++) {
+    const difference = (na[i] ?? 0) - (nb[i] ?? 0)
+    if (difference !== 0) return difference
+  }
+  return 0
+}
+
+export function sortVersions(versions: readonly PackageVersion[]): PackageVersion[] {
+  return [...versions].sort((a, b) => compareVersions(b, a))
+}
+
 export interface Bundle {
   name: string
   ids: readonly string[]

@@ -14,9 +14,11 @@ import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import {
   canEnqueue,
   clock,
+  foldText,
   isFinished,
   LOG_LIMIT,
   PARALLEL_LIMIT,
+  readProgress,
   runSchema,
   type Item,
   type LogLevel,
@@ -63,49 +65,10 @@ function note(text: string, level: LogLevel = 'info'): void {
   emitState()
 }
 
-const UNITS: Record<string, number> = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 }
-
-const BYTES_RE = /(\d+(?:[.,]\d+)?)\s*(B|KB|MB|GB)?\s*\/\s*(\d+(?:[.,]\d+)?)\s*(B|KB|MB|GB)/i
-
-function bytes(value: string, unit: string | undefined, fallback: string): number {
-  return Number(value.replace(',', '.')) * (UNITS[(unit ?? fallback).toLowerCase()] ?? 1)
-}
-
-function normalize(line: string): string {
-  return line
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-}
-
-interface Progress {
-  percent?: number
-  phase?: 'downloading' | 'installing'
-}
-
-export function readProgress(line: string): Progress {
-  const text = normalize(line)
-  const p: Progress = {}
-
-  const m = BYTES_RE.exec(line)
-  if (m?.[1] && m[3] && m[4]) {
-    const done = bytes(m[1], m[2], m[4])
-    const total = bytes(m[3], m[4], m[4])
-    if (total > 0) p.percent = Math.min(100, Math.round((done / total) * 100))
-  }
-
-  if (text.includes('baixand') || text.includes('download')) p.phase = 'downloading'
-  if (text.includes('nstalando') || text.includes('nstalacao') || text.includes('nstalling')) {
-    p.phase = 'installing'
-  }
-
-  return p
-}
-
 function alreadyInstalled(code: number, output: string): boolean {
   if (hex(code) === '0x8A15002B') return true
 
-  const t = normalize(output)
+  const t = foldText(output)
   return (
     t.includes('nenhuma atualizacao') ||
     t.includes('nenhuma versao de pacote mais recente') ||
@@ -125,7 +88,7 @@ function is(code: number, ...codes: readonly number[]): boolean {
 
 function needsAdmin(code: number, output: string): boolean {
   if (is(code, 5, 740, 0x80070005, 0x800702e4)) return true
-  const t = normalize(output)
+  const t = foldText(output)
   return t.includes('acesso negado') || t.includes('access is denied') || t.includes('0x80070005')
 }
 
@@ -135,7 +98,7 @@ function refusedElevation(code: number): boolean {
 
 function needsReboot(code: number, output: string): boolean {
   if (is(code, 3010, 1641, 0x80070bc2, 0x80070669)) return true
-  const t = normalize(output)
+  const t = foldText(output)
   return (
     t.includes('reinicializacao necessaria') ||
     t.includes('reinicie o computador') ||
@@ -148,7 +111,7 @@ function needsReboot(code: number, output: string): boolean {
 
 function installerBusy(code: number, output: string): boolean {
   if (is(code, 1618, 0x80070652)) return true
-  const t = normalize(output)
+  const t = foldText(output)
   return (
     t.includes('outra instalacao') ||
     t.includes('another installation') ||
@@ -158,12 +121,12 @@ function installerBusy(code: number, output: string): boolean {
 }
 
 function refusedDrive(output: string): boolean {
-  const t = normalize(output)
+  const t = foldText(output)
   return t.includes('location') || t.includes('local de instalacao')
 }
 
 function refusesElevation(output: string): boolean {
-  const t = normalize(output)
+  const t = foldText(output)
   return t.includes('contexto de administrador') || t.includes('administrator context')
 }
 
@@ -1358,7 +1321,7 @@ async function runUninstall(id: string): Promise<UninstallResult> {
     }
   }
 
-  const text = normalize(output.text)
+  const text = foldText(output.text)
   if (text.includes('nenhum pacote instalado') || text.includes('no installed package')) {
     return {
       ok: false,
