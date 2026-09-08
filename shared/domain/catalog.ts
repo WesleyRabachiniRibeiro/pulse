@@ -176,6 +176,24 @@ export function sortVersions(versions: readonly PackageVersion[]): PackageVersio
   return [...versions].sort((a, b) => compareVersions(b, a))
 }
 
+const UNKNOWN_VERSIONS = ['unknown', 'desconhecido', 'desconhecida']
+
+export function readVersionFromSearch(output: string, wingetId: string): string | null {
+  const wanted = wingetId.toLowerCase()
+
+  for (const line of output.split(/\r?\n/)) {
+    const tokens = line.trim().split(/\s+/)
+    const position = tokens.findIndex((t) => t.toLowerCase() === wanted)
+    if (position <= 0) continue
+
+    const version = tokens[position + 1]
+    if (!version || UNKNOWN_VERSIONS.includes(version.toLowerCase())) return null
+    return version
+  }
+
+  return null
+}
+
 export const EVERYTHING_BUNDLE = 'Tudo'
 
 export const BUILTIN_BUNDLES: readonly Bundle[] = [

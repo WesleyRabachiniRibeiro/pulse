@@ -16,6 +16,7 @@ import {
   hasProgram,
   installedIds,
   nameMatchesProgram,
+  readVersionFromSearch,
   resetCatalog,
   setCatalog,
   sortVersions,
@@ -269,5 +270,48 @@ describe('catalogSchema', () => {
         ],
       }).success,
     ).toBe(false)
+  })
+})
+
+describe('readVersionFromSearch', () => {
+  const table = [
+    'Nome ID      Versão',
+    '---------------------',
+    'Vim  vim.vim 9.2.1037',
+  ].join('\n')
+
+  it('lê a versão da linha do pacote', () => {
+    expect(readVersionFromSearch(table, 'vim.vim')).toBe('9.2.1037')
+  })
+
+  it('não depende do idioma do cabeçalho', () => {
+    const english = ['Name ID      Version', '--------------------', 'Vim  vim.vim 9.2.1037'].join('\n')
+    expect(readVersionFromSearch(english, 'vim.vim')).toBe('9.2.1037')
+  })
+
+  it('não liga para maiúscula e minúscula no id', () => {
+    expect(readVersionFromSearch(table, 'Vim.Vim')).toBe('9.2.1037')
+  })
+
+  it('devolve nulo quando o pacote não aparece', () => {
+    expect(readVersionFromSearch(table, 'outro.pacote')).toBeNull()
+  })
+
+  it('devolve nulo quando a saída está vazia', () => {
+    expect(readVersionFromSearch('', 'vim.vim')).toBeNull()
+  })
+
+  it('devolve nulo quando a versão é desconhecida', () => {
+    const store = 'LinkedIn 9WZDNCRFJ4Q7 Unknown'
+    expect(readVersionFromSearch(store, '9WZDNCRFJ4Q7')).toBeNull()
+    expect(readVersionFromSearch('X 9WZDNCRFJ4Q7 Desconhecido', '9WZDNCRFJ4Q7')).toBeNull()
+  })
+
+  it('ignora a linha em que o id é a primeira coluna, que é cabeçalho ou lixo', () => {
+    expect(readVersionFromSearch('vim.vim 9.2', 'vim.vim')).toBeNull()
+  })
+
+  it('devolve nulo quando não sobra nada depois do id', () => {
+    expect(readVersionFromSearch('Vim vim.vim', 'vim.vim')).toBeNull()
   })
 })

@@ -2,17 +2,30 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getPrograms, hasProgram, type Catalog } from '@shared/domain/catalog'
+import { getProgram, getPrograms, hasProgram, type Catalog } from '@shared/domain/catalog'
 
 let userData = ''
+
+let stored: Record<string, string> = {}
+let swept: Record<string, string> | null = null
 
 vi.mock('electron', () => ({
   app: { getPath: (): string => userData },
 }))
 
-const { forgetRemoteCatalog, loadCatalog, refreshCatalog, subscribe } = await import(
-  './remote.service'
-)
+vi.mock('./versions.service', () => ({
+  forgetVersions: (): void => undefined,
+  knownVersions: (): Promise<Record<string, string>> => Promise.resolve(stored),
+  refreshVersions: (): Promise<Record<string, string> | null> => Promise.resolve(swept),
+}))
+
+const {
+  forgetRemoteCatalog,
+  loadCatalog,
+  refreshCatalog,
+  refreshVersionsFromWinget,
+  subscribe,
+} = await import('./remote.service')
 
 const remote: Catalog = {
   version: 1,
@@ -50,6 +63,8 @@ function refuses(): void {
 
 beforeEach(async () => {
   userData = await mkdtemp(join(tmpdir(), 'pulse-catalog-'))
+  stored = {}
+  swept = null
   forgetRemoteCatalog()
 })
 
@@ -153,5 +168,64 @@ describe('refreshCatalog', () => {
 
     const gravado: unknown = JSON.parse(await readFile(file(), 'utf8'))
     expect(gravado).toMatchObject({ programs: [{ id: 'sete-zip' }] })
+  })
+})
+
+describe('versão vinda do winget', () => {
+  it('aplica na abertura o que já estava guardado', async () => {
+    stored = { vim: '9.9.9' }
+    await loadCatalog()
+    expect(getProgram('vim')?.version).toBe('9.9.9')
+  })
+
+  it('substitui a versão do catálogo pela que o winget respondeu', async () => {
+    swept = { vim: '9.9.9' }
+    await expect(refreshVersionsFromWinget()).resolves.toBe(true)
+    expect(getProgram('vim')?.version).toBe('9.9.9')
+  })
+
+  it('deixa como está quem o winget não respondeu', async () => {
+    const antes = (await loadCatalog()).programs.find((p) => p.id === 'go')?.version
+    swept = { vim: '9.9.9' }
+    await refreshVersionsFromWinget()
+    expect(getProgram('go')?.version).toBe(antes)
+  })
+
+  it('não avisa ninguém quando não há versão nova', async () => {
+    swept = null
+    const ouviu = vi.fn()
+    const stop = subscribe(ouviu)
+
+    await expect(refreshVersionsFromWinget()).resolves.toBe(false)
+    stop()
+    expect(ouviu).not.toHaveBeenCalled()
+  })
+
+  it('mantém a versão do winget depois de trocar o catálogo', async () => {
+    swept = { vim: '9.9.9' }
+    await refreshVersionsFromWinget()
+
+    answers({
+      version: 1,
+      categories: [{ id: 'dev', name: 'DESENVOLVIMENTO' }],
+      programs: [
+        { id: 'vim', name: 'Vim', winget: 'vim.vim', version: '1.0', mb: 1, category: 'dev', hints: ['vim'] },
+      ],
+    })
+    await refreshCatalog()
+
+    expect(getProgram('vim')?.version).toBe('9.9.9')
+  })
+
+  it('não grava a versão dentro do cache do catálogo', async () => {
+    answers(remote)
+    await refreshCatalog()
+
+    swept = { 'sete-zip': '99.0' }
+    await refreshVersionsFromWinget()
+
+    const gravado: unknown = JSON.parse(await readFile(file(), 'utf8'))
+    expect(gravado).toMatchObject({ programs: [{ version: '26.02' }] })
+    expect(getProgram('sete-zip')?.version).toBe('99.0')
   })
 })

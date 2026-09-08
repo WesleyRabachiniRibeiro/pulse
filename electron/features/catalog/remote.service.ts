@@ -8,6 +8,7 @@ import {
   setCatalog,
   type Catalog,
 } from '@shared/domain/catalog'
+import { forgetVersions, knownVersions, refreshVersions } from './versions.service'
 
 const SOURCE_URL =
   'https://raw.githubusercontent.com/WesleyRabachiniRibeiro/pulse/main/catalog.json'
@@ -86,6 +87,18 @@ function announce(catalog: Catalog): void {
 }
 
 let loading: Promise<Catalog> | null = null
+let base: Catalog = BUILTIN_CATALOG
+let versions: Record<string, string> = {}
+
+function publish(): Catalog {
+  const programs = base.programs.map((program) => {
+    const fresh = versions[program.id]
+    return fresh && fresh !== program.version ? { ...program, version: fresh } : program
+  })
+
+  setCatalog({ ...base, programs })
+  return getCatalog()
+}
 
 export function loadCatalog(): Promise<Catalog> {
   loading ??= start()
@@ -94,8 +107,9 @@ export function loadCatalog(): Promise<Catalog> {
 
 async function start(): Promise<Catalog> {
   const cached = await readCached()
-  if (cached) setCatalog(cached)
-  return getCatalog()
+  if (cached) base = cached
+  versions = await knownVersions()
+  return publish()
 }
 
 export async function refreshCatalog(): Promise<boolean> {
@@ -104,13 +118,27 @@ export async function refreshCatalog(): Promise<boolean> {
   const remote = await fetchRemote()
   if (!remote) return false
 
-  setCatalog(remote)
+  base = remote
   await saveCached(remote)
-  announce(getCatalog())
+  announce(publish())
+  return true
+}
+
+export async function refreshVersionsFromWinget(): Promise<boolean> {
+  await loadCatalog()
+
+  const fresh = await refreshVersions(base.programs)
+  if (!fresh) return false
+
+  versions = fresh
+  announce(publish())
   return true
 }
 
 export function forgetRemoteCatalog(): void {
   loading = null
+  base = BUILTIN_CATALOG
+  versions = {}
+  forgetVersions()
   setCatalog(BUILTIN_CATALOG)
 }
