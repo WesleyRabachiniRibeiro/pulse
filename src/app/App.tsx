@@ -10,7 +10,13 @@ import {
   usePreflightSettled,
   useWatchPreflight,
 } from '@/features/welcome'
-import { Selection, useSelection, useWatchAutostart, useWatchInstalled } from '@/features/selection'
+import {
+  Selection,
+  useLoadSelection,
+  useSelection,
+  useWatchAutostart,
+  useWatchInstalled,
+} from '@/features/selection'
 import { Installation, useRun, useWatchInstallation } from '@/features/installation'
 import { Summary } from '@/features/summary'
 import { Splash } from '@/features/splash'
@@ -28,6 +34,7 @@ const VERSION = __APP_VERSION__
 
 export function App() {
   useLoadPreferences()
+  useLoadSelection()
   useWatchPreflight()
   useWatchUpdate()
   const carregado = usePreferencesLoaded()

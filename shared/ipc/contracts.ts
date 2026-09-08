@@ -14,6 +14,7 @@ import {
 } from '../domain/installation'
 import { steamGameSchema, steamLibrarySchema, steamSearchInputSchema } from '../domain/steam'
 import { preferencesSchema } from '../domain/preferences'
+import { profileSchema } from '../domain/profile'
 import { gitSchema } from '../domain/settings'
 import { updateStateSchema } from '../domain/update'
 
@@ -50,6 +51,14 @@ export const ipcContracts = {
   'prefs:write': {
     input: preferencesSchema,
     output: preferencesSchema,
+  },
+  'profile:read': {
+    input: z.void(),
+    output: profileSchema,
+  },
+  'profile:write': {
+    input: profileSchema,
+    output: profileSchema,
   },
   'git:config': {
     input: z.void(),
