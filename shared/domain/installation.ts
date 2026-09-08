@@ -22,6 +22,9 @@ export const itemSchema = z.object({
   drive: z.string(),
   error: z.string().optional(),
   driveIgnored: z.boolean().optional(),
+  scopeIgnored: z.boolean().optional(),
+  localeIgnored: z.boolean().optional(),
+  logPath: z.string().optional(),
   canceling: z.boolean().optional(),
   needsPermission: z.boolean().optional(),
   needsRestart: z.boolean().optional(),
@@ -245,10 +248,15 @@ export interface SummaryLine {
 }
 
 export function settingsResultLines(item: Item): string[] {
-  const result = item.result
-  if (!result) return []
-
   const lines: string[] = []
+
+  if (item.scopeIgnored) {
+    lines.push('não existe pacote para todos os usuários, entrou só para você')
+  }
+  if (item.localeIgnored) lines.push('não vem no idioma pedido, ficou no idioma dele')
+
+  const result = item.result
+  if (!result) return lines
 
   if (result.extensionsRequested > 0) {
     lines.push(

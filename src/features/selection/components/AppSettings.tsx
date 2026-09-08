@@ -9,6 +9,7 @@ import {
   type Settings,
 } from '@shared/domain/settings'
 import { formatMb, type Program } from '@shared/domain/catalog'
+import { LOCALES, type InstallScope } from '@shared/domain/winget'
 import { formatGb, type Drive } from '@shared/domain/preflight'
 import type { SteamGame } from '@shared/domain/steam'
 import { bridge } from '@/shared/lib/bridge'
@@ -136,6 +137,16 @@ export function AppSettings({
   function chooseAutostart(wanted: 'on' | 'off') {
     const value = wanted === currentAutostart ? undefined : wanted === 'on'
     onChangeSettings(program.id, { ...settings, autostart: value })
+  }
+
+  function chooseScope(wanted: InstallScope) {
+    const scope = settings.scope === wanted ? undefined : wanted
+    onChangeSettings(program.id, { ...settings, scope })
+  }
+
+  function chooseLocale(wanted: string | null) {
+    const locale = wanted === settings.locale || wanted === null ? undefined : wanted
+    onChangeSettings(program.id, { ...settings, locale })
   }
   const git: GitConfig = settings.git ?? gitDaMaquina ?? DEFAULT_GIT
   const canApply = installed && !settingsAreEmpty(settings)
@@ -292,6 +303,109 @@ export function AppSettings({
             ))}
           </div>
         </section>
+        )}
+
+        {installsItself && (
+          <section className={s.section}>
+            <div className={s.label}>PARA QUEM VAI SER</div>
+            <p className={s.description}>
+              Sem escolher nada, o Pulse instala do jeito que o programa preferir. Para todos deste
+              PC costuma pedir a permissão de administrador, e nem todo programa oferece as duas
+              formas. Quando a que você pediu não existir, o Pulse instala do jeito que existe e
+              avisa no resumo.
+            </p>
+
+            <div className={s.drives}>
+              {[
+                { value: 'user' as const, name: 'Só para mim', note: 'não mexe na conta de ninguém' },
+                {
+                  value: 'machine' as const,
+                  name: 'Para todos deste PC',
+                  note: 'costuma pedir permissão de administrador',
+                },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={s.drive}
+                  aria-pressed={settings.scope === option.value}
+                  onClick={() => chooseScope(option.value)}
+                >
+                  <span className={s.driveName}>{option.name}</span>
+                  <span className={s.driveNote}>{option.note}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {installsItself && (
+          <section className={s.section}>
+            <div className={s.label}>EM QUE IDIOMA</div>
+            <p className={s.description}>
+              Vale só para os programas publicados em mais de um idioma. Quem só existe num idioma
+              vem nele mesmo, e o Pulse avisa no resumo em vez de falhar.
+            </p>
+
+            <div className={s.drives}>
+              <button
+                type="button"
+                className={s.drive}
+                aria-pressed={settings.locale === undefined}
+                onClick={() => chooseLocale(null)}
+              >
+                <span className={s.driveName}>Do jeito que vier</span>
+                <span className={s.driveNote}>o idioma que o programa escolher</span>
+              </button>
+
+              {LOCALES.map((locale) => (
+                <button
+                  key={locale.id}
+                  type="button"
+                  className={s.drive}
+                  aria-pressed={settings.locale === locale.id}
+                  onClick={() => chooseLocale(locale.id)}
+                >
+                  <span className={s.driveName}>{locale.name}</span>
+                  <span className={s.driveNote}>{locale.hint}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {installsItself && (
+          <section className={s.section}>
+            <div className={s.label}>SE DER PROBLEMA</div>
+
+            <div className={s.options}>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={settings.interactive === true}
+                className={s.option}
+                onClick={() =>
+                  onChangeSettings(program.id, {
+                    ...settings,
+                    interactive: settings.interactive ? undefined : true,
+                  })
+                }
+              >
+                <span className={s.box} aria-hidden>
+                  {settings.interactive ? '✓' : ''}
+                </span>
+                <span className={s.optionBody}>
+                  <span className={s.optionName}>Mostrar a janela do instalador</span>
+                  <span className={s.optionHint}>
+                    o normal é instalar em silêncio, sem janela nenhuma. Marque aqui quando o
+                    silencioso falhar e você quiser clicar em avançar você mesmo. A fila espera
+                    você terminar.
+                  </span>
+                </span>
+                <span className={s.optionCategory}>MANUAL</span>
+              </button>
+            </div>
+          </section>
         )}
 
         {kind === 'steam' && (

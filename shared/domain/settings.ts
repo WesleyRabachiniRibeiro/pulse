@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { steamGameSchema } from './steam'
+import { installScopeSchema, LOCALE_BY_ID, scopeLabel } from './winget'
 
 export const settingsKindSchema = z.enum([
   'vscode',
@@ -130,6 +131,9 @@ export type GitConfig = z.infer<typeof gitSchema>
 
 export const settingsSchema = z.object({
   packageId: z.string().optional(),
+  scope: installScopeSchema.optional(),
+  locale: z.string().optional(),
+  interactive: z.boolean().optional(),
   autostart: z.boolean().optional(),
   extensions: z.array(z.string()).optional(),
   games: z.array(steamGameSchema).optional(),
@@ -199,6 +203,10 @@ export function settingsSummary(settings: Settings | undefined): string | null {
   const parts: string[] = []
   const extensions = settings.extensions?.length ?? 0
   const games = settings.games ?? []
+
+  if (settings.scope) parts.push(scopeLabel(settings.scope))
+  if (settings.locale) parts.push(LOCALE_BY_ID.get(settings.locale)?.name ?? settings.locale)
+  if (settings.interactive) parts.push('instalador na tela')
 
   if (extensions) parts.push(`${extensions} ${extensions === 1 ? 'extensão' : 'extensões'}`)
   if (games.length > 0 && games.length <= 2) parts.push(games.map((g) => g.name).join(' e '))

@@ -1,6 +1,7 @@
-import { clipboard } from 'electron'
+import { app, clipboard } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdir } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { getProgram, type Program } from '@shared/domain/catalog'
 import { RIOT_BY_ID, TIBIA_BY_ID, type Settings } from '@shared/domain/settings'
 import { forgetCatalog, isInstalled, quietUninstallCommands } from '../catalog/catalog.service'
@@ -8,6 +9,7 @@ import { hasManifest, isSignedIn } from '../steam/steam.service'
 import { makeDefault, openOnce } from '../browsers'
 import { listDrives } from '../preflight/preflight.service'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
+import { installArgs, noApplicableInstaller, scopeLabel } from '@shared/domain/winget'
 import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './tools'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
@@ -677,41 +679,26 @@ function workloadOverride(settings: Settings | undefined, destination?: string):
 }
 
 function packageArgs(packageId: string, destination?: string): string[] {
-  const base = [
-    'install',
-    '--id',
-    packageId,
-    '--exact',
-    '--accept-package-agreements',
-    '--accept-source-agreements',
-    '--disable-interactivity',
-    '--silent',
-  ]
-  return destination ? [...base, '--location', destination] : base
+  return installArgs({ packageId, ...(destination ? { destination } : {}) })
 }
 
-function args(
-  program: Program,
-  destination?: string,
-  packageId?: string,
-  override?: string,
-): string[] {
-  const common = [
-    'install',
-    '--id',
-    packageId ?? program.winget ?? '',
-    '--exact',
-    '--accept-package-agreements',
-    '--accept-source-agreements',
-    '--disable-interactivity',
-  ]
+function logPathFor(id: string): string {
+  return join(app.getPath('userData'), 'logs', `${id}.log`)
+}
 
-  if (program.source === 'msstore') return [...common, '--source', 'msstore']
+function args(target: Item, program: Program, destination?: string, override?: string): string[] {
+  const settings = target.settings
 
-  if (override) return [...common, '--override', override]
-
-  const base = [...common, '--silent']
-  return destination ? [...base, '--location', destination] : base
+  return installArgs({
+    packageId: settings?.packageId ?? program.winget ?? '',
+    ...(program.source ? { source: program.source } : {}),
+    ...(destination ? { destination } : {}),
+    ...(override ? { override } : {}),
+    ...(settings?.scope && !target.scopeIgnored ? { scope: settings.scope } : {}),
+    ...(settings?.locale && !target.localeIgnored ? { locale: settings.locale } : {}),
+    ...(settings?.interactive ? { interactive: true } : {}),
+    logPath: logPathFor(target.id),
+  })
 }
 
 function destinationFor(program: Program, drive: string): string | undefined {
@@ -822,18 +809,47 @@ async function install(target: Item): Promise<void> {
   const destination = destinationFor(program, target.drive)
   const wingetArgs = (): string[] => {
     const where = target.driveIgnored ? undefined : destination
-    return args(program, where, packageId, workloadOverride(target.settings, where))
+    return args(target, program, where, workloadOverride(target.settings, where))
   }
+
+  const again = async (why: string): Promise<void> => {
+    note(`${program.name}: ${why}`, 'info')
+    target.status = 'downloading'
+    target.percent = 0
+    emitState()
+    output = await runWinget(target.id, wingetArgs(), follow, target.drive)
+  }
+
+  target.logPath = logPathFor(target.id)
+  await mkdir(dirname(target.logPath), { recursive: true }).catch(() => undefined)
 
   let output = await runWinget(target.id, wingetArgs(), follow, target.drive)
 
   if (output.code !== 0 && destination && refusedDrive(output.text) && !gaveUp()) {
     target.driveIgnored = true
-    note(`${program.name}: o instalador ignora a escolha de disco`, 'info')
-    target.status = 'downloading'
-    target.percent = 0
-    emitState()
-    output = await runWinget(target.id, wingetArgs(), follow, target.drive)
+    await again('o instalador ignora a escolha de disco')
+  }
+
+  if (
+    output.code !== 0 &&
+    target.settings?.scope &&
+    !target.scopeIgnored &&
+    noApplicableInstaller(output.text) &&
+    !gaveUp()
+  ) {
+    target.scopeIgnored = true
+    await again(`não existe pacote ${scopeLabel(target.settings.scope)}, instalando do jeito padrão`)
+  }
+
+  if (
+    output.code !== 0 &&
+    target.settings?.locale &&
+    !target.localeIgnored &&
+    noApplicableInstaller(output.text) &&
+    !gaveUp()
+  ) {
+    target.localeIgnored = true
+    await again('esse programa não vem no idioma pedido, instalando no idioma dele')
   }
 
   for (let attempt = 1; attempt < MSI_ATTEMPTS; attempt++) {
@@ -932,6 +948,7 @@ async function install(target: Item): Promise<void> {
   target.finishedAt = new Date().toISOString()
   emitState()
   note(`${program.name}: falhou com ${hex(output.code)}`, 'error')
+  if (target.logPath) note(`${program.name}: log do instalador em ${target.logPath}`, 'info')
 }
 
 function chooseDefaultBrowser(items: readonly Item[]): Item | null {

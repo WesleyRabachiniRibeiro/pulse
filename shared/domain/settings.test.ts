@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { settingsAreEmpty, settingsKey, type Settings } from './settings'
+import { settingsAreEmpty, settingsKey, settingsSummary, type Settings } from './settings'
 
 describe('settingsAreEmpty', () => {
   it('trata ausente e vazio como a mesma coisa', () => {
@@ -80,5 +80,36 @@ describe('settingsKey', () => {
     const antes = settingsKey({ games: [{ appid: '730', name: 'CS' }] })
     const depois = settingsKey({ games: [{ appid: '570', name: 'Dota' }] })
     expect(antes).not.toBe(depois)
+  })
+})
+
+describe('opções universais', () => {
+  it('escopo, idioma e instalador na tela contam como ajuste', () => {
+    expect(settingsAreEmpty({ scope: 'machine' })).toBe(false)
+    expect(settingsAreEmpty({ locale: 'pt-BR' })).toBe(false)
+    expect(settingsAreEmpty({ interactive: true })).toBe(false)
+  })
+
+  it('instalador na tela desmarcado não conta', () => {
+    expect(settingsAreEmpty({ interactive: false })).toBe(true)
+  })
+
+  it('cada um deles muda a assinatura', () => {
+    const vazio = settingsKey({})
+    expect(settingsKey({ scope: 'user' })).not.toBe(vazio)
+    expect(settingsKey({ scope: 'user' })).not.toBe(settingsKey({ scope: 'machine' }))
+    expect(settingsKey({ locale: 'pt-BR' })).not.toBe(settingsKey({ locale: 'en-US' }))
+    expect(settingsKey({ interactive: true })).not.toBe(vazio)
+  })
+
+  it('o resumo do cartão fala deles em português', () => {
+    expect(settingsSummary({ scope: 'machine' })).toBe('para todos os usuários')
+    expect(settingsSummary({ scope: 'user' })).toBe('só para você')
+    expect(settingsSummary({ locale: 'pt-BR' })).toBe('Português do Brasil')
+    expect(settingsSummary({ interactive: true })).toBe('instalador na tela')
+  })
+
+  it('idioma fora da lista aparece pelo código mesmo', () => {
+    expect(settingsSummary({ locale: 'de-DE' })).toBe('de-DE')
   })
 })
