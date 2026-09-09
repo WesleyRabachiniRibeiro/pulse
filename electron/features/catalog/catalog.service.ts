@@ -15,6 +15,7 @@ const exec = promisify(execFile)
 
 const INSTALLED_SCRIPT = `
 $ErrorActionPreference = 'SilentlyContinue'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $keys = @(
   'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
   'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
@@ -57,6 +58,7 @@ export async function listVersions(id: string): Promise<PackageVersion[]> {
 
 const UNINSTALL_SCRIPT = `
 $ErrorActionPreference = 'SilentlyContinue'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $keys = @(
   'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
   'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
@@ -122,6 +124,7 @@ export async function quietUninstallCommands(id: string): Promise<string[]> {
 
 const AUTOSTART_SCRIPT = `
 $ErrorActionPreference = 'SilentlyContinue'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $runKeys = @(
   'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
   'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run',

@@ -77,3 +77,35 @@ export function readTweakState(tweak: Tweak, found: ReadonlyMap<string, number>)
 export function tweaksTouchingExplorer(ids: readonly string[]): boolean {
   return ids.some((id) => TWEAK_BY_ID.get(id)?.refreshesExplorer === true)
 }
+
+export const startupEntrySchema = z.object({
+  name: z.string(),
+  value: z.string(),
+  enabled: z.boolean(),
+  programId: z.string().optional(),
+})
+export type StartupEntry = z.infer<typeof startupEntrySchema>
+
+export const startupInputSchema = z.object({
+  name: z.string().min(1),
+  on: z.boolean(),
+})
+export type StartupInput = z.infer<typeof startupInputSchema>
+
+export function tidyStartup(entries: readonly StartupEntry[]): StartupEntry[] {
+  const seen = new Set<string>()
+  const kept: StartupEntry[] = []
+
+  for (const entry of entries) {
+    const name = entry.name.trim()
+    if (!name) continue
+
+    const key = name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+
+    kept.push({ ...entry, name })
+  }
+
+  return kept.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }))
+}

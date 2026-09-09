@@ -16,7 +16,12 @@ import { steamGameSchema, steamLibrarySchema, steamSearchInputSchema } from '../
 import { preferencesSchema } from '../domain/preferences'
 import { profileSchema } from '../domain/profile'
 import { inventorySchema } from '../domain/inventory'
-import { tweakInputSchema, tweakStateSchema } from '../domain/windows'
+import {
+  startupEntrySchema,
+  startupInputSchema,
+  tweakInputSchema,
+  tweakStateSchema,
+} from '../domain/windows'
 import { gitSchema } from '../domain/settings'
 import { updateStateSchema } from '../domain/update'
 
@@ -73,6 +78,14 @@ export const ipcContracts = {
   'catalog:inventory': {
     input: freshInputSchema,
     output: inventorySchema,
+  },
+  'catalog:startup': {
+    input: z.void(),
+    output: z.array(startupEntrySchema),
+  },
+  'catalog:setStartup': {
+    input: startupInputSchema,
+    output: z.array(startupEntrySchema),
   },
   'catalog:autostart': {
     input: z.void(),

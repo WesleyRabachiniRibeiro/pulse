@@ -79,7 +79,7 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
 
   useWatchInstalled(run?.finishedAt ?? null, passouDaVerificacao)
   useWatchAutostart(run?.finishedAt ?? null, passouDaVerificacao)
-  useWatchInventory(run?.finishedAt ?? null, screen === 'manage')
+  useWatchInventory(run?.finishedAt ?? null, passouDaVerificacao)
   useAbrirNaPrimeiraVez()
 
   const totalMb = totalSizeMb(selected)
