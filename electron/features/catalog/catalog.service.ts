@@ -216,7 +216,7 @@ export async function isInstalled(id: string): Promise<boolean> {
   return ids.includes(id)
 }
 
-async function readInstalledNames(): Promise<string[]> {
+export async function listInstalledNames(): Promise<string[]> {
   const encoded = Buffer.from(INSTALLED_SCRIPT, 'utf16le').toString('base64')
   const { stdout } = await exec(
     'powershell.exe',
@@ -225,8 +225,11 @@ async function readInstalledNames(): Promise<string[]> {
   )
 
   const raw: unknown = JSON.parse(stdout)
-  const names = Array.isArray(raw) ? raw.filter((n): n is string => typeof n === 'string') : []
-  return installedIds(names)
+  return Array.isArray(raw) ? raw.filter((n): n is string => typeof n === 'string') : []
+}
+
+async function readInstalledNames(): Promise<string[]> {
+  return installedIds(await listInstalledNames())
 }
 
 const REUSE_MS = 120_000

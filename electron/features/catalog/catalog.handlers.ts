@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron'
 import { register } from '../../ipc/register'
 import { listAutostart, listInstalled, listVersions, warmCatalog } from './catalog.service'
+import { readInventory } from './inventory.service'
 import {
   loadCatalog,
   refreshCatalog,
@@ -19,6 +20,7 @@ export function registerCatalog(): void {
 
   register('catalog:list', () => loadCatalog())
   register('catalog:installed', (input) => listInstalled(input))
+  register('catalog:inventory', (input) => readInventory(input.fresh === true))
   register('catalog:autostart', () => listAutostart())
   register('catalog:versions', (input) => listVersions(input.id))
 
