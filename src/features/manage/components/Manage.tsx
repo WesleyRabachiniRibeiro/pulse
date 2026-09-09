@@ -175,6 +175,7 @@ function Installed({ loaded, onQueue }: InstalledProps) {
   const [filter, setFilter] = useState<InstalledFilter>('all')
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
   const [asking, setAsking] = useState(false)
+  const [building, setBuilding] = useState(false)
 
   const shown = useMemo(
     () => filterInstalled(inventory.installed, query, filter),
@@ -201,6 +202,20 @@ function Installed({ loaded, onQueue }: InstalledProps) {
   function toggleAll() {
     setAsking(false)
     setPicked(allOn ? new Set() : new Set(canPick.map((node) => node.key)))
+  }
+
+  async function build() {
+    const mine =
+      picked.size > 0
+        ? chosen.map((node) => node.programId)
+        : selectable(inventory.installed).map((node) => node.programId)
+
+    const ids = mine.filter((id): id is string => typeof id === 'string')
+    if (ids.length === 0) return
+
+    setBuilding(true)
+    await bridge.invoke('profile:export', { format: 'pulse', ids }).catch(() => undefined)
+    setBuilding(false)
   }
 
   function removeChosen() {
@@ -230,6 +245,20 @@ function Installed({ loaded, onQueue }: InstalledProps) {
             {shown.length} de {inventory.installed.length}
           </span>
         </div>
+
+        <button
+          type="button"
+          className={s.build}
+          disabled={building}
+          onClick={() => void build()}
+          title="Gera um perfil a partir do que já está neste PC, sem você marcar nada à mão"
+        >
+          {building
+            ? 'MONTANDO…'
+            : picked.size > 0
+              ? `MONTAR PERFIL COM OS ${picked.size} MARCADOS`
+              : 'MONTAR PERFIL COM O QUE JÁ ESTÁ AQUI'}
+        </button>
 
         {FILTERS.map((one) => (
           <button
@@ -521,8 +550,10 @@ function noteOf(node: InstalledNode): string {
     const many = node.children.length
     return `${many} ${many === 1 ? 'versão instalada' : 'versões instaladas'}`
   }
-  if (node.wingetId) return node.wingetId
-  return node.programId ? 'do catálogo do Pulse' : 'fora do catálogo do Pulse'
+
+  return [node.version ? `versão ${node.version}` : null, node.publisher]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 interface RowProps {
@@ -577,6 +608,10 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
         <span className={s.body}>
           <span className={s.name}>{node.name}</span>
           <span className={s.note}>{removed ? 'tirado deste PC' : noteOf(node)}</span>
+        </span>
+
+        <span className={s.origin} data-mine={Boolean(node.programId)}>
+          {node.programId ? 'PELO PULSE' : 'FORA DO CATÁLOGO'}
         </span>
 
         {program && !removed && (

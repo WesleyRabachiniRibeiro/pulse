@@ -708,3 +708,43 @@ button.disclosure:hover {
 .icon svg[data-busy='true'] {
   animation: ia-spin 1.1s linear infinite;
 }
+
+.origin {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  border-radius: 6px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  color: var(--tx-6);
+  background: var(--bg-subtle);
+}
+
+.origin[data-mine='true'] {
+  color: var(--grad-txt-a);
+  background: color-mix(in srgb, var(--grad-a) 12%, transparent);
+}
+
+.build {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  padding: 9px 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid color-mix(in srgb, var(--grad-a) 40%, var(--border-card));
+  background: transparent;
+  color: var(--grad-txt-a);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.build:hover:not(:disabled) {
+  border-color: var(--grad-txt-a);
+  color: var(--tx);
+}
+
+.build:disabled {
+  cursor: default;
+  opacity: 0.5;
+}

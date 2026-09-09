@@ -16,6 +16,7 @@ import {
   useWatchTweaks,
 } from '@/features/selection'
 import { ConfigRow, type Choice } from './ConfigRow'
+import { ProfileBlock } from './ProfileBlock'
 import s from './Config.module.css'
 
 const KEEP = 'manter'
@@ -144,6 +145,8 @@ export function Config() {
       </p>
 
       <div className={s.sections}>
+        <ProfileBlock />
+
         <section className={s.section}>
           <div className={s.header}>
             <span className={s.name}>COMO INSTALAR</span>
