@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
 import { settingsAreEmpty, settingsSummary } from '@shared/domain/settings'
-import { applyDefaults } from '@shared/domain/defaults'
+import { applyDefaults, DEFAULT_KEYS, overriddenKeys } from '@shared/domain/defaults'
 import {
-  bundleIsActive,
   estimatedMinutes,
   filterCatalog,
   formatMb,
   groupByCategory,
   totalSizeMb,
 } from '@shared/domain/catalog'
-import { useBundles, useProgram, usePrograms } from '@/features/catalog'
+import { useBundles, useCategories, useProgram, usePrograms } from '@/features/catalog'
 import { requestsToAppend, type Request } from '@shared/domain/installation'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
+import { TINTS } from '@/shared/ui/AppIcon/tints'
 import { useDrives, useWatchDrives } from '../store/useDrives'
 import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
 import { useSelection } from '../store/useSelection'
@@ -25,19 +25,31 @@ import s from './Selection.module.css'
 interface Props {
   drive: string
   onGoToInstallation: () => void
+  onGoToConfig: () => void
 }
 
 function messageOf(e: unknown): string {
   return e instanceof Error ? e.message : 'Não foi possível montar a fila.'
 }
 
-export function Selection({ drive, onGoToInstallation }: Props) {
+function byName(a: { name: string }, b: { name: string }): number {
+  return a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
+}
+
+function railLabel(name: string): string {
+  const low = name.toLocaleLowerCase('pt-BR')
+  return low.charAt(0).toLocaleUpperCase('pt-BR') + low.slice(1)
+}
+
+export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
   const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [inSettings, setInSettings] = useState<string | null>(null)
   const selected = useSelection((st) => st.selected)
   const toggle = useSelection((st) => st.toggle)
   const applyBundle = useSelection((st) => st.applyBundle)
+  const setMany = useSelection((st) => st.setMany)
   const drivesByApp = useSelection((st) => st.drives)
   const setDrive = useSelection((st) => st.setDrive)
   const settingsByApp = useSelection((st) => st.settings)
@@ -48,18 +60,47 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const installedFailed = useInstalledFailed()
   const drives = useDrives()
   const programs = usePrograms()
+  const categories = useCategories()
   const bundles = useBundles()
   const defaults = useDefaults()
 
   useWatchDrives()
-    useEffect(() => {
+
+  useEffect(() => {
     useTourStore.getState().definirContexto(inSettings ? 'ajustes' : 'grade')
   }, [inSettings])
 
-  const groups = useMemo(() => groupByCategory(filterCatalog(search)), [search, programs])
-  const found = useMemo(() => groups.reduce((t, g) => t + g.programs.length, 0), [groups])
-
   const searching = search.trim().length > 0
+  const found = useMemo(() => filterCatalog(search), [search, programs])
+
+  const countByCategory = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const p of found) counts.set(p.category, (counts.get(p.category) ?? 0) + 1)
+    return counts
+  }, [found])
+
+  useEffect(() => {
+    if (category && (countByCategory.get(category) ?? 0) === 0) setCategory(null)
+  }, [countByCategory, category])
+
+  const shown = useMemo(
+    () =>
+      found.filter((p) => category === null || p.category === category).slice().sort(byName),
+    [found, category],
+  )
+
+  const openable = shown.filter((p) => !installed.has(p.id))
+  const allOn = openable.length > 0 && openable.every((p) => selected.has(p.id))
+  const chosenCategory = categories.find((c) => c.id === category)
+  const listTitle = searching
+    ? 'RESULTADOS DA BUSCA'
+    : (chosenCategory?.name ?? 'TODOS OS PROGRAMAS').toUpperCase()
+
+  const defined = DEFAULT_KEYS.filter((key) => defaults[key] !== undefined)
+  const defaultsLine =
+    defined.length === 0
+      ? 'como vierem'
+      : `${defined.length} ${defined.length === 1 ? 'definido' : 'definidos'}`
 
   const hasQueue = run !== null
   const checked: Request[] = useMemo(
@@ -83,6 +124,19 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const nothing = fresh.length === 0
   const howMany = `${fresh.length} ${fresh.length === 1 ? 'programa' : 'programas'}`
   const repeated = checked.length - fresh.length
+  const exceptions = fresh.filter(
+    (r) => overriddenKeys(settingsByApp[r.id], defaults).length > 0,
+  ).length
+
+  const basket = useMemo(() => {
+    const ids = new Set(fresh.map((r) => r.id))
+    return groupByCategory(programs.filter((p) => ids.has(p.id)))
+  }, [fresh, programs])
+
+  function removeFromList(id: string) {
+    if (selected.has(id)) toggle(id)
+    else setSettings(id, {})
+  }
 
   async function applyAlone(id: string) {
     setError(null)
@@ -135,20 +189,20 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   return (
     <div className={s.screen}>
       <header className={s.top}>
-        <h2 className={s.title}>O que você quer no seu PC?</h2>
+        <div className={s.heading}>
+          <div className={s.step}>PASSO 02</div>
+          <h2 className={s.title}>O que você quer neste PC?</h2>
+        </div>
 
         <div className={s.search} data-tour="busca">
-          <LuSearch className={s.magnifier} size={16} aria-hidden />
+          <LuSearch className={s.magnifier} size={15} aria-hidden />
           <input
             className={s.searchInput}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome — Chrome, Steam, VS Code…"
+            placeholder={`Buscar entre ${programs.length} programas…`}
             aria-label="Buscar programas"
           />
-          <span className={s.count}>
-            {searching ? `${found} resultados` : `${programs.length} programas`}
-          </span>
           {searching && (
             <button
               type="button"
@@ -161,40 +215,88 @@ export function Selection({ drive, onGoToInstallation }: Props) {
           )}
         </div>
 
-        <div className={s.bundles} data-tour="combos">
-          <span className={s.bundlesLabel}>COMBOS</span>
-          {bundles.map((b) => (
-            <button
-              key={b.name}
-              type="button"
-              className={s.bundle}
-              aria-pressed={bundleIsActive(b, selected, installed)}
-              onClick={() => applyBundle(b.ids.filter((id) => !installed.has(id)))}
-            >
-              {b.name}
-            </button>
-          ))}
-        </div>
+        <button type="button" className={s.defaults} onClick={onGoToConfig}>
+          Padrões: {defaultsLine}
+        </button>
       </header>
 
-      <div className={s.list}>
-        {groups.length === 0 ? (
-          <p className={s.empty}>
-            Nenhum programa com esse nome. O catálogo tem {programs.length} — tente parte do nome,
-            como “chrome” ou “code”.
-          </p>
-        ) : (
-          groups.map((g) => (
-            <section key={g.category.id} className={s.group}>
-              <div className={s.header}>
-                <span className={s.category}>{g.category.name}</span>
-                <span className={s.line} aria-hidden />
-                <span className={s.amount}>{g.programs.length}</span>
-              </div>
+      <div className={s.body}>
+        <aside className={s.rail}>
+          <div className={s.railLabel}>CATEGORIAS</div>
 
+          <button
+            type="button"
+            className={s.railItem}
+            aria-pressed={category === null}
+            onClick={() => setCategory(null)}
+          >
+            <span className={s.railName}>Todos</span>
+            <span className={s.railCount}>{found.length}</span>
+          </button>
+
+          {categories.map((c) => {
+            const amount = countByCategory.get(c.id) ?? 0
+            return (
+              <button
+                key={c.id}
+                type="button"
+                className={s.railItem}
+                aria-pressed={category === c.id}
+                disabled={amount === 0}
+                onClick={() => setCategory(c.id)}
+              >
+                <span className={s.railName} title={railLabel(c.name)}>
+                  {railLabel(c.name)}
+                </span>
+                <span className={s.railCount}>{amount}</span>
+              </button>
+            )
+          })}
+
+          <div className={s.railLine} aria-hidden />
+
+          <div data-tour="combos">
+            <div className={s.railLabel}>COMBOS</div>
+            {bundles.map((b) => (
+              <button
+                key={b.name}
+                type="button"
+                className={s.combo}
+                onClick={() => applyBundle(b.ids.filter((id) => !installed.has(id)))}
+              >
+                <span className={s.railName}>{b.name}</span>
+                <span className={s.railCount}>{b.ids.length}</span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <section className={s.main}>
+          <div className={s.listHead}>
+            <span className={s.listTitle}>{listTitle}</span>
+            <span className={s.listCount}>{shown.length}</span>
+            <span className={s.spacer} />
+            {openable.length > 0 && (
+              <button
+                type="button"
+                className={s.groupAction}
+                onClick={() => setMany(openable.map((p) => p.id), !allOn)}
+              >
+                {allOn ? 'DESMARCAR TODOS' : 'MARCAR TODOS'}
+              </button>
+            )}
+          </div>
+
+          <div className={s.list}>
+            {shown.length === 0 ? (
+              <p className={s.empty}>
+                Nenhum programa com esse nome. O catálogo tem {programs.length} — tente parte do
+                nome, como “chrome” ou “code”.
+              </p>
+            ) : (
               <div className={s.grid}>
                 {loaded
-                  ? g.programs.map((p) => (
+                  ? shown.map((p) => (
                       <AppCard
                         key={p.id}
                         program={p}
@@ -206,11 +308,66 @@ export function Selection({ drive, onGoToInstallation }: Props) {
                         onOpenSettings={setInSettings}
                       />
                     ))
-                  : g.programs.map((p) => <AppCardSkeleton key={p.id} />)}
+                  : shown.map((p) => <AppCardSkeleton key={p.id} />)}
               </div>
-            </section>
-          ))
-        )}
+            )}
+          </div>
+        </section>
+
+        <aside className={s.basket}>
+          <div className={s.basketHead}>
+            <span className={s.basketLabel}>SUA LISTA</span>
+            <span className={s.basketCount}>{fresh.length}</span>
+            <span className={s.spacer} />
+            {fresh.length > 0 && (
+              <button
+                type="button"
+                className={s.basketClear}
+                onClick={() => setMany([...selected], false)}
+              >
+                LIMPAR
+              </button>
+            )}
+          </div>
+
+          <div className={s.basketBody}>
+            {fresh.length === 0 ? (
+              <p className={s.basketEmpty}>
+                Sua lista está vazia. Marque programas ao lado ou use um combo para começar.
+              </p>
+            ) : (
+              basket.map((g) => (
+                <div key={g.category.id} className={s.basketGroup}>
+                  <div className={s.basketGroupName}>{g.category.name}</div>
+                  {g.programs.map((p) => (
+                    <div key={p.id} className={s.basketItem}>
+                      <span
+                        className={s.dot}
+                        style={{ background: TINTS[p.id] ?? 'var(--tx-3)' }}
+                        aria-hidden
+                      />
+                      <span className={s.basketItemName}>{p.name}</span>
+                      {overriddenKeys(settingsByApp[p.id], defaults).length > 0 && (
+                        <span className={s.exception} title="tem exceção">
+                          EXC
+                        </span>
+                      )}
+                      <span className={s.basketItemSize}>{formatMb(p.mb)}</span>
+                      <button
+                        type="button"
+                        className={s.remove}
+                        onClick={() => removeFromList(p.id)}
+                        aria-label={`Tirar ${p.name} da lista`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
       </div>
 
       <footer className={s.footer} data-tour="rodape">
@@ -225,8 +382,8 @@ export function Selection({ drive, onGoToInstallation }: Props) {
                     ? 'não deu para checar o que já está instalado — a lista veio inteira'
                     : 'nenhum programa marcado ainda'
                 : `${howMany} · ${formatMb(totalMb)} · ~${estimatedMinutes(totalMb)} min${
-                    hasQueue && repeated > 0 ? ` · ${repeated} já na fila` : ''
-                  }`)}
+                    exceptions > 0 ? ` · ${exceptions} com exceção` : ''
+                  }${hasQueue && repeated > 0 ? ` · ${repeated} já na fila` : ''}`)}
         </div>
 
         <div className={s.footerActions}>

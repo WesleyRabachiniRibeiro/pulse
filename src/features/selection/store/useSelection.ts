@@ -11,6 +11,7 @@ interface SelectionStore {
   loaded: boolean
   toggle: (id: string) => void
   applyBundle: (ids: readonly string[]) => void
+  setMany: (ids: readonly string[], on: boolean) => void
   setDrive: (id: string, drive: string | null) => void
   setSettings: (id: string, settings: Settings) => void
   hydrate: (profile: Profile) => void
@@ -32,6 +33,16 @@ export const useSelection = create<SelectionStore>((set) => ({
     }),
 
   applyBundle: (ids) => set({ selected: new Set(ids) }),
+
+  setMany: (ids, on) =>
+    set((state) => {
+      const next = new Set(state.selected)
+      for (const id of ids) {
+        if (on) next.add(id)
+        else next.delete(id)
+      }
+      return { selected: next }
+    }),
 
   setDrive: (id, drive) =>
     set((state) => {

@@ -1,78 +1,64 @@
 import { formatMb, totalSizeMb } from '@shared/domain/catalog'
-import { usePrograms } from '@/features/catalog'
+import { usePrograms, useInventoryLoaded, useUpdateCount } from '@/features/catalog'
 import { useTourStore } from '@/features/tour'
-import logo from '@/shared/assets/logo.png'
 import s from './Home.module.css'
 
 interface Props {
   onStart: () => void
+  onManage: () => void
 }
 
-const CARTOES = [
-  {
-    titulo: 'Instala em sequência',
-    texto:
-      'Você marca tudo de uma vez e a fila cuida do resto, até três programas ao mesmo tempo. Nada de clicar em avançar num instalador atrás do outro.',
-  },
-  {
-    titulo: 'Cada um do seu jeito',
-    texto:
-      'Disco, idioma e o resto você define uma vez na Configuração e vale para todos. Quem precisar fugir da regra tem a exceção dentro do próprio cartão.',
-  },
-  {
-    titulo: 'Dá para sair de perto',
-    texto:
-      'Se algo falhar ou precisar de você, o Windows avisa com som e marca o ícone na barra de tarefas. No fim, um resumo do que entrou e do que não entrou.',
-  },
-]
-
-export function Home({ onStart }: Props) {
+export function Home({ onStart, onManage }: Props) {
   const programs = usePrograms()
   const total = totalSizeMb(programs.map((p) => p.id))
+  const updates = useUpdateCount()
+  const lido = useInventoryLoaded()
+
+  const linhaGerenciar = !lido
+    ? 'atualizar, abrir e remover o que já está aqui'
+    : updates === 0
+      ? 'tudo em dia por aqui'
+      : `${updates} ${updates === 1 ? 'atualização esperando' : 'atualizações esperando'}`
 
   return (
     <div className={s.screen}>
-      <div className={s.miolo}>
-        <div className={s.hero} data-tour="home">
-          <img className={s.art} src={logo} alt="" aria-hidden />
+      <div className={s.eyebrow}>PULSE PARA WINDOWS</div>
 
-          <div className={s.eyebrow}>PULSE</div>
+      <h1 className={s.title}>
+        Um PC novo pronto em <span className={s.highlight}>uma passada só</span>.
+      </h1>
 
-          <h1 className={s.title}>
-            Seu PC pronto em uma <span className={s.highlight}>única passada</span>.
-          </h1>
+      <p className={s.subtitle}>
+        Marque os programas, confira os padrões uma vez e deixe a fila trabalhar. Depois de
+        instalar, o Pulse continua servindo: é daqui que você atualiza e remove o que já está no PC.
+      </p>
 
-          <p className={s.subtitle}>
-            Escolha os programas que você quer, mande instalar e vá fazer outra coisa. O Pulse baixa
-            e instala tudo em sequência, do jeito que você pediu, e avisa quando terminar.
-          </p>
+      <div className={s.actions} data-tour="home">
+        <button type="button" className={s.primary} onClick={onStart}>
+          <span className={s.tag}>COMEÇAR</span>
+          <span className={s.name}>Preparar este PC</span>
+          <span className={s.note}>verificação, seleção e instalação</span>
+        </button>
 
-          <div className={s.actions}>
-            <button type="button" className={s.primary} onClick={onStart}>
-              Começar
-            </button>
-            <button
-              type="button"
-              className={s.secondary}
-              onClick={() => useTourStore.getState().abrir()}
-            >
-              Ver como funciona
-            </button>
-          </div>
-        </div>
+        <button type="button" className={s.secondary} onClick={onManage}>
+          <span className={s.tag}>JÁ INSTALADO</span>
+          <span className={s.name}>Gerenciar programas</span>
+          <span className={s.note}>{linhaGerenciar}</span>
+        </button>
+      </div>
 
-        <div className={s.cards}>
-          {CARTOES.map((c) => (
-            <div key={c.titulo} className={s.card}>
-              <div className={s.cardTitle}>{c.titulo}</div>
-              <p className={s.cardText}>{c.texto}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className={s.footnote}>
-          {programs.length} programas no catálogo · {formatMb(total)} se você quisesse todos
-        </div>
+      <div className={s.footnote}>
+        <button
+          type="button"
+          className={s.link}
+          onClick={() => useTourStore.getState().abrir()}
+        >
+          Ver como funciona
+        </button>
+        <span className={s.sep}>·</span>
+        <span>
+          {programs.length} programas no catálogo, {formatMb(total)} se você quisesse todos
+        </span>
       </div>
     </div>
   )

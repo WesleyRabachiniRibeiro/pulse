@@ -53,7 +53,7 @@ export function AppCard({
             {checked ? '✓' : ''}
           </span>
 
-          <AppIcon id={program.id} name={program.name} />
+          <AppIcon id={program.id} name={program.name} size={27} />
 
           <span className={s.body}>
             <span className={s.name}>{program.name}</span>
@@ -67,8 +67,6 @@ export function AppCard({
           </span>
         </button>
 
-        {
-}
         <button
           type="button"
           className={s.settings}

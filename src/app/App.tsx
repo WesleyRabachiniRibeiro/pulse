@@ -79,7 +79,7 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
 
   useWatchInstalled(run?.finishedAt ?? null, passouDaVerificacao)
   useWatchAutostart(run?.finishedAt ?? null, passouDaVerificacao)
-  useWatchInventory(run?.finishedAt ?? null, passouDaVerificacao)
+  useWatchInventory(run?.finishedAt ?? null, screen !== 'check')
   useAbrirNaPrimeiraVez()
 
   const totalMb = totalSizeMb(selected)
@@ -132,7 +132,9 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
           />
 
           <div className={s.content}>
-            {screen === 'home' && <Home onStart={() => setScreen('check')} />}
+            {screen === 'home' && (
+              <Home onStart={() => setScreen('check')} onManage={() => setScreen('manage')} />
+            )}
             {screen === 'check' && (
               <Welcome
                 queueOn={run && !run.finishedAt ? run.drive : null}
@@ -140,7 +142,11 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
               />
             )}
             {screen === 'select' && drive && (
-              <Selection drive={drive} onGoToInstallation={() => setScreen('run')} />
+              <Selection
+                drive={drive}
+                onGoToInstallation={() => setScreen('run')}
+                onGoToConfig={() => setScreen('config')}
+              />
             )}
             {screen === 'run' && (
               <Installation
