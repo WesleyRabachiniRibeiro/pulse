@@ -3,9 +3,11 @@ import { getPrograms } from './catalog'
 import {
   buildInstalled,
   countNodes,
+  filterInstalled,
   hiddenReason,
   iconPath,
   installedNodeSchema,
+  selectable,
   stemOf,
   uninstallerFolder,
   uninstallerPath,
@@ -234,5 +236,55 @@ describe('iconPath', () => {
   it('devolve nada quando o programa não registrou ícone', () => {
     expect(iconPath(undefined)).toBeNull()
     expect(iconPath('  ')).toBeNull()
+  })
+})
+
+describe('filterInstalled', () => {
+  const programs = getPrograms()
+  const tree = buildInstalled(
+    [
+      STEAM,
+      steamGame('105600', 'Terraria'),
+      entry({ key: 'chrome', name: 'Google Chrome' }),
+      entry({ key: 'x', name: 'Programa Estranho' }),
+    ],
+    programs,
+  )
+
+  it('sem busca e sem filtro devolve tudo', () => {
+    expect(filterInstalled(tree.nodes, '')).toHaveLength(3)
+  })
+
+  it('acha pelo nome, sem ligar para acento nem maiúscula', () => {
+    expect(filterInstalled(tree.nodes, 'ESTRANHO').map((n) => n.name)).toEqual([
+      'Programa Estranho',
+    ])
+  })
+
+  it('alcança o que está dentro do grupo', () => {
+    expect(filterInstalled(tree.nodes, 'terraria').map((n) => n.name)).toEqual(['Steam'])
+  })
+
+  it('separa quem o Pulse conhece de quem ele não conhece', () => {
+    const conhecidos = filterInstalled(tree.nodes, '', 'pulse').map((n) => n.name)
+    const estranhos = filterInstalled(tree.nodes, '', 'stranger').map((n) => n.name)
+
+    expect(conhecidos).toContain('Google Chrome')
+    expect(estranhos).toEqual(['Programa Estranho'])
+  })
+
+  it('busca e filtro valem juntos', () => {
+    expect(filterInstalled(tree.nodes, 'chrome', 'stranger')).toHaveLength(0)
+  })
+})
+
+describe('selectable', () => {
+  it('só deixa marcar o que o Pulse sabe desinstalar', () => {
+    const tree = buildInstalled(
+      [entry({ key: 'a', name: 'Google Chrome' }), entry({ key: 'b', name: 'Coisa Estranha' })],
+      getPrograms(),
+    )
+
+    expect(selectable(tree.nodes).map((n) => n.name)).toEqual(['Google Chrome'])
   })
 })

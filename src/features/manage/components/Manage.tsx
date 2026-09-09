@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { getProgram, getPrograms } from '@shared/domain/catalog'
 import { suggestedText, type Upgrade } from '@shared/domain/inventory'
-import type { InstalledNode } from '@shared/domain/installed'
+import {
+  filterInstalled,
+  selectable,
+  type InstalledFilter,
+  type InstalledNode,
+} from '@shared/domain/installed'
 import {
   HISTORY_LIMIT,
   RUN_STATE_LABEL,
@@ -128,7 +133,9 @@ export function Manage({ onGoToInstallation }: Props) {
       </div>
 
       <div className={s.list}>
-        {tab === 'installed' && <Installed loaded={loaded} />}
+        {tab === 'installed' && (
+          <Installed loaded={loaded} onQueue={(ids) => void enfileirar(ids)} />
+        )}
         {tab === 'updates' && (
           <Updates loaded={loaded} onUpdate={(id) => void enfileirar([id])} />
         )}
@@ -139,8 +146,56 @@ export function Manage({ onGoToInstallation }: Props) {
   )
 }
 
-function Installed({ loaded }: { loaded: boolean }) {
+const FILTERS: { id: InstalledFilter; label: string }[] = [
+  { id: 'all', label: 'TUDO' },
+  { id: 'pulse', label: 'PELO PULSE' },
+  { id: 'stranger', label: 'FORA DO CATÁLOGO' },
+]
+
+interface InstalledProps {
+  loaded: boolean
+  onQueue: (ids: readonly string[]) => void
+}
+
+function Installed({ loaded, onQueue }: InstalledProps) {
   const inventory = useInventory()
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<InstalledFilter>('all')
+  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
+  const [asking, setAsking] = useState(false)
+
+  const shown = useMemo(
+    () => filterInstalled(inventory.installed, query, filter),
+    [inventory.installed, query, filter],
+  )
+
+  const canPick = selectable(shown)
+  const allOn = canPick.length > 0 && canPick.every((node) => picked.has(node.key))
+  const chosen = shown.filter((node) => picked.has(node.key))
+  const updatable = chosen.filter((node) =>
+    inventory.upgrades.some((up) => up.programId === node.programId),
+  )
+
+  function toggle(key: string) {
+    setAsking(false)
+    setPicked((old) => {
+      const next = new Set(old)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setAsking(false)
+    setPicked(allOn ? new Set() : new Set(canPick.map((node) => node.key)))
+  }
+
+  function removeChosen() {
+    for (const node of chosen) if (node.programId) void uninstallProgram(node.programId)
+    setPicked(new Set())
+    setAsking(false)
+  }
 
   if (!loaded) return <p className={s.empty}>Lendo o que está instalado neste PC…</p>
   if (inventory.installed.length === 0) {
@@ -149,11 +204,117 @@ function Installed({ loaded }: { loaded: boolean }) {
 
   return (
     <>
-      {inventory.installed.map((node) => (
-        <InstalledRow key={node.key} node={node} />
-      ))}
+      <div className={s.tools}>
+        <div className={s.search}>
+          <span className={s.magnifier} aria-hidden>
+            ⌕
+          </span>
+          <input
+            className={s.searchInput}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar entre os programas do PC…"
+            aria-label="Buscar entre os programas do PC"
+          />
+          <span className={s.searchNote}>
+            {shown.length} de {inventory.installed.length}
+          </span>
+        </div>
 
-      {inventory.hidden > 0 && (
+        {FILTERS.map((one) => (
+          <button
+            key={one.id}
+            type="button"
+            className={s.filter}
+            aria-pressed={filter === one.id}
+            onClick={() => setFilter(one.id)}
+          >
+            {one.label}
+          </button>
+        ))}
+      </div>
+
+      {canPick.length > 0 && (
+        <div className={s.batch} data-on={picked.size > 0}>
+          <button
+            type="button"
+            className={s.check}
+            role="checkbox"
+            aria-checked={allOn}
+            aria-label="Marcar todos"
+            onClick={toggleAll}
+          >
+            {allOn ? '✓' : ''}
+          </button>
+
+          <span className={s.batchLine}>
+            {picked.size === 0
+              ? `marque para agir em vários de uma vez · ${canPick.length} podem ser marcados`
+              : `${picked.size} ${picked.size === 1 ? 'marcado' : 'marcados'}`}
+          </span>
+
+          {picked.size > 0 && !asking && (
+            <>
+              {updatable.length > 0 && (
+                <button
+                  type="button"
+                  className={s.action}
+                  onClick={() => onQueue(updatable.map((node) => node.programId as string))}
+                >
+                  ATUALIZAR {updatable.length}
+                </button>
+              )}
+
+              <button
+                type="button"
+                className={s.action}
+                data-tone="danger"
+                onClick={() => setAsking(true)}
+              >
+                DESINSTALAR {picked.size}
+              </button>
+
+              <button type="button" className={s.action} onClick={() => setPicked(new Set())}>
+                LIMPAR
+              </button>
+            </>
+          )}
+
+          {asking && (
+            <>
+              <span className={s.asking}>
+                tirar {picked.size} {picked.size === 1 ? 'programa' : 'programas'} deste PC?
+              </span>
+              <button
+                type="button"
+                className={s.action}
+                data-tone="danger"
+                onClick={removeChosen}
+              >
+                SIM, TIRAR
+              </button>
+              <button type="button" className={s.action} onClick={() => setAsking(false)}>
+                CANCELAR
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {shown.length === 0 ? (
+        <p className={s.empty}>Nenhum programa com esse nome.</p>
+      ) : (
+        shown.map((node) => (
+          <InstalledRow
+            key={node.key}
+            node={node}
+            picked={picked.has(node.key)}
+            onPick={toggle}
+          />
+        ))
+      )}
+
+      {inventory.hidden > 0 && filter !== 'stranger' && (
         <p className={s.hiddenNote}>
           {inventory.hidden} {inventory.hidden === 1 ? 'item ficou' : 'itens ficaram'} de fora:
           peças do Windows, componentes que vêm junto de um programa e coisas sem como desinstalar.
@@ -325,7 +486,13 @@ function noteOf(node: InstalledNode): string {
   return node.programId ? 'do catálogo do Pulse' : 'fora do catálogo do Pulse'
 }
 
-function InstalledRow({ node }: { node: InstalledNode }) {
+interface RowProps {
+  node: InstalledNode
+  picked: boolean
+  onPick: (key: string) => void
+}
+
+function InstalledRow({ node, picked, onPick }: RowProps) {
   const [open, setOpen] = useState(false)
   const program = node.programId ? getProgram(node.programId) : undefined
   const canOpen = useCanOpen(node.programId ?? '')
@@ -336,7 +503,22 @@ function InstalledRow({ node }: { node: InstalledNode }) {
 
   return (
     <>
-      <div className={s.item} data-kind={node.kind}>
+      <div className={s.item} data-kind={node.kind} data-picked={picked}>
+        {node.programId ? (
+          <button
+            type="button"
+            className={s.check}
+            role="checkbox"
+            aria-checked={picked}
+            aria-label={`Marcar ${node.name}`}
+            onClick={() => onPick(node.key)}
+          >
+            {picked ? '✓' : ''}
+          </button>
+        ) : (
+          <span className={s.check} data-empty="true" aria-hidden />
+        )}
+
         {nested ? (
           <button
             type="button"

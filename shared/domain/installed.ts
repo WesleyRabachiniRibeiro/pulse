@@ -295,3 +295,39 @@ export function buildInstalled(
 export function countNodes(nodes: readonly InstalledNode[]): number {
   return nodes.reduce((total, node) => total + 1 + node.children.length, 0)
 }
+
+export const INSTALLED_FILTERS = ['all', 'pulse', 'stranger'] as const
+export type InstalledFilter = (typeof INSTALLED_FILTERS)[number]
+
+function plain(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+/**
+ * A busca alcança o que está dentro do grupo: procurar por um jogo acha a
+ * Steam, que é onde ele mora.
+ */
+export function filterInstalled(
+  nodes: readonly InstalledNode[],
+  query: string,
+  filter: InstalledFilter = 'all',
+): InstalledNode[] {
+  const needle = plain(query.trim())
+
+  return nodes.filter((node) => {
+    if (filter === 'pulse' && !node.programId) return false
+    if (filter === 'stranger' && node.programId) return false
+    if (!needle) return true
+
+    if (plain(node.name).includes(needle)) return true
+    return node.children.some((child) => plain(child.name).includes(needle))
+  })
+}
+
+/** Só o que o Pulse sabe desinstalar é que pode ser marcado. */
+export function selectable(nodes: readonly InstalledNode[]): InstalledNode[] {
+  return nodes.filter((node) => node.programId !== undefined)
+}
