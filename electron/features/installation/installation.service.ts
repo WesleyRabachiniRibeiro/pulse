@@ -10,11 +10,13 @@ import { makeDefault, openOnce } from '../browsers'
 import { listDrives } from '../preflight/preflight.service'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
 import { installArgs, noApplicableInstaller, scopeLabel } from '@shared/domain/winget'
+import { gitConfigPairs, gitIsEmpty } from '@shared/domain/git'
 import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './tools'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
 import { applyEditorTweaks, type EditorResult } from './editor'
+import { ensureSshKey, type SshOutcome, type SshResult } from './ssh'
 import {
   canEnqueue,
   clock,
@@ -517,7 +519,7 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
   }
 
   const git = settings.git
-  if (git && (git.name || git.email || git.branch || git.saveLogin)) {
+  if (git && !gitIsEmpty(git)) {
     target.detail = 'Configurando o Git'
     emitState()
 
@@ -525,32 +527,52 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
     if (!gitExe) {
       note(`${program.name}: não encontrei o git, a configuração ficou para depois`, 'error')
     } else {
-      const pairs: [string, string][] = [
-        ['user.name', git.name],
-        ['user.email', git.email],
-        ['init.defaultBranch', git.branch],
-      ]
-      for (const [key, value] of pairs) {
-        if (!value.trim()) continue
+      for (const [key, value] of gitConfigPairs(git)) {
         const ok = await runTool(gitExe, ['config', '--global', key, value])
-        if (ok) result.git = true
-        else note(`${program.name}: falhou ao gravar ${key}`, 'error')
+        if (!ok) {
+          note(`${program.name}: falhou ao gravar ${key}`, 'error')
+          continue
+        }
+        if (key === 'credential.helper') result.gitLogin = true
+        else result.git = true
       }
 
       if (git.saveLogin) {
-        const ok = await runTool(gitExe, ['config', '--global', 'credential.helper', 'manager'])
-        result.gitLogin = ok
         note(
-          ok
+          result.gitLogin
             ? `${program.name}: o Windows vai guardar o login do GitHub`
             : `${program.name}: falhou ao ligar o gerenciador de credenciais`,
-          ok ? 'ok' : 'error',
+          result.gitLogin ? 'ok' : 'error',
         )
       }
 
       emitState()
       note(`${program.name}: Git configurado`, 'ok')
     }
+  }
+
+  if (git?.sshKey) {
+    target.detail = 'Cuidando da chave SSH'
+    emitState()
+
+    const outcome = await ensureSshKey(git.email).catch(
+      (): SshOutcome => ({ result: 'failed', publicKey: null }),
+    )
+    result.sshKey = outcome.result
+    emitState()
+
+    if (outcome.publicKey) {
+      clipboard.writeText(outcome.publicKey)
+      result.sshCopied = true
+    }
+
+    const said: Record<SshResult, string> = {
+      created: `${program.name}: chave SSH criada, a parte pública já está na área de transferência`,
+      existed: `${program.name}: você já tinha uma chave SSH, não criei outra`,
+      'no-tool': `${program.name}: não achei o ssh-keygen para criar a chave`,
+      failed: `${program.name}: não deu para criar a chave SSH`,
+    }
+    note(said[outcome.result], outcome.result === 'created' ? 'ok' : 'info')
   }
 
   if (settings.desktopShortcut !== undefined) {

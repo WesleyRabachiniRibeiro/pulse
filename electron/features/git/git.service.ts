@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { DEFAULT_GIT, type GitConfig } from '@shared/domain/settings'
+import { DEFAULT_GIT, lineEndingSchema, type GitConfig } from '@shared/domain/git'
 import { locateGit } from '../installation/tools'
 
 function ler(exe: string, chave: string): Promise<string> {
@@ -16,17 +16,23 @@ export async function readGitConfig(): Promise<GitConfig> {
   const exe = await locateGit()
   if (!exe) return DEFAULT_GIT
 
-  const [name, email, branch, helper] = await Promise.all([
+  const [name, email, branch, helper, autocrlf, rebase] = await Promise.all([
     ler(exe, 'user.name'),
     ler(exe, 'user.email'),
     ler(exe, 'init.defaultBranch'),
     ler(exe, 'credential.helper'),
+    ler(exe, 'core.autocrlf'),
+    ler(exe, 'pull.rebase'),
   ])
+
+  const parsedEnding = lineEndingSchema.safeParse(autocrlf.toLowerCase())
 
   return {
     name,
     email,
     branch: branch || DEFAULT_GIT.branch,
     saveLogin: helper.length > 0,
+    ...(parsedEnding.success ? { lineEnding: parsedEnding.data } : {}),
+    ...(rebase ? { pullRebase: rebase.toLowerCase() === 'true' } : {}),
   }
 }

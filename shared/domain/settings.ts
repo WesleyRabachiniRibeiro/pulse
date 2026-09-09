@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { steamGameSchema } from './steam'
 import { installScopeSchema, LOCALE_BY_ID, scopeLabel } from './winget'
+import { gitSchema as gitConfigSchema, gitSummary } from './git'
 
 export const settingsKindSchema = z.enum([
   'vscode',
@@ -121,13 +122,7 @@ export const VS_WORKLOADS: readonly SettingsOption[] = [
   },
 ]
 
-export const gitSchema = z.object({
-  name: z.string(),
-  email: z.string(),
-  branch: z.string(),
-  saveLogin: z.boolean().optional(),
-})
-export type GitConfig = z.infer<typeof gitSchema>
+export { DEFAULT_GIT, gitSchema, type GitConfig } from './git'
 
 export const settingsSchema = z.object({
   packageId: z.string().optional(),
@@ -139,7 +134,7 @@ export const settingsSchema = z.object({
   extensions: z.array(z.string()).optional(),
   editorTweaks: z.array(z.string()).optional(),
   games: z.array(steamGameSchema).optional(),
-  git: gitSchema.optional(),
+  git: gitConfigSchema.optional(),
   tibia: z.array(z.string()).optional(),
   riot: z.array(z.string()).optional(),
   workloads: z.array(z.string()).optional(),
@@ -147,8 +142,6 @@ export const settingsSchema = z.object({
   openAfter: z.boolean().optional(),
 })
 export type Settings = z.infer<typeof settingsSchema>
-
-export const DEFAULT_GIT: GitConfig = { name: '', email: '', branch: 'main' }
 
 export function optionsFor(kind: SettingsKind): readonly SettingsOption[] {
   if (kind === 'vscode') return VSCODE_EXTENSIONS
@@ -225,8 +218,7 @@ export function settingsSummary(settings: Settings | undefined): string | null {
   if (riot) parts.push(`${riot} ${riot === 1 ? 'jogo da Riot' : 'jogos da Riot'}`)
   const workloads = settings.workloads?.length ?? 0
   if (workloads) parts.push(`${workloads} ${workloads === 1 ? 'linguagem' : 'linguagens'}`)
-  if (settings.git?.name || settings.git?.email) parts.push('Git configurado')
-  if (settings.git?.saveLogin) parts.push('login do GitHub guardado')
+  parts.push(...gitSummary(settings.git))
   if (settings.makeDefault) parts.push('navegador padrão')
   if (settings.openAfter) parts.push('abre no fim')
   if (settings.autostart === true) parts.push('abre com o Windows')

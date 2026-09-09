@@ -42,6 +42,8 @@ export const itemSchema = z.object({
       autostart: z.enum(['on', 'off', 'no-entry']).optional(),
       shortcut: z.enum(['created', 'removed', 'kept', 'not-found', 'failed']).optional(),
       editor: z.enum(['written', 'nothing', 'unreadable', 'failed']).optional(),
+      sshKey: z.enum(['created', 'existed', 'no-tool', 'failed']).optional(),
+      sshCopied: z.boolean().optional(),
       pagesOpened: z.array(z.string()),
       riotInstalled: z.array(z.string()),
       riotFailed: z.array(z.string()),
@@ -273,6 +275,16 @@ export function settingsResultLines(item: Item): string[] {
   }
   if (result.editor === 'failed') lines.push('não deu para gravar os ajustes do editor')
   if (result.git) lines.push('Git configurado')
+  if (result.sshKey === 'created') {
+    lines.push(
+      result.sshCopied
+        ? 'chave SSH criada, a parte pública ficou na área de transferência'
+        : 'chave SSH criada',
+    )
+  }
+  if (result.sshKey === 'existed') lines.push('você já tinha uma chave SSH, não criei outra')
+  if (result.sshKey === 'no-tool') lines.push('não achei o ssh-keygen para criar a chave')
+  if (result.sshKey === 'failed') lines.push('não deu para criar a chave SSH')
   if (result.gitLogin) lines.push('login do GitHub guardado pelo Windows')
   if (result.madeDefault === 'yes') lines.push('agora é o navegador padrão')
   if (result.madeDefault === 'asked') lines.push('confirme como padrão na janela do Windows')

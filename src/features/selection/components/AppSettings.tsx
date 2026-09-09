@@ -11,6 +11,7 @@ import {
 import { formatMb, type Program } from '@shared/domain/catalog'
 import { LOCALES, type InstallScope } from '@shared/domain/winget'
 import { EDITOR_TWEAKS } from '@shared/domain/editor'
+import { LINE_ENDINGS } from '@shared/domain/git'
 import { formatGb, type Drive } from '@shared/domain/preflight'
 import type { SteamGame } from '@shared/domain/steam'
 import { bridge } from '@/shared/lib/bridge'
@@ -665,7 +666,86 @@ export function AppSettings({
               </label>
             </div>
 
+            <div className={s.label}>FIM DE LINHA</div>
+            <p className={s.description}>
+              Windows e Linux marcam o fim da linha de jeitos diferentes, e é isso que faz um
+              arquivo aparecer inteiro modificado num diff sem ninguém ter tocado nele.
+            </p>
+
+            <div className={s.drives}>
+              {LINE_ENDINGS.map((choice) => (
+                <button
+                  key={choice.id}
+                  type="button"
+                  className={s.drive}
+                  aria-pressed={git.lineEnding === choice.id}
+                  onClick={() =>
+                    onChangeSettings(program.id, {
+                      ...settings,
+                      git: {
+                        ...git,
+                        lineEnding: git.lineEnding === choice.id ? undefined : choice.id,
+                      },
+                    })
+                  }
+                >
+                  <span className={s.driveName}>{choice.name}</span>
+                  <span className={s.driveNote}>{choice.hint}</span>
+                </button>
+              ))}
+            </div>
+
             <div className={s.options}>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={git.pullRebase === true}
+                className={s.option}
+                onClick={() =>
+                  onChangeSettings(program.id, {
+                    ...settings,
+                    git: { ...git, pullRebase: git.pullRebase ? undefined : true },
+                  })
+                }
+              >
+                <span className={s.box} aria-hidden>
+                  {git.pullRebase ? '✓' : ''}
+                </span>
+                <span className={s.optionBody}>
+                  <span className={s.optionName}>Puxar com rebase, não com merge</span>
+                  <span className={s.optionHint}>
+                    o histórico fica em linha reta, sem aquele commit de merge a cada git pull
+                  </span>
+                </span>
+                <span className={s.optionCategory}>HISTÓRICO</span>
+              </button>
+
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={git.sshKey === true}
+                className={s.option}
+                onClick={() =>
+                  onChangeSettings(program.id, {
+                    ...settings,
+                    git: { ...git, sshKey: git.sshKey ? undefined : true },
+                  })
+                }
+              >
+                <span className={s.box} aria-hidden>
+                  {git.sshKey ? '✓' : ''}
+                </span>
+                <span className={s.optionBody}>
+                  <span className={s.optionName}>Criar uma chave SSH, se você ainda não tiver</span>
+                  <span className={s.optionHint}>
+                    uma chave ed25519 sem senha, do jeito que o GitHub pede. A parte pública vai
+                    para a área de transferência, pronta para colar lá. Se você já tiver uma chave,
+                    o Pulse não encosta nela.
+                  </span>
+                </span>
+                <span className={s.optionCategory}>SSH</span>
+              </button>
+
               <button
                 type="button"
                 role="checkbox"
