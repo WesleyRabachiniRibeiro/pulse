@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { formatMb, totalSizeMb } from '@shared/domain/catalog'
+import { countOverrides } from '@shared/domain/defaults'
 import { TitleBar } from '@/shared/ui/TitleBar/TitleBar'
 import { StepRail } from '@/shared/ui/StepRail/StepRail'
+import type { Screen } from '@/shared/ui/StepRail/screens'
 import { Home } from '@/features/home'
-import { useWatchCatalog } from '@/features/catalog'
+import { Config } from '@/features/config'
+import { Manage } from '@/features/manage'
+import { useUpdateCount, useWatchCatalog, useWatchInventory } from '@/features/catalog'
 import {
   Welcome,
   startPreflight,
@@ -25,6 +29,7 @@ import { useWatchUpdate } from '@/features/updates'
 import { Tour, useAbrirNaPrimeiraVez, useTourStore } from '@/features/tour'
 import {
   savePreference,
+  useDefaults,
   useLoadPreferences,
   usePreferences,
   usePreferencesLoaded,
@@ -59,32 +64,43 @@ export function App() {
 }
 
 function Shell({ driveSalvo }: { driveSalvo: string | null }) {
-  const [step, setStep] = useState(0)
+  const [screen, setScreen] = useState<Screen>('home')
   const [drive, setDrive] = useState<string | null>(driveSalvo)
   const selected = useSelection((st) => st.selected)
+  const settingsByApp = useSelection((st) => st.settings)
+  const defaults = useDefaults()
   const driveVerificado = usePreflightDrive()
+  const updates = useUpdateCount()
 
   useWatchInstallation()
   const run = useRun()
 
-  const passouDaVerificacao = step >= 2
+  const passouDaVerificacao = screen !== 'home' && screen !== 'check'
 
   useWatchInstalled(run?.finishedAt ?? null, passouDaVerificacao)
   useWatchAutostart(run?.finishedAt ?? null, passouDaVerificacao)
+  useWatchInventory(run?.finishedAt ?? null, screen === 'manage')
   useAbrirNaPrimeiraVez()
 
   const totalMb = totalSizeMb(selected)
   const size = selected.size === 0 ? 'nada escolhido ainda' : `${formatMb(totalMb)} para baixar`
 
-  const available = [1, ...(drive ? [2] : []), ...(run ? [3] : []), ...(run?.finishedAt ? [4] : [])]
+  const available: Screen[] = [
+    'check',
+    ...(drive ? (['select'] as const) : []),
+    ...(run ? (['run'] as const) : []),
+    ...(run?.finishedAt ? (['summary'] as const) : []),
+    'config',
+    'manage',
+  ]
 
   useEffect(() => {
     if (driveVerificado !== undefined) setDrive(driveVerificado)
   }, [driveVerificado])
 
   useEffect(() => {
-    if (!drive && step === 2) setStep(1)
-  }, [drive, step])
+    if (!drive && screen === 'select') setScreen('check')
+  }, [drive, screen])
 
   useEffect(() => {
     if (drive && drive !== driveSalvo) void savePreference({ drive })
@@ -95,43 +111,51 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
 
   useEffect(() => {
     if (telaAlvo === null) return
-    if (telaAlvo === 0 || disponiveis.split(',').includes(String(telaAlvo))) setStep(telaAlvo)
+    if (telaAlvo === 'home' || disponiveis.split(',').includes(telaAlvo)) setScreen(telaAlvo)
     useTourStore.getState().pedirTela(null)
   }, [telaAlvo, disponiveis])
 
   return (
     <div className={s.page}>
       <div className={s.window}>
-        <TitleBar version={VERSION} onHome={() => setStep(0)} />
+        <TitleBar version={VERSION} onHome={() => setScreen('home')} />
 
         <div className={s.inner}>
           <StepRail
-            onHome={() => setStep(0)}
-            atHome={step === 0}
-            current={step}
+            current={screen}
             available={available}
-            onGo={setStep}
+            onGo={setScreen}
             selected={selected.size}
             size={size}
+            overrides={countOverrides(settingsByApp, defaults)}
+            updates={updates}
           />
 
           <div className={s.content}>
-            {step === 0 && <Home onStart={() => setStep(1)} />}
-            {step === 1 && (
+            {screen === 'home' && <Home onStart={() => setScreen('check')} />}
+            {screen === 'check' && (
               <Welcome
                 queueOn={run && !run.finishedAt ? run.drive : null}
-                onNext={() => setStep(2)}
+                onNext={() => setScreen('select')}
               />
             )}
-            {step === 2 && drive && (
-              <Selection drive={drive} onGoToInstallation={() => setStep(3)} />
+            {screen === 'select' && drive && (
+              <Selection drive={drive} onGoToInstallation={() => setScreen('run')} />
             )}
-            {step === 3 && (
-              <Installation onChooseMore={() => setStep(2)} onSeeSummary={() => setStep(4)} />
+            {screen === 'run' && (
+              <Installation
+                onChooseMore={() => setScreen('select')}
+                onSeeSummary={() => setScreen('summary')}
+              />
             )}
-            {step === 4 && (
-              <Summary onChooseMore={() => setStep(2)} onSeeInstallation={() => setStep(3)} />
+            {screen === 'summary' && (
+              <Summary
+                onChooseMore={() => setScreen('select')}
+                onSeeInstallation={() => setScreen('run')}
+              />
             )}
+            {screen === 'config' && <Config />}
+            {screen === 'manage' && <Manage />}
           </div>
         </div>
       </div>

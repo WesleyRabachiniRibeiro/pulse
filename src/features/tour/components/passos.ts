@@ -1,49 +1,51 @@
+import type { Screen } from '@/shared/ui/StepRail/screens'
+
 export interface Passo {
   alvo: string | null
   titulo: string
   texto: string
-  tela?: 0 | 1 | 2 | 3 | 4
+  tela?: Screen
   esperar?: 'ajustes' | 'grade'
 }
 
 export const PASSOS: readonly Passo[] = [
   {
-    tela: 0,
+    tela: 'home',
     alvo: '[data-tour="home"]',
     titulo: 'Esta é a tela inicial',
     texto:
       'O Pulse instala vários programas de uma vez, em sequência, sem você clicar em cada instalador. Daqui saem quatro etapas, e este passo a passo percorre todas elas. Dá para sair a qualquer momento pelo "pular".',
   },
   {
-    tela: 1,
+    tela: 'check',
     alvo: '[data-tour="discos"]',
     titulo: '1. Onde vai ser instalado',
     texto:
       'Escolha o disco antes de qualquer coisa. Enquanto não houver um verificado, as outras etapas ficam trancadas: não faz sentido escolher programas sem saber onde eles vão. O que você escolher fica guardado para a próxima vez.',
   },
   {
-    tela: 1,
+    tela: 'check',
     alvo: '[data-tour="checks"]',
     titulo: 'O que é conferido antes',
     texto:
       'Versão do Windows, instalador do sistema, internet, espaço livre e virtualização. Cartão vermelho tranca o caminho, amarelo só avisa. O espaço é medido no disco escolhido e também no do Windows, porque todo instalador escreve nos dois.',
   },
   {
-    tela: 2,
+    tela: 'select',
     alvo: '[data-tour="combos"]',
     titulo: '2. Comece por um combo',
     texto:
       'Cada combo marca um conjunto pronto de uma vez, como o essencial ou o setup gamer. Ele troca a seleção inteira, então serve de ponto de partida: depois é só marcar e desmarcar o que quiser.',
   },
   {
-    tela: 2,
+    tela: 'select',
     alvo: '[data-tour="busca"]',
     titulo: 'Ou procure pelo nome',
     texto:
       'A busca acha por nome e por categoria. O que já está no seu PC aparece marcado e travado, para você não pedir a mesma coisa duas vezes.',
   },
   {
-    tela: 2,
+    tela: 'select',
     alvo: '[data-tour="ajustes-steam"]',
     titulo: 'Agora clique neste botão',
     texto:
@@ -76,15 +78,15 @@ export const PASSOS: readonly Passo[] = [
     esperar: 'grade',
   },
   {
-    tela: 2,
+    tela: 'select',
     alvo: '[data-tour="rodape"]',
     titulo: 'Depois é só mandar',
     texto:
       'O rodapé mostra quantos programas, quanto vai baixar e uma estimativa de tempo. A partir daqui a fila cuida do resto.',
   },
   {
-    tela: 3,
-    alvo: '[data-tour="3"]',
+    tela: 'run',
+    alvo: '[data-tour="run"]',
     titulo: '3. A fila anda sozinha',
     texto:
       'Até três programas ao mesmo tempo, cada um mostrando em qual etapa está: baixar, instalar, ajustar, pronto. Dá para cancelar um sem parar os outros, e para voltar à seleção e acrescentar mais no meio do caminho.',
@@ -96,8 +98,8 @@ export const PASSOS: readonly Passo[] = [
       'Se algo falhar ou precisar de você, o Windows avisa com uma notificação e um som, e o ícone na barra de tarefas ganha uma marca: vermelha quando algo falhou, amarela quando a fila está esperando a sua resposta.',
   },
   {
-    tela: 4,
-    alvo: '[data-tour="4"]',
+    tela: 'summary',
+    alvo: '[data-tour="summary"]',
     titulo: '4. O que aconteceu',
     texto:
       'O resumo separa o que ficou pronto, o que só termina depois de reiniciar, o que precisa de você e o que ficou de fora, com o motivo de cada um. É daqui que sai o reinício, com contagem e chance de desistir.',
