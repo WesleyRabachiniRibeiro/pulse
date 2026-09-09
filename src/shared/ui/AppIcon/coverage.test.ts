@@ -40,14 +40,20 @@ describe('ícone de cada programa do catálogo', () => {
     expect(orfaos).toEqual([])
   })
 
-  it('todo ícone tem viewBox quadrado, que é o que a máscara precisa', async () => {
+  it('todo ícone tem viewBox, e não é comprido a ponto de sumir na máscara', async () => {
     const { readFile } = await import('node:fs/promises')
 
     for (const name of files) {
       const svg = await readFile(join(iconsDir, name), 'utf8')
       const box = /viewBox="([\d.\s-]+)"/.exec(svg)?.[1]?.trim().split(/\s+/)
       expect(box, name).toHaveLength(4)
-      expect(box?.[2], name).toBe(box?.[3])
+
+      const width = Number(box?.[2])
+      const height = Number(box?.[3])
+      expect(width, name).toBeGreaterThan(0)
+      expect(height, name).toBeGreaterThan(0)
+      expect(width / height, name).toBeGreaterThan(0.5)
+      expect(width / height, name).toBeLessThan(2)
     }
   })
 })

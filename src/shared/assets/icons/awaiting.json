@@ -4,14 +4,7 @@
     "amazongames",
     "awscli",
     "azurecli",
-    "edge",
-    "logitechghub",
-    "office",
-    "ohmyposh",
     "powershell",
-    "putty",
-    "slack",
-    "winrar",
-    "wsl"
+    "putty"
   ]
 }
