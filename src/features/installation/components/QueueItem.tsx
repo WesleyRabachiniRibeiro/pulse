@@ -1,4 +1,5 @@
 import { useProgram } from '@/features/catalog'
+import { openProgram, useCanOpen, useOpening } from '../store/useOpen'
 import {
   canCancel,
   driveLabel,
@@ -35,6 +36,8 @@ interface Props {
 export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Props) {
   const program = useProgram(item.id)
   const name = program?.name ?? item.id
+  const canOpen = useCanOpen(item.id)
+  const opening = useOpening(item.id)
   const canRetry = item.status === 'failed' || item.status === 'canceled'
 
   return (
@@ -119,6 +122,20 @@ export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Pr
           <ClampedText text={item.error ?? 'Ficou de fora da instalação.'} className={s.message} />
           <button type="button" className={s.retry} onClick={() => onRetry(item.id)}>
             Tentar de novo
+          </button>
+        </div>
+      )}
+
+      {item.status === 'done' && canOpen && (
+        <div className={s.problem}>
+          <span className={s.message}>Instalado e pronto para usar.</span>
+          <button
+            type="button"
+            className={s.retry}
+            disabled={opening}
+            onClick={() => void openProgram(item.id)}
+          >
+            {opening ? 'Abrindo…' : 'Abrir'}
           </button>
         </div>
       )}

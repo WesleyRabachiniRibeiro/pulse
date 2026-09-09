@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getProgram } from '@shared/domain/catalog'
 import { usePrograms } from '@/features/catalog'
+import { useWatchOpenable } from '../store/useOpen'
 import {
   anyoneNeedingPermission,
   anyoneWaiting,
@@ -51,6 +52,7 @@ function phase(run: Run): string {
 export function Installation({ onChooseMore, onSeeSummary }: Props) {
   const { run, running, elapsed, cancel, cancelItem, retry, grant } = useInstallation()
   usePrograms()
+  useWatchOpenable(run?.finishedAt ?? null)
   const [showLog, setShowLog] = useState(false)
   const logEnd = useRef<HTMLDivElement>(null)
 

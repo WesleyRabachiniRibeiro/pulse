@@ -46,19 +46,23 @@ function closeness(name: string, program: Program): number {
   return (exact ? 0 : 1_000_000) + folded.length
 }
 
-export async function findStartMenuShortcut(program: Program): Promise<string | null> {
-  const matches: string[] = []
+export async function allStartMenuShortcuts(): Promise<string[]> {
+  const found: string[] = []
+  for (const folder of startMenuFolders()) found.push(...(await shortcutsIn(folder)))
+  return found
+}
 
-  for (const folder of startMenuFolders()) {
-    const links = await shortcutsIn(folder)
-    matches.push(...links.filter((path) => nameMatchesProgram(basename(path, '.lnk'), program)))
-  }
-
+export function bestShortcutFor(links: readonly string[], program: Program): string | null {
+  const matches = links.filter((path) => nameMatchesProgram(basename(path, '.lnk'), program))
   if (matches.length === 0) return null
 
   return matches.sort(
     (a, b) => closeness(basename(a, '.lnk'), program) - closeness(basename(b, '.lnk'), program),
   )[0] as string
+}
+
+export async function findStartMenuShortcut(program: Program): Promise<string | null> {
+  return bestShortcutFor(await allStartMenuShortcuts(), program)
 }
 
 function desktopFolder(): string {

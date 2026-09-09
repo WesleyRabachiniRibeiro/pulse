@@ -326,3 +326,27 @@
 .quiet:hover {
   color: var(--tx-2);
 }
+
+.open {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 6px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-field);
+  background: var(--bg-field);
+  color: var(--tx);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.open:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--grad-a) 55%, var(--border-field));
+}
+
+.open:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

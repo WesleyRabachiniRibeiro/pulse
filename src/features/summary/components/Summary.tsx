@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatMb, getProgram } from '@shared/domain/catalog'
 import { usePrograms } from '@/features/catalog'
+import { openProgram, useCanOpen, useOpening, useWatchOpenable } from '@/features/installation'
 import {
   anyNeedsRestart,
   driveLabel,
@@ -39,9 +40,27 @@ function duration(seconds: number): string {
   return `${Math.max(1, Math.round(seconds / 60))} min`
 }
 
+function OpenButton({ id }: { id: string }) {
+  const canOpen = useCanOpen(id)
+  const opening = useOpening(id)
+  if (!canOpen) return null
+
+  return (
+    <button
+      type="button"
+      className={s.open}
+      disabled={opening}
+      onClick={() => void openProgram(id)}
+    >
+      {opening ? 'ABRINDO…' : 'ABRIR'}
+    </button>
+  )
+}
+
 export function Summary({ onChooseMore, onSeeInstallation }: Props) {
   const run = useRun()
   usePrograms()
+  useWatchOpenable(run?.finishedAt ?? null)
   const [restarting, setRestarting] = useState(false)
   const [left, setLeft] = useState(SECONDS_UNTIL_RESTART)
 
@@ -170,6 +189,8 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
 
                         <ClampedText text={line.note} className={s.note} />
                       </div>
+
+                      {group.kind === 'ready' && <OpenButton id={line.id} />}
                     </div>
 
                     <div className={s.details}>
