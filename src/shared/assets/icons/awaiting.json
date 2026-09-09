@@ -2,7 +2,6 @@
   "note": "Programas do catálogo que ainda estão sem ícone. Salve o SVG como <id>.svg nesta pasta, no mesmo formato dos outros (viewBox quadrado, silhueta de uma cor só, sem fill próprio), e tire o id desta lista. O teste em src/shared/ui/AppIcon/coverage.test.ts cobra os dois passos.",
   "ids": [
     "amazongames",
-    "awscli",
     "putty"
   ]
 }
