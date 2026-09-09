@@ -98,7 +98,11 @@ function namesOf(ids: readonly string[]): string[] {
   return ids.map((id) => getProgram(id)?.name ?? id)
 }
 
-export function Config() {
+interface Props {
+  onGoToInstallation: () => void
+}
+
+export function Config({ onGoToInstallation }: Props) {
   const defaults = useDefaults()
   const prefs = usePreferences()
   const settingsByApp = useSelection((st) => st.settings)
@@ -145,7 +149,7 @@ export function Config() {
       </p>
 
       <div className={s.sections}>
-        <ProfileBlock />
+        <ProfileBlock onGoToInstallation={onGoToInstallation} />
 
         <section className={s.section}>
           <div className={s.header}>

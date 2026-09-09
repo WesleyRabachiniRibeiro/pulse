@@ -1,3 +1,4 @@
+export { reloadSelection } from './store/useSelection'
 export { Selection } from './components/Selection'
 export { useLoadSelection, useSelection } from './store/useSelection'
 export { useWatchInstalled } from './store/useInstalled'

@@ -163,6 +163,10 @@ export function myProgramIds(): string[] {
   return extras.map((program) => program.id)
 }
 
+export function myPrograms(): Program[] {
+  return extras.map((program) => ({ ...program }))
+}
+
 /** Tira do catálogo o que a pessoa adotou. O programa segue instalado no PC. */
 export async function removeFromCatalog(id: string): Promise<boolean> {
   await loadCatalog()

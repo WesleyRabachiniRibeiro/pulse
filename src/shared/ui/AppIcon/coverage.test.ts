@@ -7,9 +7,11 @@ import { TINTS } from './tints'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const iconsDir = join(here, '..', '..', 'assets', 'icons')
+const logosDir = join(here, '..', '..', 'assets', 'logos')
 
 const files = readdirSync(iconsDir).filter((name) => name.endsWith('.svg'))
-const withIcon = new Set(files.map((name) => name.replace(/\.svg$/, '')))
+const logos = readdirSync(logosDir).filter((name) => name.endsWith('.svg'))
+const withIcon = new Set([...files, ...logos].map((name) => name.replace(/\.svg$/, '')))
 const ids = BUILTIN_PROGRAMS.map((p) => p.id)
 
 const awaiting: string[] = JSON.parse(readFileSync(join(iconsDir, 'awaiting.json'), 'utf8')).ids
@@ -53,5 +55,15 @@ describe('ícone de cada programa do catálogo', () => {
       expect(width / height, name).toBeGreaterThan(0.5)
       expect(width / height, name).toBeLessThan(2)
     }
+  })
+})
+
+describe('logotipo colorido', () => {
+  it('não repete quem já tem silhueta, senão os dois disputariam o mesmo id', () => {
+    const nasDuas = logos
+      .map((name) => name.replace(/\.svg$/, ''))
+      .filter((id) => files.includes(`${id}.svg`))
+
+    expect(nasDuas).toEqual([])
   })
 })

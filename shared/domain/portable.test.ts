@@ -7,6 +7,7 @@ import {
   profileOf,
   readPortable,
   scriptOf,
+  unknownOf,
   wingetImportOf,
   type Portable,
 } from './portable'
@@ -148,5 +149,50 @@ describe('fileFor', () => {
 
   it('o do Pulse volta a ser lido pelo próprio Pulse', () => {
     expect(readPortable(JSON.parse(fileFor('pulse', PROFILE)))).not.toBeNull()
+  })
+})
+
+describe('bagagem do arquivo', () => {
+  const adotado = {
+    id: 'protonvpn',
+    name: 'Proton VPN',
+    winget: 'Proton.ProtonVPN',
+    version: '',
+    mb: 0,
+    category: 'utilities',
+    hints: ['proton vpn'],
+  }
+
+  it('leva a ficha de quem o catálogo publicado não tem', () => {
+    const perfil = { ...PROFILE, selected: ['chrome', 'protonvpn'] }
+    const saved = portableOf(perfil, undefined, new Date(), [adotado])
+
+    expect(saved.extras).toEqual([adotado])
+  })
+
+  it('não leva ficha de quem não está marcado', () => {
+    const saved = portableOf(PROFILE, undefined, new Date(), [adotado])
+    expect(saved).not.toHaveProperty('extras')
+  })
+
+  it('diz quem do arquivo o catálogo daqui não conhece', () => {
+    const saved = portableOf({ ...PROFILE, selected: ['protonvpn'] }, undefined, new Date(), [
+      adotado,
+    ])
+
+    const desconhecidos = unknownOf(saved, (id) => id === 'chrome')
+    expect(desconhecidos.map((p) => p.id)).toEqual(['protonvpn'])
+  })
+
+  it('não repete quem o catálogo daqui já conhece', () => {
+    const saved = portableOf({ ...PROFILE, selected: ['protonvpn'] }, undefined, new Date(), [
+      adotado,
+    ])
+
+    expect(unknownOf(saved, () => true)).toEqual([])
+  })
+
+  it('arquivo sem bagagem não quebra a leitura', () => {
+    expect(unknownOf(portableOf(PROFILE), () => false)).toEqual([])
   })
 })

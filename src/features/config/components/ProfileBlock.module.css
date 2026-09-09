@@ -290,3 +290,21 @@
   color: var(--grad-txt-b);
   word-break: break-word;
 }
+
+.missing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 13px 15px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--grad-a) 45%, transparent);
+  background: color-mix(in srgb, var(--grad-a) 10%, var(--bg-card));
+}
+
+.missingLine {
+  flex: 1;
+  min-width: 220px;
+  font-size: 13.5px;
+  color: var(--tx);
+}

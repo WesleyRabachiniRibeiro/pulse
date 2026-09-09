@@ -872,7 +872,11 @@
       "category": "dev",
       "hints": [
         "microsoft .net sdk"
-      ]
+      ],
+      "family": {
+        "prefix": "Microsoft.DotNet.SDK",
+        "pattern": "^Microsoft\\.DotNet\\.SDK\\.\\d+(_\\d+)?$"
+      }
     },
     {
       "id": "rust",
@@ -894,7 +898,11 @@
       "category": "dev",
       "hints": [
         "postgresql"
-      ]
+      ],
+      "family": {
+        "prefix": "PostgreSQL.PostgreSQL",
+        "pattern": "^PostgreSQL\\.PostgreSQL\\.\\d+$"
+      }
     },
     {
       "id": "mysql",

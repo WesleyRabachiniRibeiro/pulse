@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   BUILTIN_CATALOG,
+  BUILTIN_PROGRAMS,
   bundleIsActive,
   catalogSchema,
   entryMatchesProgram,
@@ -313,5 +314,45 @@ describe('readVersionFromSearch', () => {
 
   it('devolve nulo quando não sobra nada depois do id', () => {
     expect(readVersionFromSearch('Vim vim.vim', 'vim.vim')).toBeNull()
+  })
+})
+
+describe('família de versões', () => {
+  const familias = BUILTIN_PROGRAMS.filter((p) => p.family)
+
+  it('o padrão de cada família compila como expressão', () => {
+    for (const program of familias) {
+      expect(() => new RegExp(program.family!.pattern), program.id).not.toThrow()
+    }
+  })
+
+  it('o pacote recomendado do programa casa com o próprio padrão', () => {
+    for (const program of familias) {
+      const aceita = new RegExp(program.family!.pattern)
+      expect(aceita.test(program.winget ?? ''), program.id).toBe(true)
+    }
+  })
+
+  it('o prefixo da busca é começo do pacote recomendado', () => {
+    for (const program of familias) {
+      expect(program.winget?.startsWith(program.family!.prefix), program.id).toBe(true)
+    }
+  })
+
+  it('o padrão do .NET aceita as versões e recusa a prévia', () => {
+    const dotnet = BUILTIN_PROGRAMS.find((p) => p.id === 'dotnet')
+    const aceita = new RegExp(dotnet?.family?.pattern ?? '')
+
+    expect(aceita.test('Microsoft.DotNet.SDK.8')).toBe(true)
+    expect(aceita.test('Microsoft.DotNet.SDK.3_1')).toBe(true)
+    expect(aceita.test('Microsoft.DotNet.SDK.Preview')).toBe(false)
+  })
+
+  it('o padrão do PostgreSQL aceita só o número da versão', () => {
+    const postgres = BUILTIN_PROGRAMS.find((p) => p.id === 'postgresql')
+    const aceita = new RegExp(postgres?.family?.pattern ?? '')
+
+    expect(aceita.test('PostgreSQL.PostgreSQL.18')).toBe(true)
+    expect(aceita.test('PostgreSQL.PostgreSQL.Beta')).toBe(false)
   })
 })

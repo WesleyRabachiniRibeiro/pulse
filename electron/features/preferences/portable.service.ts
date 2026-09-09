@@ -4,12 +4,15 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { access } from 'node:fs/promises'
 import { hasProgram } from '@shared/domain/catalog'
+import { addToCatalog, myPrograms } from '../catalog/remote.service'
+import { installedIdsNow } from '../catalog/inventory.service'
 import { cleanProfile, EMPTY_PROFILE, type Profile } from '@shared/domain/profile'
 import {
   fileFor,
   FORMAT_FILE,
   profileOf,
   readPortable,
+  unknownOf,
   type ExportFormat,
   type ImportMode,
 } from '@shared/domain/portable'
@@ -26,6 +29,8 @@ export interface ExportResult {
 export interface ImportResult {
   status: 'imported' | 'canceled' | 'failed' | 'invalid'
   count?: number
+  adopted?: number
+  missing?: string[]
 }
 
 function owner(): BrowserWindow | null {
@@ -77,22 +82,40 @@ export async function exportProfile(
   const prefs = await readPreferences()
 
   try {
-    await writeFile(chosen.filePath, fileFor(format, profile, prefs.drive), 'utf8')
+    await writeFile(
+      chosen.filePath,
+      fileFor(format, profile, prefs.drive, myPrograms()),
+      'utf8',
+    )
     return { status: 'saved', path: chosen.filePath }
   } catch {
     return { status: 'failed' }
   }
 }
 
+/**
+ * Traz o arquivo para dentro. Programa que veio na bagagem e o catálogo daqui
+ * não conhece entra antes da limpeza, senão ele seria descartado justamente
+ * por ser desconhecido.
+ */
 async function adopt(raw: unknown, mode: ImportMode): Promise<ImportResult> {
   const portable = readPortable(raw)
   if (!portable) return { status: 'invalid' }
+
+  let adopted = 0
+  for (const program of unknownOf(portable, hasProgram)) {
+    if ((await addToCatalog(program).catch(() => 'exists')) === 'added') adopted++
+  }
 
   const current = await readProfile().catch(() => EMPTY_PROFILE)
   const merged = cleanProfile(profileOf(portable, mode, current), hasProgram)
 
   await writeProfile(merged)
-  return { status: 'imported', count: merged.selected.length }
+
+  const here = await installedIdsNow().catch((): string[] => [])
+  const missing = merged.selected.filter((id) => !here.includes(id))
+
+  return { status: 'imported', count: merged.selected.length, adopted, missing }
 }
 
 export async function importProfile(mode: ImportMode): Promise<ImportResult> {

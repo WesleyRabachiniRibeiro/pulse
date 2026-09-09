@@ -3,18 +3,30 @@ import { getProgram } from '@shared/domain/catalog'
 import s from './AppIcon.module.css'
 import { TINTS } from './tints'
 
-const FILES = import.meta.glob('../../assets/icons/*.svg', {
+const MASKS = import.meta.glob('../../assets/icons/*.svg', {
   eager: true,
   query: '?url',
   import: 'default',
 }) as Record<string, string>
 
-const URL_BY_ID: Record<string, string> = Object.fromEntries(
-  Object.entries(FILES).map(([path, url]) => [
-    path.slice(path.lastIndexOf('/') + 1, -'.svg'.length),
-    url,
-  ]),
-)
+/** Logotipo que só existe colorido, e que viraria um borrão como máscara. */
+const LOGOS = import.meta.glob('../../assets/logos/*.svg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
+
+function byId(files: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(files).map(([path, url]) => [
+      path.slice(path.lastIndexOf('/') + 1, -'.svg'.length),
+      url,
+    ]),
+  )
+}
+
+const MASK_BY_ID = byId(MASKS)
+const LOGO_BY_ID = byId(LOGOS)
 
 function monogram(name: string): string {
   const words = name.split(/[\s.]+/).filter(Boolean)
@@ -30,29 +42,28 @@ interface Props {
 }
 
 export function AppIcon({ id, name, size = 34 }: Props) {
-  const url = URL_BY_ID[id]
   const tint = TINTS[id] ?? 'var(--tx-3)'
   const style = { '--tint': tint, '--side': `${size}px` } as CSSProperties
 
-  if (!url) {
-    // Programa adotado do PC traz a imagem que ele mesmo registrou no Windows,
-    // e ela vem colorida: entra como imagem, não como máscara de uma cor só.
-    const own = getProgram(id)?.icon
-    if (own) {
-      return (
-        <span className={s.tile} data-own="true" style={style} aria-hidden>
-          <img className={s.photo} src={own} alt="" />
-        </span>
-      )
-    }
+  // Programa adotado do PC traz a imagem que ele mesmo registrou no Windows.
+  const picture = LOGO_BY_ID[id] ?? (MASK_BY_ID[id] ? undefined : getProgram(id)?.icon)
+
+  if (picture) {
+    return (
+      <span className={s.tile} data-own="true" style={style} aria-hidden>
+        <img className={s.photo} src={picture} alt="" />
+      </span>
+    )
   }
+
+  const mask = MASK_BY_ID[id]
 
   return (
     <span className={s.tile} style={style} aria-hidden>
-      {url ? (
+      {mask ? (
         <span
           className={s.brand}
-          style={{ maskImage: `url("${url}")`, WebkitMaskImage: `url("${url}")` }}
+          style={{ maskImage: `url("${mask}")`, WebkitMaskImage: `url("${mask}")` }}
         />
       ) : (
         <span className={s.monogram}>{monogram(name)}</span>

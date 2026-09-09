@@ -37,6 +37,13 @@ export const copyInputSchema = z.object({
 })
 export type CopyInput = z.infer<typeof copyInputSchema>
 
+export const importResultSchema = z.object({
+  status: z.enum(['imported', 'canceled', 'failed', 'invalid']),
+  count: z.number().optional(),
+  adopted: z.number().optional(),
+  missing: z.array(z.string()).optional(),
+})
+
 export const ipcContracts = {
   'preflight:drives': {
     input: freshInputSchema,
@@ -82,17 +89,11 @@ export const ipcContracts = {
   },
   'profile:import': {
     input: z.object({ mode: z.enum(IMPORT_MODES) }),
-    output: z.object({
-      status: z.enum(['imported', 'canceled', 'failed', 'invalid']),
-      count: z.number().optional(),
-    }),
+    output: importResultSchema,
   },
   'profile:importLink': {
     input: z.object({ url: z.string(), mode: z.enum(IMPORT_MODES) }),
-    output: z.object({
-      status: z.enum(['imported', 'canceled', 'failed', 'invalid']),
-      count: z.number().optional(),
-    }),
+    output: importResultSchema,
   },
   'profile:folders': {
     input: z.void(),

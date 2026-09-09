@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getProgram } from './catalog'
+import { getProgram, programSchema, type Program } from './catalog'
 import { settingsSchema } from './settings'
 import { profileSchema, type Profile } from './profile'
 
@@ -12,6 +12,7 @@ export const portableSchema = z.object({
   programs: z.array(z.string()),
   drives: z.record(z.string(), z.string()),
   settings: z.record(z.string(), settingsSchema),
+  extras: z.array(programSchema).optional(),
 })
 export type Portable = z.infer<typeof portableSchema>
 
@@ -28,7 +29,15 @@ export const FORMAT_FILE: Record<ExportFormat, { name: string; extension: string
   csv: { name: 'Planilha', extension: 'csv' },
 }
 
-export function portableOf(profile: Profile, drive?: string, at = new Date()): Portable {
+export function portableOf(
+  profile: Profile,
+  drive?: string,
+  at = new Date(),
+  extras: readonly Program[] = [],
+): Portable {
+  const wanted = new Set(profile.selected)
+  const mine = extras.filter((program) => wanted.has(program.id))
+
   return {
     pulse: PORTABLE_VERSION,
     savedAt: at.toISOString(),
@@ -36,7 +45,13 @@ export function portableOf(profile: Profile, drive?: string, at = new Date()): P
     programs: [...profile.selected],
     drives: { ...profile.drives },
     settings: { ...profile.settings },
+    ...(mine.length > 0 ? { extras: mine.map((program) => ({ ...program })) } : {}),
   }
+}
+
+/** O que veio no arquivo e o catálogo de casa ainda não conhece. */
+export function unknownOf(portable: Portable, known: (id: string) => boolean): Program[] {
+  return (portable.extras ?? []).filter((program) => !known(program.id))
 }
 
 /**
@@ -130,12 +145,17 @@ export function csvOf(ids: readonly string[]): string {
   return `${rows.map((row) => row.map(csvCell).join(';')).join('\r\n')}\r\n`
 }
 
-export function fileFor(format: ExportFormat, profile: Profile, drive?: string): string {
+export function fileFor(
+  format: ExportFormat,
+  profile: Profile,
+  drive?: string,
+  extras: readonly Program[] = [],
+): string {
   const ids = [...profile.selected]
 
   if (format === 'winget') return wingetImportOf(ids)
   if (format === 'script') return scriptOf(ids)
   if (format === 'csv') return csvOf(ids)
 
-  return `${JSON.stringify(portableOf(profile, drive), null, 2)}\n`
+  return `${JSON.stringify(portableOf(profile, drive, new Date(), extras), null, 2)}\n`
 }

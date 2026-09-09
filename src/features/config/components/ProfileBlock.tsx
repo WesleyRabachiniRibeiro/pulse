@@ -8,7 +8,8 @@ import {
   type ImportMode,
 } from '@shared/domain/portable'
 import { savePreference, usePreferences } from '@/features/preferences'
-import { useSelection } from '@/features/selection'
+import { appendToQueue, startInstallation, useRun } from '@/features/installation'
+import { reloadSelection, useSelection } from '@/features/selection'
 import { bridge } from '@/shared/lib/bridge'
 import s from './ProfileBlock.module.css'
 
@@ -35,9 +36,15 @@ interface Folder {
 interface Answer {
   status: string
   count?: number
+  adopted?: number
+  missing?: string[]
 }
 
-export function ProfileBlock() {
+interface Props {
+  onGoToInstallation: () => void
+}
+
+export function ProfileBlock({ onGoToInstallation }: Props) {
   const prefs = usePreferences()
   const selected = useSelection((st) => st.selected)
   const settings = useSelection((st) => st.settings)
@@ -50,6 +57,8 @@ export function ProfileBlock() {
   const [folders, setFolders] = useState<Folder[]>([])
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
+  const [missing, setMissing] = useState<string[]>([])
+  const run = useRun()
 
   useEffect(() => {
     let alive = true
@@ -82,9 +91,34 @@ export function ProfileBlock() {
     }
 
     const count = answer.count ?? 0
+    const adopted = answer.adopted ?? 0
+
+    setMissing(answer.missing ?? [])
+    void reloadSelection()
+
     setNote(
-      `${count} ${count === 1 ? 'programa marcado' : 'programas marcados'}. Reabra o Pulse para a Seleção pegar a lista nova.`,
+      [
+        `${count} ${count === 1 ? 'programa marcado' : 'programas marcados'}`,
+        adopted > 0
+          ? `${adopted} ${adopted === 1 ? 'entrou' : 'entraram'} no seu catálogo`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
     )
+  }
+
+  async function instalarFaltantes() {
+    const drive = prefs.drive ?? 'C:'
+    const requests = missing.map((id) => ({ id, drive }))
+    if (requests.length === 0) return
+
+    setMissing([])
+
+    if (run) await appendToQueue(requests)
+    else await startInstallation(requests, drive)
+
+    onGoToInstallation()
   }
 
   async function exportar() {
@@ -310,6 +344,25 @@ export function ProfileBlock() {
             </button>
           </div>
         </div>
+
+        {missing.length > 0 && (
+          <div className={s.missing}>
+            <span className={s.missingLine}>
+              {missing.length} {missing.length === 1 ? 'programa do perfil não está' : 'programas do perfil não estão'}{' '}
+              neste PC.
+            </span>
+            <button
+              type="button"
+              className={s.primary}
+              onClick={() => void instalarFaltantes()}
+            >
+              Instalar {missing.length === 1 ? 'o que falta' : `os ${missing.length} que faltam`}
+            </button>
+            <button type="button" className={s.close} aria-label="Deixar para depois" onClick={() => setMissing([])}>
+              ✕
+            </button>
+          </div>
+        )}
 
         {note && <p className={s.note}>{note}</p>}
       </div>
