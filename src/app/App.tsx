@@ -158,6 +158,7 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
               <Summary
                 onChooseMore={() => setScreen('select')}
                 onSeeInstallation={() => setScreen('run')}
+                onGoToManage={() => setScreen('manage')}
               />
             )}
             {screen === 'config' && <Config />}

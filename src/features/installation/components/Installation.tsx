@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getProgram } from '@shared/domain/catalog'
+import { formatMb, getProgram, totalSizeMb } from '@shared/domain/catalog'
 import { usePrograms } from '@/features/catalog'
 import { useWatchOpenable } from '../store/useOpen'
 import {
@@ -74,6 +74,9 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
   const percent = overallPercent(run.items)
   const { total, done, failed } = tally(run.items)
   const active = run.items.filter(isActive).length
+  const totalMb = totalSizeMb(run.items.map((i) => i.id))
+  const doneMb = totalSizeMb(run.items.filter((i) => i.status === 'done').map((i) => i.id))
+  const rest = remainingMinutes(run.items)
 
   const groups = [
     {
@@ -95,11 +98,10 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
         <div className={s.numbers}>
           <div className={s.pct}>{percent}%</div>
           <div className={s.count}>
-            {done} de {total} programas
+            {formatMb(doneMb)} de {formatMb(totalMb)}
           </div>
         </div>
 
-        {}
         <button
           type="button"
           className={s.morePrograms}
@@ -111,7 +113,6 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
         </button>
       </div>
 
-      {}
       <div className={s.ribbon}>
         {run.items.map((item) => {
           const program = getProgram(item.id)
@@ -131,8 +132,6 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
       </div>
 
       <div className={s.middle}>
-        {
-}
         <div className={s.queue}>
           {groups.map((group) => (
             <section key={group.title} className={s.group}>
@@ -158,8 +157,10 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
 
         <aside className={s.panel}>
           <div className={s.panelCard}>
-            <div className={s.panelLabel}>TEMPO DECORRIDO</div>
-            <div className={s.time}>{clock(elapsed)}</div>
+            <div className={s.panelLabel}>{running ? 'TEMPO RESTANTE' : 'TEMPO DECORRIDO'}</div>
+            <div className={s.time}>
+              {running ? (rest > 1 ? `~${rest} min` : 'menos de 1 min') : clock(elapsed)}
+            </div>
 
             <div className={s.divider} />
 
@@ -185,8 +186,8 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
             </div>
             {running && (
               <div className={s.stat}>
-                <span>falta baixar</span>
-                <span className={s.statValue}>~{remainingMinutes(run.items)} min</span>
+                <span>decorrido</span>
+                <span className={s.statValue}>{clock(elapsed)}</span>
               </div>
             )}
           </div>
