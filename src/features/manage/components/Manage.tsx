@@ -4,6 +4,7 @@ import {
   LuChevronDown,
   LuChevronRight,
   LuExternalLink,
+  LuListX,
   LuPlus,
   LuRotateCw,
   LuSearch,
@@ -53,6 +54,7 @@ import {
   useWatchStartup,
 } from '../store/useStartup'
 import { useFileIcon } from '../store/useFileIcon'
+import { reloadMine, useMine, useWatchMine } from '../store/useMine'
 import { useHistory, useHistoryLoaded, useWatchHistory } from '../store/useHistory'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
@@ -74,6 +76,7 @@ export function Manage({ onGoToInstallation }: Props) {
   const prefs = usePreferences()
   const run = useRun()
   useWatchHistory(run?.finishedAt ?? null)
+  useWatchMine(loaded)
 
   useWatchStartup(true)
   useWatchOpenable(loaded)
@@ -374,6 +377,42 @@ const ADOPT_TITLE: Record<AdoptState, string> = {
   failed: 'Não deu para pôr no catálogo. Tente de novo.',
 }
 
+function DropButton({ node }: { node: InstalledNode }) {
+  const [asking, setAsking] = useState(false)
+
+  async function drop() {
+    if (!node.programId) return
+    await bridge.invoke('catalog:remove', { id: node.programId }).catch(() => undefined)
+    await reloadMine()
+    void reloadInventory(true)
+  }
+
+  if (!asking) {
+    return (
+      <button
+        type="button"
+        className={s.icon}
+        onClick={() => setAsking(true)}
+        aria-label={`Tirar ${node.name} do seu catálogo`}
+        title="Tirar do seu catálogo. O programa continua instalado neste PC."
+      >
+        <LuListX size={15} />
+      </button>
+    )
+  }
+
+  return (
+    <>
+      <button type="button" className={s.action} onClick={() => void drop()}>
+        TIRAR DO CATÁLOGO
+      </button>
+      <button type="button" className={s.action} onClick={() => setAsking(false)}>
+        NÃO
+      </button>
+    </>
+  )
+}
+
 function AdoptButton({ node }: { node: InstalledNode }) {
   const [state, setState] = useState<AdoptState>('idle')
 
@@ -564,6 +603,7 @@ interface RowProps {
 
 function InstalledRow({ node, picked, onPick }: RowProps) {
   const [open, setOpen] = useState(false)
+  const mine = useMine()
   const program = node.programId ? getProgram(node.programId) : undefined
   const canOpen = useCanOpen(node.programId ?? '')
   const opening = useOpening(node.programId ?? '')
@@ -616,6 +656,8 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
 
         {program && !removed && (
           <span className={s.actions}>
+            {node.programId && mine.has(node.programId) && <DropButton node={node} />}
+
             {canOpen && (
               <button
                 type="button"

@@ -125,6 +125,14 @@ export const ipcContracts = {
       id: z.string().optional(),
     }),
   },
+  'catalog:mine': {
+    input: z.void(),
+    output: z.array(z.string()),
+  },
+  'catalog:remove': {
+    input: z.object({ id: z.string().min(1) }),
+    output: z.boolean(),
+  },
   'catalog:startup': {
     input: z.void(),
     output: z.array(startupEntrySchema),

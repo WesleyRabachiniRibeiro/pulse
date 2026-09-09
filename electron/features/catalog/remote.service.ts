@@ -159,6 +159,23 @@ export async function addToCatalog(program: Program): Promise<'added' | 'exists'
   return 'added'
 }
 
+export function myProgramIds(): string[] {
+  return extras.map((program) => program.id)
+}
+
+/** Tira do catálogo o que a pessoa adotou. O programa segue instalado no PC. */
+export async function removeFromCatalog(id: string): Promise<boolean> {
+  await loadCatalog()
+
+  const rest = extras.filter((program) => program.id !== id)
+  if (rest.length === extras.length) return false
+
+  extras = rest
+  await saveExtras(extras)
+  announce(publish())
+  return true
+}
+
 export function forgetRemoteCatalog(): void {
   loading = null
   base = BUILTIN_CATALOG

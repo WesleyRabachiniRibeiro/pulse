@@ -1,38 +1,40 @@
 import { useEffect, useState } from 'react'
-import { LuCheck, LuFolder, LuLink } from 'react-icons/lu'
-import { EXPORT_FORMATS, type ExportFormat, type ImportMode } from '@shared/domain/portable'
+import { LuLink } from 'react-icons/lu'
+import { formatMb, totalSizeMb } from '@shared/domain/catalog'
+import {
+  EXPORT_FORMATS,
+  FORMAT_FILE,
+  type ExportFormat,
+  type ImportMode,
+} from '@shared/domain/portable'
 import { savePreference, usePreferences } from '@/features/preferences'
 import { useSelection } from '@/features/selection'
 import { bridge } from '@/shared/lib/bridge'
 import s from './ProfileBlock.module.css'
 
 const FORMATS: Record<ExportFormat, { label: string; hint: string }> = {
-  pulse: {
-    label: 'Perfil do Pulse',
-    hint: 'a lista, o disco de cada um e as exceções. É o que o Pulse importa de volta',
-  },
-  winget: {
-    label: 'Lista do winget',
-    hint: 'para rodar winget import em qualquer PC, sem o Pulse',
-  },
-  script: {
-    label: 'Script do PowerShell',
-    hint: 'um comando de instalação por programa, para você ler antes de rodar',
-  },
-  csv: { label: 'Planilha', hint: 'nome, identificador, categoria e tamanho, para consultar' },
+  pulse: { label: 'Perfil do Pulse', hint: '.json — traz de volta tudo, inclusive as exceções' },
+  winget: { label: 'JSON do winget', hint: '.json — o formato que o winget import lê' },
+  script: { label: 'Script de linha de comando', hint: '.ps1 — roda sem o Pulse instalado' },
+  csv: { label: 'Planilha da lista', hint: '.csv — só os nomes, para conferir ou imprimir' },
 }
 
 type Escolha = ImportMode | 'ask'
 
 const MODES: { id: Escolha; label: string }[] = [
-  { id: 'ask', label: 'PERGUNTAR' },
-  { id: 'merge', label: 'SOMAR' },
-  { id: 'replace', label: 'SUBSTITUIR' },
+  { id: 'replace', label: 'Substituir' },
+  { id: 'merge', label: 'Somar' },
+  { id: 'ask', label: 'Perguntar na hora' },
 ]
 
 interface Folder {
   path: string
   label: string
+}
+
+interface Answer {
+  status: string
+  count?: number
 }
 
 export function ProfileBlock() {
@@ -43,6 +45,7 @@ export function ProfileBlock() {
   const [format, setFormat] = useState<ExportFormat>('pulse')
   const [mode, setMode] = useState<Escolha>('ask')
   const [asking, setAsking] = useState(false)
+  const [pending, setPending] = useState<'file' | 'link'>('file')
   const [link, setLink] = useState('')
   const [folders, setFolders] = useState<Folder[]>([])
   const [busy, setBusy] = useState(false)
@@ -61,15 +64,28 @@ export function ProfileBlock() {
     }
   }, [])
 
+  const many = selected.size
   const exceptions = Object.keys(settings).length
-  const profileLine =
-    selected.size === 0
-      ? 'Você ainda não marcou nenhum programa.'
-      : `Hoje são ${selected.size} ${selected.size === 1 ? 'programa' : 'programas'}${
-          exceptions > 0
-            ? ` e ${exceptions} ${exceptions === 1 ? 'exceção' : 'exceções'}`
-            : ''
-        }.`
+  const profileLine = [
+    `${many} ${many === 1 ? 'programa marcado' : 'programas marcados'}`,
+    formatMb(totalSizeMb(selected)),
+    exceptions === 0
+      ? 'nenhuma exceção'
+      : `${exceptions} ${exceptions === 1 ? 'exceção' : 'exceções'}`,
+  ].join(' · ')
+
+  function contar(answer: Answer | null) {
+    if (!answer || answer.status === 'failed') return setNote('Não deu para ler esse perfil.')
+    if (answer.status === 'canceled') return
+    if (answer.status === 'invalid') {
+      return setNote('Esse arquivo não é um perfil do Pulse, ou é de uma versão que não conheço.')
+    }
+
+    const count = answer.count ?? 0
+    setNote(
+      `${count} ${count === 1 ? 'programa marcado' : 'programas marcados'}. Reabra o Pulse para a Seleção pegar a lista nova.`,
+    )
+  }
 
   async function exportar() {
     setBusy(true)
@@ -83,62 +99,34 @@ export function ProfileBlock() {
     setNote(`Salvo em ${answer.path}`)
   }
 
-  async function importar(escolha: ImportMode) {
+  async function trazer(escolha: ImportMode, from: 'file' | 'link') {
     setAsking(false)
     setBusy(true)
     setNote(null)
 
-    const answer = await bridge.invoke('profile:import', { mode: escolha }).catch(() => null)
+    const answer = await (from === 'link'
+      ? bridge.invoke('profile:importLink', { url: link, mode: escolha })
+      : bridge.invoke('profile:import', { mode: escolha })
+    ).catch(() => null)
+
     setBusy(false)
     contar(answer)
   }
-
-  async function importarLink(escolha: ImportMode) {
-    setAsking(false)
-    setBusy(true)
-    setNote(null)
-
-    const answer = await bridge
-      .invoke('profile:importLink', { url: link, mode: escolha })
-      .catch(() => null)
-    setBusy(false)
-    contar(answer)
-  }
-
-  function contar(answer: { status: string; count?: number } | null) {
-    if (!answer || answer.status === 'failed') return setNote('Não deu para ler esse perfil.')
-    if (answer.status === 'canceled') return
-    if (answer.status === 'invalid') {
-      return setNote('Esse arquivo não é um perfil do Pulse, ou é de uma versão que não conheço.')
-    }
-
-    const many = answer.count ?? 0
-    setNote(
-      `${many} ${many === 1 ? 'programa marcado' : 'programas marcados'}. Reabra o Pulse para a Seleção pegar a lista nova.`,
-    )
-  }
-
-  const [pending, setPending] = useState<'file' | 'link' | null>(null)
 
   function começar(from: 'file' | 'link') {
-    if (mode === 'ask') {
-      setPending(from)
-      setAsking(true)
-      return
-    }
-    if (from === 'file') void importar(mode)
-    else void importarLink(mode)
-  }
-
-  function resolver(escolha: ImportMode) {
-    if (pending === 'link') void importarLink(escolha)
-    else void importar(escolha)
+    setPending(from)
+    if (mode === 'ask') return setAsking(true)
+    void trazer(mode, from)
   }
 
   async function escolherPasta() {
     const chosen = await bridge.invoke('profile:pickFolder', undefined).catch(() => null)
     if (chosen) void savePreference({ profileFolder: chosen })
   }
+
+  const folderNote = prefs.profileFolder
+    ? `Salvar e abrir começam em ${prefs.profileFolder}.`
+    : 'Sem pasta escolhida, o perfil só sai quando você clicar em salvar.'
 
   return (
     <section className={s.section}>
@@ -158,26 +146,29 @@ export function ProfileBlock() {
               </div>
             </div>
 
-            <button type="button" className={s.primary} disabled={busy} onClick={() => void exportar()}>
-              Salvar arquivo…
+            <button
+              type="button"
+              className={s.primary}
+              disabled={busy}
+              onClick={() => void exportar()}
+            >
+              Salvar .{FORMAT_FILE[format].extension}…
             </button>
           </div>
 
-          <div className={s.options}>
+          <div className={s.picks}>
             {EXPORT_FORMATS.map((one) => (
               <button
                 key={one}
                 type="button"
-                className={s.option}
+                className={s.pick}
                 aria-pressed={format === one}
                 onClick={() => setFormat(one)}
               >
-                <span className={s.mark} aria-hidden>
-                  {format === one ? <LuCheck size={12} /> : null}
-                </span>
-                <span className={s.optionTexts}>
-                  <span className={s.optionName}>{FORMATS[one].label}</span>
-                  <span className={s.optionHint}>{FORMATS[one].hint}</span>
+                <span className={s.dot} aria-hidden />
+                <span className={s.pickTexts}>
+                  <span className={s.pickName}>{FORMATS[one].label}</span>
+                  <span className={s.pickHint}>{FORMATS[one].hint}</span>
                 </span>
               </button>
             ))}
@@ -218,12 +209,20 @@ export function ProfileBlock() {
           {asking && (
             <div className={s.ask}>
               <span className={s.askLine}>
-                O que fazer com os {selected.size} que você já tinha marcado?
+                O que fazer com os {many} que você já tinha marcado?
               </span>
-              <button type="button" className={s.secondary} onClick={() => resolver('merge')}>
+              <button
+                type="button"
+                className={s.secondary}
+                onClick={() => void trazer('merge', pending)}
+              >
                 Somar as duas listas
               </button>
-              <button type="button" className={s.secondary} onClick={() => resolver('replace')}>
+              <button
+                type="button"
+                className={s.secondary}
+                onClick={() => void trazer('replace', pending)}
+              >
                 Substituir pela do arquivo
               </button>
               <button
@@ -240,7 +239,9 @@ export function ProfileBlock() {
 
         <div className={s.card}>
           <div className={s.cardName}>Importar de um link</div>
-          <div className={s.hint}>Cole o endereço de um perfil que alguém compartilhou com você.</div>
+          <div className={s.hint}>
+            Cole o endereço de um perfil que alguém compartilhou com você.
+          </div>
 
           <div className={s.linkRow}>
             <div className={s.field}>
@@ -267,38 +268,44 @@ export function ProfileBlock() {
 
         <div className={s.card}>
           <div className={s.cardName}>Pasta sincronizada</div>
-          <div className={s.hint}>
-            {prefs.profileFolder
-              ? `Salvar e abrir começam em ${prefs.profileFolder}.`
-              : 'Escolha onde salvar e abrir os perfis. Uma pasta que já sincroniza sozinha faz o arquivo viajar entre os seus PCs, sem login nenhum.'}
-          </div>
+          <div className={s.hint}>{folderNote}</div>
 
-          <div className={s.options}>
+          <div className={s.picks}>
+            <button
+              type="button"
+              className={s.pick}
+              aria-pressed={!prefs.profileFolder}
+              onClick={() => void savePreference({ profileFolder: undefined })}
+            >
+              <span className={s.dot} aria-hidden />
+              <span className={s.pickTexts}>
+                <span className={s.pickName}>Nenhuma</span>
+                <span className={s.pickHint}>só salvar quando eu pedir</span>
+              </span>
+            </button>
+
             {folders.map((one) => (
               <button
                 key={one.path}
                 type="button"
-                className={s.option}
+                className={s.pick}
                 aria-pressed={prefs.profileFolder === one.path}
                 onClick={() => void savePreference({ profileFolder: one.path })}
+                title={one.path}
               >
-                <span className={s.mark} aria-hidden>
-                  {prefs.profileFolder === one.path ? <LuCheck size={12} /> : null}
-                </span>
-                <span className={s.optionTexts}>
-                  <span className={s.optionName}>{one.label}</span>
-                  <span className={s.optionHint}>{one.path}</span>
+                <span className={s.dot} aria-hidden />
+                <span className={s.pickTexts}>
+                  <span className={s.pickName}>{one.label}</span>
+                  <span className={s.pickHint}>detectado neste PC</span>
                 </span>
               </button>
             ))}
 
-            <button type="button" className={s.option} onClick={() => void escolherPasta()}>
-              <span className={s.mark} aria-hidden>
-                <LuFolder size={12} />
-              </span>
-              <span className={s.optionTexts}>
-                <span className={s.optionName}>Outra pasta…</span>
-                <span className={s.optionHint}>pendrive, ou qualquer pasta deste PC</span>
+            <button type="button" className={s.pick} onClick={() => void escolherPasta()}>
+              <span className={s.dot} aria-hidden />
+              <span className={s.pickTexts}>
+                <span className={s.pickName}>Pendrive ou outra pasta</span>
+                <span className={s.pickHint}>você escolhe na hora</span>
               </span>
             </button>
           </div>

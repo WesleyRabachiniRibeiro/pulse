@@ -5,6 +5,8 @@ import { readInventory } from './inventory.service'
 import { adoptProgram } from './adopt.service'
 import { listStartup, setStartup } from './startup.service'
 import {
+  myProgramIds,
+  removeFromCatalog,
   loadCatalog,
   refreshCatalog,
   refreshVersionsFromWinget,
@@ -24,6 +26,8 @@ export function registerCatalog(): void {
   register('catalog:installed', (input) => listInstalled(input))
   register('catalog:inventory', (input) => readInventory(input.fresh === true))
   register('catalog:add', (input) => adoptProgram(input))
+  register('catalog:mine', () => myProgramIds())
+  register('catalog:remove', (input) => removeFromCatalog(input.id))
   register('catalog:startup', () => listStartup())
   register('catalog:setStartup', (input) => setStartup(input.name, input.on))
   register('catalog:autostart', () => listAutostart())
