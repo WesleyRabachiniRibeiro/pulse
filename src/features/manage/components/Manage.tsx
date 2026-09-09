@@ -2,6 +2,15 @@ import { useState } from 'react'
 import { getProgram, getPrograms } from '@shared/domain/catalog'
 import { suggestedText, type Upgrade } from '@shared/domain/inventory'
 import type { InstalledNode } from '@shared/domain/installed'
+import {
+  HISTORY_LIMIT,
+  RUN_STATE_LABEL,
+  RUN_STATE_ONE,
+  RUN_STATES,
+  runSeconds,
+  tallyOf,
+  type RunRecord,
+} from '@shared/domain/history'
 import type { StartupEntry } from '@shared/domain/windows'
 import {
   reloadInventory,
@@ -29,10 +38,11 @@ import {
   useWatchStartup,
 } from '../store/useStartup'
 import { useFileIcon } from '../store/useFileIcon'
+import { useHistory, useHistoryLoaded, useWatchHistory } from '../store/useHistory'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
 
-type Tab = 'installed' | 'updates' | 'startup'
+type Tab = 'installed' | 'updates' | 'startup' | 'history'
 
 interface Props {
   onGoToInstallation: () => void
@@ -45,8 +55,10 @@ export function Manage({ onGoToInstallation }: Props) {
   const busy = useInventoryBusy()
   const startup = useStartup()
   const startupLoaded = useStartupLoaded()
+  const history = useHistory()
   const prefs = usePreferences()
   const run = useRun()
+  useWatchHistory(run?.finishedAt ?? null)
 
   useWatchStartup(true)
   useWatchOpenable(loaded)
@@ -67,6 +79,7 @@ export function Manage({ onGoToInstallation }: Props) {
     { id: 'installed', label: 'INSTALADOS', count: inventory.installed.length },
     { id: 'updates', label: 'ATUALIZAÇÕES', count: inventory.upgrades.length },
     { id: 'startup', label: 'INICIALIZAÇÃO', count: startup.length },
+    { id: 'history', label: 'HISTÓRICO', count: history.length },
   ]
 
   return (
@@ -120,6 +133,7 @@ export function Manage({ onGoToInstallation }: Props) {
           <Updates loaded={loaded} onUpdate={(id) => void enfileirar([id])} />
         )}
         {tab === 'startup' && <Startup entries={startup} loaded={startupLoaded} />}
+        {tab === 'history' && <History />}
       </div>
     </div>
   )
@@ -170,6 +184,116 @@ function SuggestButton({ node }: { node: InstalledNode }) {
     >
       {copied ? 'COPIADO' : 'SUGERIR'}
     </button>
+  )
+}
+
+function when(record: RunRecord): string {
+  const started = new Date(record.startedAt)
+  const finished = new Date(record.finishedAt)
+  const day = started.toLocaleDateString('pt-BR')
+  const from = started.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const to = finished.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return `${day} ${from} → ${to}`
+}
+
+function howLong(seconds: number): string {
+  if (seconds < 60) return `${seconds} s`
+  return `${Math.max(1, Math.round(seconds / 60))} min`
+}
+
+function Run({ record, index }: { record: RunRecord; index: number }) {
+  const [open, setOpen] = useState(index === 0)
+  const many = record.items.length
+
+  return (
+    <div className={s.run}>
+      <button
+        type="button"
+        className={s.runHead}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className={s.runCaret} aria-hidden>
+          {open ? '▾' : '▸'}
+        </span>
+
+        <span className={s.runTitles}>
+          <span className={s.runWhen}>{when(record)}</span>
+          <span className={s.runMeta}>
+            {many} {many === 1 ? 'programa' : 'programas'} · disco {record.drive} ·{' '}
+            {howLong(runSeconds(record))}
+          </span>
+        </span>
+
+        <span className={s.runPills}>
+          {tallyOf(record).map((one) => (
+            <span key={one.state} className={s.runPill} data-state={one.state}>
+              {one.count} {one.count === 1 ? RUN_STATE_ONE[one.state] : RUN_STATE_LABEL[one.state]}
+            </span>
+          ))}
+        </span>
+      </button>
+
+      {open && (
+        <div className={s.runBody}>
+          {record.items.map((item) => {
+            const program = getProgram(item.id)
+            const state = RUN_STATES.find((one) => one === item.status)
+
+            return (
+              <div key={item.id} className={s.runItem}>
+                <div className={s.runLine}>
+                  {program ? (
+                    <AppIcon id={program.id} name={program.name} size={26} />
+                  ) : (
+                    <span className={s.stranger}>—</span>
+                  )}
+
+                  <span className={s.runName}>{program?.name ?? item.id}</span>
+                  <span className={s.runDisk}>disco {item.drive}</span>
+                  <span className={s.runTag} data-state={state ?? 'canceled'}>
+                    {state ? RUN_STATE_ONE[state].toUpperCase() : item.status.toUpperCase()}
+                  </span>
+                </div>
+
+                {item.error && <div className={s.runError}>{item.error}</div>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function History() {
+  const runs = useHistory()
+  const loaded = useHistoryLoaded()
+
+  if (!loaded) return <p className={s.empty}>Lendo as filas que já rodaram…</p>
+  if (runs.length === 0) {
+    return (
+      <p className={s.empty}>
+        Nenhuma fila terminou ainda neste PC. Quando a primeira terminar, ela aparece aqui.
+      </p>
+    )
+  }
+
+  return (
+    <>
+      <p className={s.histLine}>
+        {runs.length === 1
+          ? 'A última fila que rodou neste PC.'
+          : `As ${runs.length} filas mais recentes deste PC.`}{' '}
+        O Pulse guarda as {HISTORY_LIMIT} últimas.
+      </p>
+
+      <div className={s.runs}>
+        {runs.map((record, index) => (
+          <Run key={`${record.finishedAt}-${index}`} record={record} index={index} />
+        ))}
+      </div>
+    </>
   )
 }
 

@@ -5,6 +5,8 @@ import {
   historySchema,
   installedCount,
   recordOf,
+  runSeconds,
+  tallyOf,
   withRecord,
   type RunRecord,
 } from './history'
@@ -125,5 +127,47 @@ describe('installedCount', () => {
     })
 
     expect(installedCount(saved)).toBe(1)
+  })
+})
+
+describe('tallyOf', () => {
+  it('conta por estado e deixa de fora o que não aconteceu', () => {
+    const saved = record({
+      items: [
+        { id: 'a', status: 'done', drive: 'C:' },
+        { id: 'b', status: 'done', drive: 'C:' },
+        { id: 'c', status: 'failed', drive: 'C:' },
+      ],
+    })
+
+    expect(tallyOf(saved)).toEqual([
+      { state: 'done', count: 2 },
+      { state: 'failed', count: 1 },
+    ])
+  })
+
+  it('vem na ordem em que interessa ler, pronto antes de falhou', () => {
+    const saved = record({
+      items: [
+        { id: 'a', status: 'canceled', drive: 'C:' },
+        { id: 'b', status: 'done', drive: 'C:' },
+      ],
+    })
+
+    expect(tallyOf(saved).map((one) => one.state)).toEqual(['done', 'canceled'])
+  })
+})
+
+describe('runSeconds', () => {
+  it('mede do começo ao fim da fila', () => {
+    const saved = record({
+      startedAt: '2026-09-09T10:00:00.000Z',
+      finishedAt: '2026-09-09T10:22:30.000Z',
+    })
+    expect(runSeconds(saved)).toBe(1350)
+  })
+
+  it('devolve zero quando a data não presta', () => {
+    expect(runSeconds(record({ startedAt: 'ontem' }))).toBe(0)
   })
 })

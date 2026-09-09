@@ -53,3 +53,40 @@ export function withRecord(
 export function installedCount(record: RunRecord): number {
   return record.items.filter((item) => item.status === 'done').length
 }
+
+export const RUN_STATES = ['done', 'failed', 'waiting', 'canceled'] as const
+export type RunState = (typeof RUN_STATES)[number]
+
+export const RUN_STATE_LABEL: Record<RunState, string> = {
+  done: 'prontos',
+  failed: 'falharam',
+  waiting: 'pararam esperando você',
+  canceled: 'cancelados',
+}
+
+export const RUN_STATE_ONE: Record<RunState, string> = {
+  done: 'pronto',
+  failed: 'falhou',
+  waiting: 'parou esperando você',
+  canceled: 'cancelado',
+}
+
+export interface RunTally {
+  state: RunState
+  count: number
+}
+
+/** Só os estados que apareceram, na ordem em que interessam ler. */
+export function tallyOf(record: RunRecord): RunTally[] {
+  return RUN_STATES.map((state) => ({
+    state,
+    count: record.items.filter((item) => item.status === state).length,
+  })).filter((one) => one.count > 0)
+}
+
+export function runSeconds(record: RunRecord): number {
+  const from = Date.parse(record.startedAt)
+  const to = Date.parse(record.finishedAt)
+  if (Number.isNaN(from) || Number.isNaN(to)) return 0
+  return Math.max(0, Math.round((to - from) / 1000))
+}
