@@ -9,11 +9,11 @@ import {
   type Settings,
 } from '@shared/domain/settings'
 import { formatMb, type Program } from '@shared/domain/catalog'
-import { LOCALES, type InstallScope } from '@shared/domain/winget'
 import { EDITOR_TWEAKS } from '@shared/domain/editor'
 import { LINE_ENDINGS } from '@shared/domain/git'
 import { runtimeToolsFor } from '@shared/domain/runtime'
-import { formatGb, type Drive } from '@shared/domain/preflight'
+import type { Defaults } from '@shared/domain/defaults'
+import type { Drive } from '@shared/domain/preflight'
 import type { SteamGame } from '@shared/domain/steam'
 import { bridge } from '@/shared/lib/bridge'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
@@ -26,6 +26,7 @@ import {
 import s from './AppSettings.module.css'
 import { SteamGames } from './SteamGames'
 import { PackageVersions } from './PackageVersions'
+import { ProgramExceptions } from './ProgramExceptions'
 
 interface Props {
   program: Program
@@ -33,7 +34,7 @@ interface Props {
   drives: readonly Drive[]
   generalDrive: string
   chosenDrive: string | null
-  currentAutostart: 'on' | 'off' | null
+  defaults: Defaults
   settings: Settings
   onChangeDrive: (id: string, drive: string | null) => void
   onChangeSettings: (id: string, settings: Settings) => void
@@ -80,7 +81,7 @@ export function AppSettings({
   drives,
   generalDrive,
   chosenDrive,
-  currentAutostart,
+  defaults,
   settings,
   onChangeDrive,
   onChangeSettings,
@@ -135,23 +136,6 @@ export function AppSettings({
           ? settings.workloads
           : settings.extensions) ?? []
 
-  const autostartShown: 'on' | 'off' | null =
-    settings.autostart === undefined ? currentAutostart : settings.autostart ? 'on' : 'off'
-
-  function chooseAutostart(wanted: 'on' | 'off') {
-    const value = wanted === currentAutostart ? undefined : wanted === 'on'
-    onChangeSettings(program.id, { ...settings, autostart: value })
-  }
-
-  function chooseScope(wanted: InstallScope) {
-    const scope = settings.scope === wanted ? undefined : wanted
-    onChangeSettings(program.id, { ...settings, scope })
-  }
-
-  function chooseLocale(wanted: string | null) {
-    const locale = wanted === settings.locale || wanted === null ? undefined : wanted
-    onChangeSettings(program.id, { ...settings, locale })
-  }
   const git: GitConfig = settings.git ?? gitDaMaquina ?? DEFAULT_GIT
   const canApply = installed && !settingsAreEmpty(settings)
 
@@ -215,45 +199,15 @@ export function AppSettings({
         )}
 
         {installsItself && (
-        <section className={s.section} data-tour="aj-disco">
-          <div className={s.label}>ONDE INSTALAR ESTE PROGRAMA</div>
-          <p className={s.description}>
-            Vale só para o {program.name}. Os outros seguem o disco geral, escolhido nas
-            boas-vindas.
-          </p>
-
-          <div className={s.drives}>
-            <button
-              type="button"
-              className={s.drive}
-              aria-pressed={chosenDrive === null}
-              disabled={installed}
-              onClick={() => onChangeDrive(program.id, null)}
-            >
-              <span className={s.driveName}>Geral · {generalDrive}</span>
-              <span className={s.driveNote}>o disco da etapa 1</span>
-            </button>
-
-            {drives.map((d) => (
-              <button
-                key={d.letter}
-                type="button"
-                className={s.drive}
-                aria-pressed={chosenDrive === d.letter}
-                disabled={installed}
-                onClick={() => onChangeDrive(program.id, d.letter === generalDrive ? null : d.letter)}
-              >
-                <span className={s.driveName}>
-                  {d.letter} {d.label || 'Sem nome'}
-                </span>
-                <span className={s.driveNote}>
-                  {formatGb(d.freeBytes)} livres
-                  {d.media !== 'Desconhecido' ? ` · ${d.media}` : ''}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+          <ProgramExceptions
+            settings={settings}
+            defaults={defaults}
+            drives={drives}
+            generalDrive={generalDrive}
+            chosenDrive={chosenDrive}
+            onChangeSettings={(next) => onChangeSettings(program.id, next)}
+            onChangeDrive={(letra) => onChangeDrive(program.id, letra)}
+          />
         )}
 
         {program.family && (
@@ -274,176 +228,6 @@ export function AppSettings({
                 })
               }
             />
-          </section>
-        )}
-
-        {installsItself && (
-        <section className={s.section} data-tour="aj-inicio">
-          <div className={s.label}>AO LIGAR O COMPUTADOR</div>
-          <p className={s.description}>
-            {currentAutostart
-              ? 'Já está marcado como está hoje no seu PC. É o mesmo interruptor da aba Inicializar do Gerenciador de Tarefas, então dá para conferir e desfazer por lá.'
-              : 'Este programa não se cadastra para abrir sozinho hoje. Se ele passar a se cadastrar depois de instalado, a sua escolha aqui vale.'}
-          </p>
-
-          <div className={s.drives}>
-            {[
-              { value: 'on' as const, name: 'Abrir com o Windows', note: 'já pronto quando o PC liga' },
-              { value: 'off' as const, name: 'Não abrir com o Windows', note: 'você abre quando quiser' },
-            ].map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={s.drive}
-                aria-pressed={autostartShown === option.value}
-                onClick={() => chooseAutostart(option.value)}
-              >
-                <span className={s.driveName}>{option.name}</span>
-                <span className={s.driveNote}>
-                  {option.note}
-                  {currentAutostart === option.value ? ' · é o que está agora' : ''}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-        )}
-
-        {installsItself && (
-          <section className={s.section}>
-            <div className={s.label}>ATALHO NA ÁREA DE TRABALHO</div>
-            <p className={s.description}>
-              Sem escolher nada, o Pulse deixa como o instalador deixou. O atalho é copiado do menu
-              Iniciar depois que o programa entra, então quem não aparece no menu Iniciar, como as
-              ferramentas de linha de comando, não tem o que copiar.
-            </p>
-
-            <div className={s.drives}>
-              {[
-                { value: true, name: 'Quero o atalho', note: 'copiado do menu Iniciar' },
-                { value: false, name: 'Não quero o atalho', note: 'se já existir, o Pulse apaga' },
-              ].map((option) => (
-                <button
-                  key={String(option.value)}
-                  type="button"
-                  className={s.drive}
-                  aria-pressed={settings.desktopShortcut === option.value}
-                  onClick={() =>
-                    onChangeSettings(program.id, {
-                      ...settings,
-                      desktopShortcut:
-                        settings.desktopShortcut === option.value ? undefined : option.value,
-                    })
-                  }
-                >
-                  <span className={s.driveName}>{option.name}</span>
-                  <span className={s.driveNote}>{option.note}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {installsItself && (
-          <section className={s.section}>
-            <div className={s.label}>PARA QUEM VAI SER</div>
-            <p className={s.description}>
-              Sem escolher nada, o Pulse instala do jeito que o programa preferir. Para todos deste
-              PC costuma pedir a permissão de administrador, e nem todo programa oferece as duas
-              formas. Quando a que você pediu não existir, o Pulse instala do jeito que existe e
-              avisa no resumo.
-            </p>
-
-            <div className={s.drives}>
-              {[
-                { value: 'user' as const, name: 'Só para mim', note: 'não mexe na conta de ninguém' },
-                {
-                  value: 'machine' as const,
-                  name: 'Para todos deste PC',
-                  note: 'costuma pedir permissão de administrador',
-                },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={s.drive}
-                  aria-pressed={settings.scope === option.value}
-                  onClick={() => chooseScope(option.value)}
-                >
-                  <span className={s.driveName}>{option.name}</span>
-                  <span className={s.driveNote}>{option.note}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {installsItself && (
-          <section className={s.section}>
-            <div className={s.label}>EM QUE IDIOMA</div>
-            <p className={s.description}>
-              Vale só para os programas publicados em mais de um idioma. Quem só existe num idioma
-              vem nele mesmo, e o Pulse avisa no resumo em vez de falhar.
-            </p>
-
-            <div className={s.drives}>
-              <button
-                type="button"
-                className={s.drive}
-                aria-pressed={settings.locale === undefined}
-                onClick={() => chooseLocale(null)}
-              >
-                <span className={s.driveName}>Do jeito que vier</span>
-                <span className={s.driveNote}>o idioma que o programa escolher</span>
-              </button>
-
-              {LOCALES.map((locale) => (
-                <button
-                  key={locale.id}
-                  type="button"
-                  className={s.drive}
-                  aria-pressed={settings.locale === locale.id}
-                  onClick={() => chooseLocale(locale.id)}
-                >
-                  <span className={s.driveName}>{locale.name}</span>
-                  <span className={s.driveNote}>{locale.hint}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {installsItself && (
-          <section className={s.section}>
-            <div className={s.label}>SE DER PROBLEMA</div>
-
-            <div className={s.options}>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={settings.interactive === true}
-                className={s.option}
-                onClick={() =>
-                  onChangeSettings(program.id, {
-                    ...settings,
-                    interactive: settings.interactive ? undefined : true,
-                  })
-                }
-              >
-                <span className={s.box} aria-hidden>
-                  {settings.interactive ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Mostrar a janela do instalador</span>
-                  <span className={s.optionHint}>
-                    o normal é instalar em silêncio, sem janela nenhuma. Marque aqui quando o
-                    silencioso falhar e você quiser clicar em avançar você mesmo. A fila espera
-                    você terminar.
-                  </span>
-                </span>
-                <span className={s.optionCategory}>MANUAL</span>
-              </button>
-            </div>
           </section>
         )}
 

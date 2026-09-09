@@ -7,23 +7,40 @@ export interface Choice {
 
 interface Props {
   name: string
-  hint: string
+  hint?: string
+  tag?: string
+  exception?: boolean
   choices: readonly Choice[]
   chosen: string
   busy?: boolean
-  exceptions: readonly string[]
+  exceptions?: readonly string[]
   onPick: (id: string) => void
 }
 
-export function ConfigRow({ name, hint, choices, chosen, busy, exceptions, onPick }: Props) {
+export function ConfigRow({
+  name,
+  hint,
+  tag,
+  exception,
+  choices,
+  chosen,
+  busy,
+  exceptions = [],
+  onPick,
+}: Props) {
   const fugindo = exceptions.length
 
   return (
-    <div className={s.row} data-exception={fugindo > 0}>
+    <div className={s.row} data-exception={exception === true || fugindo > 0}>
       <div className={s.rowTop}>
         <div className={s.rowText}>
           <span className={s.rowName}>{name}</span>
-          <span className={s.rowHint}>{hint}</span>
+          {tag && (
+            <span className={s.rowTag} data-exception={exception === true}>
+              {tag}
+            </span>
+          )}
+          {hint && <span className={s.rowHint}>{hint}</span>}
         </div>
 
         <div className={s.choices} role="group" aria-label={name}>

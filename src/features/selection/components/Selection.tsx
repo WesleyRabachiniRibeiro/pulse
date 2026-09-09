@@ -13,7 +13,6 @@ import {
 import { useBundles, useProgram, usePrograms } from '@/features/catalog'
 import { requestsToAppend, type Request } from '@shared/domain/installation'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
-import { useAutostart } from '../store/useAutostart'
 import { useDrives, useWatchDrives } from '../store/useDrives'
 import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
 import { useSelection } from '../store/useSelection'
@@ -48,7 +47,6 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const loaded = useInstalledLoaded()
   const installedFailed = useInstalledFailed()
   const drives = useDrives()
-  const autostart = useAutostart()
   const programs = usePrograms()
   const bundles = useBundles()
   const defaults = useDefaults()
@@ -125,7 +123,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
         generalDrive={drive}
         chosenDrive={drivesByApp[programInSettings.id] ?? null}
         settings={settingsByApp[programInSettings.id] ?? {}}
-        currentAutostart={autostart[programInSettings.id] ?? null}
+        defaults={defaults}
         onChangeDrive={setDrive}
         onChangeSettings={setSettings}
         onApplyNow={() => void applyAlone(programInSettings.id)}

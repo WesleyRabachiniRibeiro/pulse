@@ -1,0 +1,143 @@
+import { useState } from 'react'
+import { DEFAULT_KEYS, defaultLabel, type Defaults, type DefaultKey } from '@shared/domain/defaults'
+import { formatGb, type Drive } from '@shared/domain/preflight'
+import { LOCALES } from '@shared/domain/winget'
+import type { Settings } from '@shared/domain/settings'
+import { ConfigRow, type Choice } from '@/features/config'
+import s from './ProgramExceptions.module.css'
+
+const KEEP = 'padrao'
+
+const NAME: Record<DefaultKey, string> = {
+  scope: 'Instalar para quem',
+  locale: 'Idioma',
+  interactive: 'Janela do instalador',
+  desktopShortcut: 'Atalho na área de trabalho',
+  autostart: 'Abrir com o Windows',
+}
+
+const CHOICES: Record<DefaultKey, readonly Choice[]> = {
+  scope: [
+    { id: 'user', label: 'SÓ PARA MIM' },
+    { id: 'machine', label: 'PARA TODOS' },
+  ],
+  locale: LOCALES.map((locale) => ({ id: locale.id, label: locale.name.toUpperCase() })),
+  interactive: [
+    { id: 'false', label: 'EM SILÊNCIO' },
+    { id: 'true', label: 'MOSTRAR' },
+  ],
+  desktopShortcut: [
+    { id: 'true', label: 'CRIAR' },
+    { id: 'false', label: 'NÃO CRIAR' },
+  ],
+  autostart: [
+    { id: 'true', label: 'ABRIR' },
+    { id: 'false', label: 'NÃO ABRIR' },
+  ],
+}
+
+function valueFor(key: DefaultKey, picked: string): Settings[DefaultKey] {
+  if (key === 'scope') return picked === 'machine' ? 'machine' : 'user'
+  if (key === 'locale') return picked
+  return picked === 'true'
+}
+
+interface Props {
+  settings: Settings
+  defaults: Defaults
+  drives: readonly Drive[]
+  generalDrive: string
+  chosenDrive: string | null
+  onChangeSettings: (settings: Settings) => void
+  onChangeDrive: (drive: string | null) => void
+}
+
+export function ProgramExceptions({
+  settings,
+  defaults,
+  drives,
+  generalDrive,
+  chosenDrive,
+  onChangeSettings,
+  onChangeDrive,
+}: Props) {
+  const [open, setOpen] = useState(false)
+
+  const escapando = DEFAULT_KEYS.filter(
+    (key) => settings[key] !== undefined && settings[key] !== defaults[key],
+  )
+  const driveEscapando = chosenDrive !== null && chosenDrive !== generalDrive
+  const total = escapando.length + (driveEscapando ? 1 : 0)
+
+  function pick(key: DefaultKey, picked: string): void {
+    const next: Settings = { ...settings }
+    const value = valueFor(key, picked)
+
+    if (value === defaults[key]) delete next[key]
+    else Object.assign(next, { [key]: value })
+
+    onChangeSettings(next)
+  }
+
+  return (
+    <section className={s.block} data-open={open}>
+      <button type="button" className={s.summary} onClick={() => setOpen((v) => !v)}>
+        <span className={s.summaryText}>
+          <span className={s.label}>EXCEÇÕES PARA ESTE PROGRAMA</span>
+          <span className={s.line} data-exception={total > 0}>
+            {total > 0
+              ? `${total} ${total === 1 ? 'exceção' : 'exceções'} · o resto segue a Configuração`
+              : 'Nada por aqui, segue tudo da Configuração'}
+          </span>
+        </span>
+        <span className={s.action}>{open ? 'FECHAR' : 'ABRIR'}</span>
+      </button>
+
+      {open && (
+        <div className={s.rows}>
+          <ConfigRow
+            name="Disco onde instalar"
+            tag={
+              driveEscapando
+                ? 'EXCEÇÃO DESTE PROGRAMA'
+                : `PADRÃO: ${generalDrive.toUpperCase()}`
+            }
+            exception={driveEscapando}
+            choices={drives.map((drive) => ({
+              id: drive.letter,
+              label: `${drive.letter} · ${formatGb(drive.freeBytes)} LIVRES`,
+            }))}
+            chosen={chosenDrive ?? generalDrive}
+            busy={drives.length === 0}
+            onPick={(letter) => onChangeDrive(letter === generalDrive ? null : letter)}
+          />
+
+          {DEFAULT_KEYS.map((key) => {
+            const fugindo = escapando.includes(key)
+            const chosen = settings[key] ?? defaults[key]
+            return (
+              <ConfigRow
+                key={key}
+                name={NAME[key]}
+                tag={
+                  fugindo
+                    ? 'EXCEÇÃO DESTE PROGRAMA'
+                    : `PADRÃO: ${defaultLabel(key, defaults).toUpperCase()}`
+                }
+                exception={fugindo}
+                choices={CHOICES[key]}
+                chosen={chosen === undefined ? KEEP : String(chosen)}
+                onPick={(picked) => pick(key, picked)}
+              />
+            )
+          })}
+
+          <p className={s.note}>
+            Escolher o mesmo que a Configuração apaga a exceção. Para mudar de uma vez para todos os
+            programas, use a tela de Configuração.
+          </p>
+        </div>
+      )}
+    </section>
+  )
+}

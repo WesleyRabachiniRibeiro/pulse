@@ -186,3 +186,14 @@
   color: var(--tx-5);
   max-width: 68ch;
 }
+
+.rowTag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--tx-6);
+}
+
+.rowTag[data-exception='true'] {
+  color: var(--warning);
+}
