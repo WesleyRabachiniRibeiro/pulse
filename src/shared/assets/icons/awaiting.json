@@ -5,19 +5,13 @@
     "awscli",
     "azurecli",
     "edge",
-    "everything",
-    "handbrake",
     "logitechghub",
     "office",
     "ohmyposh",
     "powershell",
-    "powertoys",
     "putty",
-    "rufus",
     "slack",
-    "windirstat",
     "winrar",
-    "winscp",
     "wsl"
   ]
 }
