@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { nameMatchesProgram, type Program } from './catalog'
+import { buildInstalled, installedNodeSchema, type RegistryEntry } from './installed'
 
 export const upgradeSchema = z.object({
   wingetId: z.string(),
@@ -19,12 +20,20 @@ export type InstalledApp = z.infer<typeof installedAppSchema>
 
 export const inventorySchema = z.object({
   apps: z.array(installedAppSchema),
+  installed: z.array(installedNodeSchema),
+  hidden: z.number(),
   upgrades: z.array(upgradeSchema),
   readAt: z.string(),
 })
 export type Inventory = z.infer<typeof inventorySchema>
 
-export const EMPTY_INVENTORY: Inventory = { apps: [], upgrades: [], readAt: '' }
+export const EMPTY_INVENTORY: Inventory = {
+  apps: [],
+  installed: [],
+  hidden: 0,
+  upgrades: [],
+  readAt: '',
+}
 
 const ID_SHAPE = /^[A-Za-z0-9][\w+-]*(\.[\w+-]+)+$/
 
@@ -167,6 +176,7 @@ function bestProgramFor(name: string, programs: readonly Program[]): Program | n
 
 export interface InventoryInput {
   names: readonly string[]
+  entries?: readonly RegistryEntry[]
   wingetIds: readonly string[]
   upgrades: readonly Upgrade[]
   programs: readonly Program[]
@@ -208,7 +218,9 @@ export function buildInventory(input: InventoryInput, readAt: string): Inventory
     return programId ? { ...upgrade, programId } : upgrade
   })
 
-  return { apps, upgrades, readAt }
+  const tree = buildInstalled(input.entries ?? [], input.programs, input.wingetIds)
+
+  return { apps, installed: tree.nodes, hidden: tree.hidden, upgrades, readAt }
 }
 
 export function catalogued(inventory: Inventory): InstalledApp[] {

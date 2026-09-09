@@ -11,6 +11,7 @@ import {
   type Inventory,
 } from '@shared/domain/inventory'
 import { listInstalledNames } from './catalog.service'
+import { readRegistryEntries } from './registry.service'
 
 const exec = promisify(execFile)
 
@@ -85,8 +86,9 @@ export function forgetInventory(): void {
 }
 
 async function read(): Promise<Inventory> {
-  const [names, wingetIds, table] = await Promise.all([
+  const [names, entries, wingetIds, table] = await Promise.all([
     listInstalledNames().catch((): string[] => []),
+    readRegistryEntries().catch(() => []),
     readWingetIds(),
     readUpgradeTable(),
   ])
@@ -94,7 +96,7 @@ async function read(): Promise<Inventory> {
   const upgrades = table === null ? [] : readUpgrades(table, wingetIds)
 
   const inventory = buildInventory(
-    { names, wingetIds, upgrades, programs: getPrograms() },
+    { names, entries, wingetIds, upgrades, programs: getPrograms() },
     new Date().toISOString(),
   )
 

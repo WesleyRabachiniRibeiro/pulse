@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getProgram, getPrograms } from '@shared/domain/catalog'
-import { suggestedText, type InstalledApp, type Upgrade } from '@shared/domain/inventory'
+import { suggestedText, type Upgrade } from '@shared/domain/inventory'
+import type { InstalledNode } from '@shared/domain/installed'
 import type { StartupEntry } from '@shared/domain/windows'
 import {
   reloadInventory,
@@ -62,7 +63,7 @@ export function Manage({ onGoToInstallation }: Props) {
   }
 
   const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: 'installed', label: 'INSTALADOS', count: inventory.apps.length },
+    { id: 'installed', label: 'INSTALADOS', count: inventory.installed.length },
     { id: 'updates', label: 'ATUALIZAÇÕES', count: inventory.upgrades.length },
     { id: 'startup', label: 'INICIALIZAÇÃO', count: startup.length },
   ]
@@ -127,24 +128,33 @@ function Installed({ loaded }: { loaded: boolean }) {
   const inventory = useInventory()
 
   if (!loaded) return <p className={s.empty}>Lendo o que está instalado neste PC…</p>
-  if (inventory.apps.length === 0) {
+  if (inventory.installed.length === 0) {
     return <p className={s.empty}>Não consegui ler a lista de programas deste PC.</p>
   }
 
   return (
     <>
-      {inventory.apps.map((app) => (
-        <InstalledItem key={app.name} app={app} />
+      {inventory.installed.map((node) => (
+        <InstalledRow key={node.key} node={node} />
       ))}
+
+      {inventory.hidden > 0 && (
+        <p className={s.hiddenNote}>
+          {inventory.hidden} {inventory.hidden === 1 ? 'item ficou' : 'itens ficaram'} de fora:
+          peças do Windows, componentes que vêm junto de um programa e coisas sem como desinstalar.
+          São as mesmas que o Windows não mostra em Aplicativos instalados.
+        </p>
+      )}
     </>
   )
 }
 
-function SuggestButton({ app }: { app: InstalledApp }) {
+function SuggestButton({ node }: { node: InstalledNode }) {
   const [copied, setCopied] = useState(false)
 
   async function copy() {
     const taken = getPrograms().map((p) => p.id)
+    const app = { name: node.name, ...(node.wingetId ? { wingetId: node.wingetId } : {}) }
     await bridge.invoke('system:copy', { text: suggestedText(app, taken) }).catch(() => undefined)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -162,61 +172,97 @@ function SuggestButton({ app }: { app: InstalledApp }) {
   )
 }
 
-function InstalledItem({ app }: { app: InstalledApp }) {
-  const program = app.programId ? getProgram(app.programId) : undefined
-  const canOpen = useCanOpen(app.programId ?? '')
-  const opening = useOpening(app.programId ?? '')
-  const removing = useUninstalling(app.programId ?? '')
-  const removed = useUninstalled(app.programId ?? '')
+function noteOf(node: InstalledNode): string {
+  if (node.kind === 'owner') {
+    const many = node.children.length
+    return `${many} ${many === 1 ? 'item sai' : 'itens saem'} junto se você remover`
+  }
+  if (node.kind === 'family') {
+    const many = node.children.length
+    return `${many} ${many === 1 ? 'versão instalada' : 'versões instaladas'}`
+  }
+  if (node.wingetId) return node.wingetId
+  return node.programId ? 'do catálogo do Pulse' : 'fora do catálogo do Pulse'
+}
+
+function InstalledRow({ node }: { node: InstalledNode }) {
+  const [open, setOpen] = useState(false)
+  const program = node.programId ? getProgram(node.programId) : undefined
+  const canOpen = useCanOpen(node.programId ?? '')
+  const opening = useOpening(node.programId ?? '')
+  const removing = useUninstalling(node.programId ?? '')
+  const removed = useUninstalled(node.programId ?? '')
+  const nested = node.children.length > 0
 
   return (
-    <div className={s.item}>
-      {program ? (
-        <AppIcon id={program.id} name={program.name} size={28} />
-      ) : (
-        <span className={s.stranger}>—</span>
-      )}
+    <>
+      <div className={s.item} data-kind={node.kind}>
+        {nested ? (
+          <button
+            type="button"
+            className={s.disclosure}
+            aria-expanded={open}
+            aria-label={open ? `Fechar ${node.name}` : `Abrir ${node.name}`}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? '▾' : '▸'}
+          </button>
+        ) : (
+          <span className={s.disclosure} aria-hidden />
+        )}
 
-      <span className={s.body}>
-        <span className={s.name}>{app.name}</span>
-        <span className={s.note}>
-          {removed
-            ? 'tirado deste PC'
-            : (app.wingetId ?? (program ? 'do catálogo do Pulse' : 'fora do catálogo do Pulse'))}
+        {program ? (
+          <AppIcon id={program.id} name={program.name} size={28} />
+        ) : (
+          <span className={s.stranger}>—</span>
+        )}
+
+        <span className={s.body}>
+          <span className={s.name}>{node.name}</span>
+          <span className={s.note}>{removed ? 'tirado deste PC' : noteOf(node)}</span>
         </span>
-      </span>
 
-      {!program && (
-        <span className={s.actions}>
-          <SuggestButton app={app} />
-        </span>
-      )}
+        {program && !removed && (
+          <span className={s.actions}>
+            {canOpen && (
+              <button
+                type="button"
+                className={s.action}
+                disabled={opening}
+                onClick={() => void openProgram(program.id)}
+              >
+                {opening ? 'ABRINDO…' : 'ABRIR'}
+              </button>
+            )}
 
-      {program && !removed && (
-        <span className={s.actions}>
-          {canOpen && (
             <button
               type="button"
               className={s.action}
-              disabled={opening}
-              onClick={() => void openProgram(program.id)}
+              data-tone="danger"
+              disabled={removing}
+              onClick={() => void uninstallProgram(program.id)}
             >
-              {opening ? 'ABRINDO…' : 'ABRIR'}
+              {removing ? 'TIRANDO…' : 'DESINSTALAR'}
             </button>
-          )}
+          </span>
+        )}
 
-          <button
-            type="button"
-            className={s.action}
-            data-tone="danger"
-            disabled={removing}
-            onClick={() => void uninstallProgram(program.id)}
-          >
-            {removing ? 'TIRANDO…' : 'DESINSTALAR'}
-          </button>
-        </span>
-      )}
-    </div>
+        {!program && node.kind === 'app' && (
+          <span className={s.actions}>
+            <SuggestButton node={node} />
+          </span>
+        )}
+      </div>
+
+      {open &&
+        node.children.map((child) => (
+          <div key={child.key} className={s.child}>
+            <span className={s.dot} aria-hidden />
+            <span className={s.childName}>{child.name}</span>
+            {child.version && <span className={s.childVersion}>{child.version}</span>}
+          </div>
+        ))}
+    </>
   )
 }
 
