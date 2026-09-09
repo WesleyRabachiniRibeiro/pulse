@@ -1,4 +1,13 @@
 import { useMemo, useState } from 'react'
+import {
+  LuCheck,
+  LuChevronDown,
+  LuChevronRight,
+  LuCopy,
+  LuExternalLink,
+  LuRotateCw,
+  LuSearch,
+} from 'react-icons/lu'
 import { getProgram, getPrograms } from '@shared/domain/catalog'
 import { suggestedText, type Upgrade } from '@shared/domain/inventory'
 import {
@@ -127,8 +136,10 @@ export function Manage({ onGoToInstallation }: Props) {
           className={s.refresh}
           disabled={busy}
           onClick={() => void reloadInventory(true)}
+          aria-label={busy ? 'Lendo o PC' : 'Ler o PC de novo'}
+          title={busy ? 'Lendo o PC…' : 'Ler o PC de novo'}
         >
-          {busy ? 'LENDO O PC…' : 'LER O PC DE NOVO'}
+          <LuRotateCw size={15} data-busy={busy} aria-hidden />
         </button>
       </div>
 
@@ -206,9 +217,7 @@ function Installed({ loaded, onQueue }: InstalledProps) {
     <>
       <div className={s.tools}>
         <div className={s.search}>
-          <span className={s.magnifier} aria-hidden>
-            ⌕
-          </span>
+          <LuSearch className={s.magnifier} size={15} aria-hidden />
           <input
             className={s.searchInput}
             value={query}
@@ -339,11 +348,16 @@ function SuggestButton({ node }: { node: InstalledNode }) {
   return (
     <button
       type="button"
-      className={s.action}
+      className={s.icon}
       onClick={() => void copy()}
-      title="Copia uma entrada pronta para o catálogo do Pulse, com o resto para você preencher"
+      aria-label={`Sugerir ${node.name} para o catálogo do Pulse`}
+      title={
+        copied
+          ? 'Copiado, cole no catálogo'
+          : 'Copia uma entrada pronta para o catálogo do Pulse, com o resto para você preencher'
+      }
     >
-      {copied ? 'COPIADO' : 'SUGERIR'}
+      {copied ? <LuCheck size={15} data-done="true" /> : <LuCopy size={15} />}
     </button>
   )
 }
@@ -375,7 +389,7 @@ function Run({ record, index }: { record: RunRecord; index: number }) {
         onClick={() => setOpen((v) => !v)}
       >
         <span className={s.runCaret} aria-hidden>
-          {open ? '▾' : '▸'}
+          {open ? <LuChevronDown size={14} /> : <LuChevronRight size={14} />}
         </span>
 
         <span className={s.runTitles}>
@@ -527,7 +541,7 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
             aria-label={open ? `Fechar ${node.name}` : `Abrir ${node.name}`}
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? '▾' : '▸'}
+            {open ? <LuChevronDown size={14} /> : <LuChevronRight size={14} />}
           </button>
         ) : (
           <span className={s.disclosure} aria-hidden />
@@ -545,11 +559,13 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
             {canOpen && (
               <button
                 type="button"
-                className={s.action}
+                className={s.icon}
                 disabled={opening}
                 onClick={() => void openProgram(program.id)}
+                aria-label={`Abrir ${program.name}`}
+                title={opening ? 'Abrindo…' : 'Abrir'}
               >
-                {opening ? 'ABRINDO…' : 'ABRIR'}
+                <LuExternalLink size={15} />
               </button>
             )}
 
