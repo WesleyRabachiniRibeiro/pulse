@@ -53,16 +53,10 @@ export const PASSOS: readonly Passo[] = [
     esperar: 'ajustes',
   },
   {
-    alvo: '[data-tour="aj-disco"]',
-    titulo: 'Um disco só para ele',
+    alvo: '[data-tour="aj-excecoes"]',
+    titulo: 'Quando um programa foge da regra',
     texto:
-      'Por padrão todo programa vai para o disco geral, o da etapa 1. Aqui você tira um programa dessa regra sem mexer nos outros, o que ajuda quando um deles é grande demais para o disco do sistema.',
-  },
-  {
-    alvo: '[data-tour="aj-inicio"]',
-    titulo: 'Abrir junto com o Windows',
-    texto:
-      'Já vem marcado no que está valendo hoje no seu PC, lido do mesmo lugar que o Gerenciador de Tarefas usa. Se você escolher o lado que já está ativo, nada é gravado: não há mudança a fazer.',
+      'Disco, idioma, para quem instalar e o resto valem para os 93 de uma vez, e ficam na Configuração. Aqui dentro você tira um programa dessa regra sem mexer nos outros. Escolher o mesmo valor da Configuração apaga a exceção.',
   },
   {
     alvo: '[data-tour="aj-kind"]',
@@ -85,6 +79,13 @@ export const PASSOS: readonly Passo[] = [
       'O rodapé mostra quantos programas, quanto vai baixar e uma estimativa de tempo. A partir daqui a fila cuida do resto.',
   },
   {
+    tela: 'config',
+    alvo: '[data-tour="config"]',
+    titulo: 'Onde mora o padrão de todos',
+    texto:
+      'Disco, idioma, para quem instalar, atalho na área de trabalho e abrir com o Windows: define uma vez aqui e vale para o catálogo inteiro. Os interruptores do próprio Windows também ficam nesta tela, e esses entram na hora, sem passar pela fila.',
+  },
+  {
     tela: 'run',
     alvo: '[data-tour="run"]',
     titulo: '3. A fila anda sozinha',
@@ -103,6 +104,13 @@ export const PASSOS: readonly Passo[] = [
     titulo: '4. O que aconteceu',
     texto:
       'O resumo separa o que ficou pronto, o que só termina depois de reiniciar, o que precisa de você e o que ficou de fora, com o motivo de cada um. É daqui que sai o reinício, com contagem e chance de desistir.',
+  },
+  {
+    tela: 'manage',
+    alvo: '[data-tour="manage"]',
+    titulo: 'E depois que tudo terminou',
+    texto:
+      'O Gerenciamento não é uma etapa, é um lugar para onde se volta. Ele lista tudo que está neste PC, inclusive o que não está no catálogo, mostra quem tem versão nova esperando e deixa desligar o que abre junto com o Windows.',
   },
   {
     alvo: '[data-tour="ajuda"]',

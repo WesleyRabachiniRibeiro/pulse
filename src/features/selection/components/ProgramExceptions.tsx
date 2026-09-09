@@ -80,7 +80,7 @@ export function ProgramExceptions({
   }
 
   return (
-    <section className={s.block} data-open={open}>
+    <section className={s.block} data-open={open} data-tour="aj-excecoes">
       <button type="button" className={s.summary} onClick={() => setOpen((v) => !v)}>
         <span className={s.summaryText}>
           <span className={s.label}>EXCEÇÕES PARA ESTE PROGRAMA</span>

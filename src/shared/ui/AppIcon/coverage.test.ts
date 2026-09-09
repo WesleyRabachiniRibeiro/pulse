@@ -40,11 +40,9 @@ describe('ícone de cada programa do catálogo', () => {
     expect(orfaos).toEqual([])
   })
 
-  it('todo ícone tem viewBox, e não é comprido a ponto de sumir na máscara', async () => {
-    const { readFile } = await import('node:fs/promises')
-
+  it('todo ícone tem viewBox, e não é comprido a ponto de sumir na máscara', () => {
     for (const name of files) {
-      const svg = await readFile(join(iconsDir, name), 'utf8')
+      const svg = readFileSync(join(iconsDir, name), 'utf8')
       const box = /viewBox="([\d.\s-]+)"/.exec(svg)?.[1]?.trim().split(/\s+/)
       expect(box, name).toHaveLength(4)
 

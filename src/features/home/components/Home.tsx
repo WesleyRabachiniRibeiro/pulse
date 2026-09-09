@@ -17,7 +17,7 @@ const CARTOES = [
   {
     titulo: 'Cada um do seu jeito',
     texto:
-      'Disco próprio, versão, extensões, jogos, abrir ou não com o Windows. Os ajustes ficam dentro do cartão de cada programa.',
+      'Disco, idioma e o resto você define uma vez na Configuração e vale para todos. Quem precisar fugir da regra tem a exceção dentro do próprio cartão.',
   },
   {
     titulo: 'Dá para sair de perto',
