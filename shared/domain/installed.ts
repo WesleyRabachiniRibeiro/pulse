@@ -8,6 +8,7 @@ export const registryEntrySchema = z.object({
   version: z.string().optional(),
   system: z.boolean().optional(),
   location: z.string().optional(),
+  icon: z.string().optional(),
   uninstall: z.string().optional(),
 })
 export type RegistryEntry = z.infer<typeof registryEntrySchema>
@@ -26,6 +27,7 @@ export interface InstalledNode {
   version?: string
   programId?: string
   wingetId?: string
+  icon?: string
   children: InstalledNode[]
 }
 
@@ -37,6 +39,7 @@ const nodeBase = z.object({
   version: z.string().optional(),
   programId: z.string().optional(),
   wingetId: z.string().optional(),
+  icon: z.string().optional(),
 })
 
 export const installedNodeSchema: z.ZodType<InstalledNode> = nodeBase.extend({
@@ -129,6 +132,18 @@ export function stemOf(name: string): string {
     .trim()
 }
 
+/**
+ * O caminho do ícone que o próprio programa registrou. Vem com o índice do
+ * recurso colado no fim quando o ícone mora dentro de um executável.
+ */
+export function iconPath(value: string | undefined): string | null {
+  const text = (value ?? '').trim().replace(/^"|"$/g, '')
+  if (!text) return null
+
+  const path = text.replace(/,-?\d+$/, '').trim()
+  return path || null
+}
+
 function programFor(name: string, programs: readonly Program[]): Program | null {
   let best: Program | null = null
   let longest = 0
@@ -161,6 +176,7 @@ function leafOf(
     ...(entry.version ? { version: entry.version } : {}),
     ...(program ? { programId: program.id } : {}),
     ...(winget && managed.has(winget.toLowerCase()) ? { wingetId: winget } : {}),
+    ...(iconPath(entry.icon) ? { icon: iconPath(entry.icon) as string } : {}),
     children: [],
   }
 }

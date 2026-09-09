@@ -28,6 +28,7 @@ import {
   useStartupLoaded,
   useWatchStartup,
 } from '../store/useStartup'
+import { useFileIcon } from '../store/useFileIcon'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
 
@@ -172,6 +173,21 @@ function SuggestButton({ node }: { node: InstalledNode }) {
   )
 }
 
+function NodeIcon({ node, size }: { node: InstalledNode; size: number }) {
+  const program = node.programId ? getProgram(node.programId) : undefined
+  const url = useFileIcon(program ? undefined : node.icon)
+
+  if (program) return <AppIcon id={program.id} name={program.name} size={size} />
+
+  if (url) {
+    return (
+      <img className={s.fileIcon} style={{ width: size, height: size }} src={url} alt="" aria-hidden />
+    )
+  }
+
+  return <span className={s.stranger}>—</span>
+}
+
 function noteOf(node: InstalledNode): string {
   if (node.kind === 'owner') {
     const many = node.children.length
@@ -211,11 +227,7 @@ function InstalledRow({ node }: { node: InstalledNode }) {
           <span className={s.disclosure} aria-hidden />
         )}
 
-        {program ? (
-          <AppIcon id={program.id} name={program.name} size={28} />
-        ) : (
-          <span className={s.stranger}>—</span>
-        )}
+        <NodeIcon node={node} size={28} />
 
         <span className={s.body}>
           <span className={s.name}>{node.name}</span>
@@ -257,7 +269,7 @@ function InstalledRow({ node }: { node: InstalledNode }) {
       {open &&
         node.children.map((child) => (
           <div key={child.key} className={s.child}>
-            <span className={s.dot} aria-hidden />
+            <NodeIcon node={child} size={18} />
             <span className={s.childName}>{child.name}</span>
             {child.version && <span className={s.childVersion}>{child.version}</span>}
           </div>

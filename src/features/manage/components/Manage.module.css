@@ -321,3 +321,16 @@ button.disclosure:hover {
   color: var(--tx-5);
   max-width: 76ch;
 }
+
+.fileIcon {
+  flex: 0 0 auto;
+  border-radius: 7px;
+  object-fit: contain;
+  background: var(--bg-subtle);
+  padding: 2px;
+}
+
+.child .stranger {
+  width: 18px;
+  text-align: center;
+}

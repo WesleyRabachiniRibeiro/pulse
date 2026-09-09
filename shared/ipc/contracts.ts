@@ -165,6 +165,10 @@ export const ipcContracts = {
     input: z.void(),
     output: historySchema,
   },
+  'system:icon': {
+    input: z.object({ path: z.string() }),
+    output: z.string().nullable(),
+  },
   'system:copy': {
     input: copyInputSchema,
     output: z.void(),

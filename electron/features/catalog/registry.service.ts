@@ -22,6 +22,7 @@ $keys = @(
     version   = [string]$_.DisplayVersion
     system    = [bool]$_.SystemComponent
     location  = [string]$_.InstallLocation
+    icon      = [string]$_.DisplayIcon
     uninstall = [string]$(if ($_.QuietUninstallString) { $_.QuietUninstallString } else { $_.UninstallString })
   }
 }) | ConvertTo-Json -Compress -Depth 3
@@ -69,6 +70,7 @@ export async function readRegistryEntries(): Promise<RegistryEntry[]> {
       ...(trimmed(one['version']) ? { version: trimmed(one['version']) } : {}),
       ...(one['system'] === true ? { system: true } : {}),
       ...(trimmed(one['location']) ? { location: trimmed(one['location']) } : {}),
+      ...(trimmed(one['icon']) ? { icon: trimmed(one['icon']) } : {}),
       ...(trimmed(one['uninstall']) ? { uninstall: trimmed(one['uninstall']) } : {}),
     })
 

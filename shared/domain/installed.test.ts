@@ -4,6 +4,7 @@ import {
   buildInstalled,
   countNodes,
   hiddenReason,
+  iconPath,
   installedNodeSchema,
   stemOf,
   uninstallerFolder,
@@ -210,5 +211,28 @@ describe('buildInstalled', () => {
   it('conta pai e filho ao dizer o tamanho da lista', () => {
     const tree = buildInstalled([STEAM, steamGame('1', 'Terraria')], programs)
     expect(countNodes(tree.nodes)).toBe(2)
+  })
+})
+
+describe('iconPath', () => {
+  it('tira o índice do recurso colado no fim', () => {
+    expect(iconPath('D:\\overwolf\\Overwolf.exe,0')).toBe('D:\\overwolf\\Overwolf.exe')
+  })
+
+  it('aceita índice negativo, que o Windows também usa', () => {
+    expect(iconPath('C:\\app\\x.dll,-101')).toBe('C:\\app\\x.dll')
+  })
+
+  it('tira as aspas de fora', () => {
+    expect(iconPath('"C:\\Arquivos\\Coisa\\x.ico"')).toBe('C:\\Arquivos\\Coisa\\x.ico')
+  })
+
+  it('deixa em paz o caminho que já está limpo', () => {
+    expect(iconPath('D:\\Steam\\games\\a4ce.ico')).toBe('D:\\Steam\\games\\a4ce.ico')
+  })
+
+  it('devolve nada quando o programa não registrou ícone', () => {
+    expect(iconPath(undefined)).toBeNull()
+    expect(iconPath('  ')).toBeNull()
   })
 })
