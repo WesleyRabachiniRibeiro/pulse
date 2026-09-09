@@ -5,6 +5,7 @@ import { gitSchema as gitConfigSchema, gitSummary } from './git'
 
 export const settingsKindSchema = z.enum([
   'vscode',
+  'runtime',
   'steam',
   'git',
   'tibia',
@@ -133,6 +134,7 @@ export const settingsSchema = z.object({
   autostart: z.boolean().optional(),
   extensions: z.array(z.string()).optional(),
   editorTweaks: z.array(z.string()).optional(),
+  globalPackages: z.array(z.string()).optional(),
   games: z.array(steamGameSchema).optional(),
   git: gitConfigSchema.optional(),
   tibia: z.array(z.string()).optional(),
@@ -206,6 +208,10 @@ export function settingsSummary(settings: Settings | undefined): string | null {
   if (settings.desktopShortcut === false) parts.push('sem atalho na área de trabalho')
 
   if (extensions) parts.push(`${extensions} ${extensions === 1 ? 'extensão' : 'extensões'}`)
+  const packages = settings.globalPackages?.length ?? 0
+  if (packages) {
+    parts.push(packages + (packages === 1 ? ' ferramenta' : ' ferramentas'))
+  }
   const editorTweaks = settings.editorTweaks?.length ?? 0
   if (editorTweaks) {
     parts.push(`${editorTweaks} ${editorTweaks === 1 ? 'ajuste do editor' : 'ajustes do editor'}`)

@@ -12,6 +12,7 @@ import { formatMb, type Program } from '@shared/domain/catalog'
 import { LOCALES, type InstallScope } from '@shared/domain/winget'
 import { EDITOR_TWEAKS } from '@shared/domain/editor'
 import { LINE_ENDINGS } from '@shared/domain/git'
+import { runtimeToolsFor } from '@shared/domain/runtime'
 import { formatGb, type Drive } from '@shared/domain/preflight'
 import type { SteamGame } from '@shared/domain/steam'
 import { bridge } from '@/shared/lib/bridge'
@@ -112,6 +113,7 @@ export function AppSettings({
     }
   }, [kind])
   const installsItself = program.source !== 'pages'
+  const runtime = kind === 'runtime' ? runtimeToolsFor(program.id) : null
   const options = kind ? optionsFor(kind) : []
   const categories = useMemo(() => categoriesOf(options), [options])
 
@@ -518,6 +520,45 @@ export function AppSettings({
                   </button>
                 ))
               )}
+            </div>
+          </section>
+        )}
+
+        {runtime && (
+          <section className={s.section} data-tour="aj-kind">
+            <div className={s.label}>FERRAMENTAS PARA INSTALAR JUNTO</div>
+            <p className={s.description}>{runtime.note}</p>
+
+            <div className={s.options}>
+              {runtime.packages.map((tool) => {
+                const on = (settings.globalPackages ?? []).includes(tool.id)
+                return (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={on}
+                    className={s.option}
+                    onClick={() => {
+                      const current = settings.globalPackages ?? []
+                      const next = on ? current.filter((x) => x !== tool.id) : [...current, tool.id]
+                      onChangeSettings(program.id, {
+                        ...settings,
+                        globalPackages: next.length > 0 ? next : undefined,
+                      })
+                    }}
+                  >
+                    <span className={s.box} aria-hidden>
+                      {on ? '✓' : ''}
+                    </span>
+                    <span className={s.optionBody}>
+                      <span className={s.optionName}>{tool.name}</span>
+                      <span className={s.optionHint}>{tool.hint}</span>
+                    </span>
+                    <span className={s.optionCategory}>{tool.category.toUpperCase()}</span>
+                  </button>
+                )
+              })}
             </div>
           </section>
         )}

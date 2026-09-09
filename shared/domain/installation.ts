@@ -44,6 +44,8 @@ export const itemSchema = z.object({
       editor: z.enum(['written', 'nothing', 'unreadable', 'failed']).optional(),
       sshKey: z.enum(['created', 'existed', 'no-tool', 'failed']).optional(),
       sshCopied: z.boolean().optional(),
+      packagesInstalled: z.array(z.string()).optional(),
+      packagesFailed: z.array(z.string()).optional(),
       pagesOpened: z.array(z.string()),
       riotInstalled: z.array(z.string()),
       riotFailed: z.array(z.string()),
@@ -269,6 +271,10 @@ export function settingsResultLines(item: Item): string[] {
         : `${result.extensions} de ${result.extensionsRequested} extensões instaladas`,
     )
   }
+  const packagesInstalled = result.packagesInstalled ?? []
+  const packagesFailed = result.packagesFailed ?? []
+  if (packagesInstalled.length > 0) lines.push(`instalados junto: ${packagesInstalled.join(', ')}`)
+  if (packagesFailed.length > 0) lines.push(`não entraram: ${packagesFailed.join(', ')}`)
   if (result.editor === 'written') lines.push('ajustes do editor gravados')
   if (result.editor === 'unreadable') {
     lines.push('o settings.json do editor tem comentário ou está fora do formato, não mexi nele')

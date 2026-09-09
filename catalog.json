@@ -426,6 +426,7 @@
       "hints": [
         "node.js"
       ],
+      "settingsKind": "runtime",
       "family": {
         "prefix": "OpenJS.NodeJS",
         "pattern": "^OpenJS\\.NodeJS(\\.LTS|\\.\\d+)?$"
@@ -441,6 +442,7 @@
       "hints": [
         "python 3"
       ],
+      "settingsKind": "runtime",
       "family": {
         "prefix": "Python.Python",
         "pattern": "^Python\\.Python\\.3\\.\\d+$"

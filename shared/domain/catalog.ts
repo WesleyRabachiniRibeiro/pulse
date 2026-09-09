@@ -130,6 +130,7 @@ export const BUILTIN_PROGRAMS: readonly Program[] = [
     mb: 30,
     category: 'dev',
     hints: ['node.js'],
+    settingsKind: 'runtime',
     family: { prefix: 'OpenJS.NodeJS', pattern: '^OpenJS\\.NodeJS(\\.LTS|\\.\\d+)?$' },
   },
   {
@@ -140,6 +141,7 @@ export const BUILTIN_PROGRAMS: readonly Program[] = [
     mb: 28,
     category: 'dev',
     hints: ['python 3'],
+    settingsKind: 'runtime',
     family: { prefix: 'Python.Python', pattern: '^Python\\.Python\\.3\\.\\d+$' },
   },
   { id: 'vs', name: 'Visual Studio', winget: 'Microsoft.VisualStudio.Community', version: '2026', mb: 1800, category: 'dev', hints: ['visual studio community'], settingsKind: 'vs' },

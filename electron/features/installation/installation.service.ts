@@ -11,7 +11,16 @@ import { listDrives } from '../preflight/preflight.service'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
 import { installArgs, noApplicableInstaller, scopeLabel } from '@shared/domain/winget'
 import { gitConfigPairs, gitIsEmpty } from '@shared/domain/git'
-import { forgetPath, locateGit, locateVsCode, runCommandLine, runTool } from './tools'
+import { installArgsFor, knownPackages, runtimeToolsFor } from '@shared/domain/runtime'
+import {
+  forgetPath,
+  locateGit,
+  locateNpm,
+  locatePython,
+  locateVsCode,
+  runCommandLine,
+  runTool,
+} from './tools'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
@@ -496,6 +505,33 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
       }
       note(`${program.name}: ${done} de ${extensions.length} extensões instaladas`, 'ok')
     }
+  }
+
+  const wanted = knownPackages(program.id, settings.globalPackages ?? [])
+  const tools = runtimeToolsFor(program.id)
+  if (wanted.length > 0 && tools) {
+    target.detail = `Instalando ${wanted.length} ${wanted.length === 1 ? 'ferramenta' : 'ferramentas'}`
+    emitState()
+
+    const exe = tools.runner === 'npm' ? await locateNpm() : await locatePython()
+
+    if (!exe) {
+      result.packagesFailed = wanted
+      note(
+        `${program.name}: não achei o ${tools.runner === 'npm' ? 'npm' : 'python'}, as ferramentas ficaram para depois`,
+        'error',
+      )
+    } else {
+      const ok = await runTool(exe, installArgsFor(tools.runner, wanted))
+      if (ok) {
+        result.packagesInstalled = wanted
+        note(`${program.name}: ${wanted.join(', ')} instalados`, 'ok')
+      } else {
+        result.packagesFailed = wanted
+        note(`${program.name}: não deu para instalar ${wanted.join(', ')}`, 'error')
+      }
+    }
+    emitState()
   }
 
   const editorTweaks = settings.editorTweaks ?? []

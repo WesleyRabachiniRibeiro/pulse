@@ -105,6 +105,20 @@ export function locateVsCode(): Promise<string | null> {
   ])
 }
 
+export function locateNpm(): Promise<string | null> {
+  return locate('npm.cmd', [
+    under('ProgramFiles', 'nodejs', 'npm.cmd'),
+    under('APPDATA', 'npm', 'npm.cmd'),
+  ])
+}
+
+export function locatePython(): Promise<string | null> {
+  return locate('python.exe', [
+    under('LOCALAPPDATA', 'Programs', 'Python', 'Python313', 'python.exe'),
+    under('LOCALAPPDATA', 'Programs', 'Python', 'Python312', 'python.exe'),
+  ])
+}
+
 export function locateGit(): Promise<string | null> {
   return locate('git.exe', [
     under('ProgramFiles', 'Git', 'cmd', 'git.exe'),
