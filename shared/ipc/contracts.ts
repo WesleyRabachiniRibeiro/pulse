@@ -16,6 +16,7 @@ import { steamGameSchema, steamLibrarySchema, steamSearchInputSchema } from '../
 import { preferencesSchema } from '../domain/preferences'
 import { profileSchema } from '../domain/profile'
 import { inventorySchema } from '../domain/inventory'
+import { historySchema } from '../domain/history'
 import {
   startupEntrySchema,
   startupInputSchema,
@@ -29,6 +30,11 @@ export const freshInputSchema = z.object({
   fresh: z.boolean().optional(),
 })
 export type FreshInput = z.infer<typeof freshInputSchema>
+
+export const copyInputSchema = z.object({
+  text: z.string(),
+})
+export type CopyInput = z.infer<typeof copyInputSchema>
 
 export const ipcContracts = {
   'preflight:drives': {
@@ -154,6 +160,14 @@ export const ipcContracts = {
   'windows:setTweak': {
     input: tweakInputSchema,
     output: z.array(tweakStateSchema),
+  },
+  'history:read': {
+    input: z.void(),
+    output: historySchema,
+  },
+  'system:copy': {
+    input: copyInputSchema,
+    output: z.void(),
   },
   'system:restart': {
     input: z.void(),

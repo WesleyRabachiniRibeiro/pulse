@@ -23,6 +23,7 @@ import {
 } from './tools'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
+import { rememberRun } from './history.service'
 import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
 import { applyEditorTweaks, type EditorResult } from './editor'
 import { ensureSshKey, type SshOutcome, type SshResult } from './ssh'
@@ -1195,6 +1196,7 @@ async function processQueue(): Promise<void> {
           run.canceling = false
           emitState()
           note(canceled ? 'instalação cancelada' : 'fila encerrada', canceled ? 'error' : 'ok')
+          void rememberRun(run)
         }
       }
     } finally {

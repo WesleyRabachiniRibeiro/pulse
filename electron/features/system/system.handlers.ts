@@ -1,8 +1,12 @@
+import { clipboard } from 'electron'
 import { register } from '../../ipc/register'
 import { cancelRestart, restart } from './system.service'
 import { readTweaks, writeTweak } from './windows.service'
 
 export function registerSystem(): void {
+  register('system:copy', (input) => {
+    clipboard.writeText(input.text)
+  })
   register('system:restart', () => restart())
   register('system:cancelRestart', () => cancelRestart())
   register('windows:tweaks', () => readTweaks())

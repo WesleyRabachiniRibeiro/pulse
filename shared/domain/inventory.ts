@@ -222,3 +222,50 @@ export function strangers(inventory: Inventory): InstalledApp[] {
 export function upgradeFor(inventory: Inventory, wingetId: string): Upgrade | undefined {
   return inventory.upgrades.find((u) => u.wingetId.toLowerCase() === wingetId.toLowerCase())
 }
+
+/** Categoria de partida da sugestão, que a pessoa troca ao colar no catálogo. */
+export const SUGGESTED_CATEGORY = 'utilities'
+
+function withoutAccents(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function hintOf(name: string): string {
+  return withoutAccents(name).trim().replace(/\s+/g, ' ')
+}
+
+export function suggestedId(name: string, taken: readonly string[] = []): string {
+  const base = withoutAccents(name).replace(/[^a-z0-9]/g, '') || 'programa'
+  const used = new Set(taken)
+  if (!used.has(base)) return base
+
+  let next = 2
+  while (used.has(`${base}${next}`)) next++
+  return `${base}${next}`
+}
+
+/**
+ * Monta a entrada de catálogo de um programa que está no PC e não está no
+ * catálogo. Tamanho, versão e categoria ninguém consegue adivinhar, então
+ * saem em branco para a pessoa preencher.
+ */
+export function suggestedEntry(app: InstalledApp, taken: readonly string[] = []): Program {
+  const name = app.name.trim() || 'Sem nome'
+
+  return {
+    id: suggestedId(name, taken),
+    name,
+    ...(app.wingetId ? { winget: app.wingetId } : {}),
+    version: '',
+    mb: 0,
+    category: SUGGESTED_CATEGORY,
+    hints: [hintOf(name)],
+  }
+}
+
+export function suggestedText(app: InstalledApp, taken: readonly string[] = []): string {
+  return JSON.stringify(suggestedEntry(app, taken), null, 2)
+}

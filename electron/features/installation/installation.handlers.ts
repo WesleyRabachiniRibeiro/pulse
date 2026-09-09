@@ -3,6 +3,7 @@ import { register } from '../../ipc/register'
 import { getProgram, getPrograms } from '@shared/domain/catalog'
 import { alertFrom } from '../alerts'
 import { openableIds, openProgram, type LaunchResult } from './launch'
+import { readHistory } from './history.service'
 import {
   append,
   cancel,
@@ -35,6 +36,7 @@ export function registerInstallation(): void {
   register('installation:openable', () => listOpenable())
   register('installation:grant', (input) => grantPermission(input.id))
   register('installation:uninstall', (input) => uninstall(input.id))
+  register('history:read', () => readHistory())
 
   subscribe((run) => {
     for (const win of BrowserWindow.getAllWindows()) {

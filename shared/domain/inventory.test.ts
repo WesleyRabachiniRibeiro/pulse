@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getProgram, getPrograms } from './catalog'
+import { getProgram, getPrograms, programSchema } from './catalog'
 import {
   buildInventory,
   catalogued,
@@ -7,6 +7,10 @@ import {
   inventorySchema,
   readUpgrades,
   strangers,
+  suggestedEntry,
+  suggestedId,
+  suggestedText,
+  SUGGESTED_CATEGORY,
   upgradeFor,
 } from './inventory'
 
@@ -227,5 +231,65 @@ describe('atualização casada com o catálogo', () => {
     const original = readUpgrades(TABLE)
     inventarioCom(original)
     expect(original[0]).not.toHaveProperty('programId')
+  })
+})
+
+describe('suggestedId', () => {
+  it('junta o nome em minúsculas, sem espaço nem símbolo', () => {
+    expect(suggestedId('Rockstar Games Launcher')).toBe('rockstargameslauncher')
+  })
+
+  it('tira acento em vez de jogar a letra fora', () => {
+    expect(suggestedId('Gravação Fácil')).toBe('gravacaofacil')
+  })
+
+  it('cai num nome genérico quando não sobra letra nenhuma', () => {
+    expect(suggestedId('★ ✦ ★')).toBe('programa')
+  })
+
+  it('desvia do id que já existe no catálogo', () => {
+    expect(suggestedId('Steam', getPrograms().map((p) => p.id))).toBe('steam2')
+  })
+
+  it('continua desviando quando o desvio também está tomado', () => {
+    expect(suggestedId('Steam', ['steam', 'steam2'])).toBe('steam3')
+  })
+})
+
+describe('suggestedEntry', () => {
+  it('aproveita o identificador do winget quando o PC informou', () => {
+    const entry = suggestedEntry({ name: 'Parsec', wingetId: 'Parsec.Parsec' })
+    expect(entry.winget).toBe('Parsec.Parsec')
+  })
+
+  it('não inventa identificador quando o PC não informou', () => {
+    expect(suggestedEntry({ name: 'Parsec' })).not.toHaveProperty('winget')
+  })
+
+  it('deixa em branco o que ninguém consegue adivinhar', () => {
+    const entry = suggestedEntry({ name: 'Parsec' })
+    expect(entry.version).toBe('')
+    expect(entry.mb).toBe(0)
+    expect(entry.category).toBe(SUGGESTED_CATEGORY)
+  })
+
+  it('nasce com a pista que faz o programa ser reconhecido depois', () => {
+    expect(suggestedEntry({ name: 'Parsec  Cloud' }).hints).toEqual(['parsec cloud'])
+  })
+
+  it('sai válida pelo esquema do catálogo, pronta para colar', () => {
+    expect(programSchema.safeParse(suggestedEntry({ name: 'Parsec' })).success).toBe(true)
+  })
+
+  it('sobrevive a nome vazio, que o esquema recusaria', () => {
+    expect(programSchema.safeParse(suggestedEntry({ name: '   ' })).success).toBe(true)
+  })
+})
+
+describe('suggestedText', () => {
+  it('sai como JSON indentado, pronto para colar no catálogo', () => {
+    const text = suggestedText({ name: 'Parsec', wingetId: 'Parsec.Parsec' })
+    expect(text.split('\n')[0]).toBe('{')
+    expect(JSON.parse(text)).toEqual(suggestedEntry({ name: 'Parsec', wingetId: 'Parsec.Parsec' }))
   })
 })

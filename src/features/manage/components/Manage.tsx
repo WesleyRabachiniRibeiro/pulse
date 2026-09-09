@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { getProgram } from '@shared/domain/catalog'
-import type { InstalledApp, Upgrade } from '@shared/domain/inventory'
+import { getProgram, getPrograms } from '@shared/domain/catalog'
+import { suggestedText, type InstalledApp, type Upgrade } from '@shared/domain/inventory'
 import type { StartupEntry } from '@shared/domain/windows'
 import {
   reloadInventory,
@@ -27,6 +27,7 @@ import {
   useStartupLoaded,
   useWatchStartup,
 } from '../store/useStartup'
+import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
 
 type Tab = 'installed' | 'updates' | 'startup'
@@ -139,6 +140,28 @@ function Installed({ loaded }: { loaded: boolean }) {
   )
 }
 
+function SuggestButton({ app }: { app: InstalledApp }) {
+  const [copied, setCopied] = useState(false)
+
+  async function copy() {
+    const taken = getPrograms().map((p) => p.id)
+    await bridge.invoke('system:copy', { text: suggestedText(app, taken) }).catch(() => undefined)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <button
+      type="button"
+      className={s.action}
+      onClick={() => void copy()}
+      title="Copia uma entrada pronta para o catálogo do Pulse, com o resto para você preencher"
+    >
+      {copied ? 'COPIADO' : 'SUGERIR'}
+    </button>
+  )
+}
+
 function InstalledItem({ app }: { app: InstalledApp }) {
   const program = app.programId ? getProgram(app.programId) : undefined
   const canOpen = useCanOpen(app.programId ?? '')
@@ -162,6 +185,12 @@ function InstalledItem({ app }: { app: InstalledApp }) {
             : (app.wingetId ?? (program ? 'do catálogo do Pulse' : 'fora do catálogo do Pulse'))}
         </span>
       </span>
+
+      {!program && (
+        <span className={s.actions}>
+          <SuggestButton app={app} />
+        </span>
+      )}
 
       {program && !removed && (
         <span className={s.actions}>
