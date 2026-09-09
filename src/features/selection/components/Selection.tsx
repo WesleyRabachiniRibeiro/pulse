@@ -15,13 +15,11 @@ import { requestsToAppend, type Request } from '@shared/domain/installation'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { useAutostart } from '../store/useAutostart'
 import { useDrives, useWatchDrives } from '../store/useDrives'
-import { useWatchTweaks } from '../store/useTweaks'
 import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
 import { useSelection } from '../store/useSelection'
 import { useTourStore } from '@/features/tour'
 import { useDefaults } from '@/features/preferences'
 import { AppSettings } from './AppSettings'
-import { WindowsTweaks } from './WindowsTweaks'
 import { AppCard, AppCardSkeleton } from './AppCard'
 import s from './Selection.module.css'
 
@@ -56,7 +54,6 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const defaults = useDefaults()
 
   useWatchDrives()
-  useWatchTweaks(true)
     useEffect(() => {
     useTourStore.getState().definirContexto(inSettings ? 'ajustes' : 'grade')
   }, [inSettings])
@@ -216,8 +213,6 @@ export function Selection({ drive, onGoToInstallation }: Props) {
             </section>
           ))
         )}
-
-        {!searching && <WindowsTweaks />}
       </div>
 
       <footer className={s.footer} data-tour="rodape">

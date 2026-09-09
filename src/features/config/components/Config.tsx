@@ -1,27 +1,138 @@
-import { DEFAULT_KEYS, defaultLabel, programsOverriding, type DefaultKey } from '@shared/domain/defaults'
+import { getProgram } from '@shared/domain/catalog'
+import { programsOverriding, type Defaults, type DefaultKey } from '@shared/domain/defaults'
+import { formatGb } from '@shared/domain/preflight'
+import { LOCALES } from '@shared/domain/winget'
 import { TWEAKS } from '@shared/domain/windows'
 import { usePrograms } from '@/features/catalog'
-import { useDefaults } from '@/features/preferences'
-import { useSelection } from '@/features/selection'
+import { savePreference, useDefaults, usePreferences } from '@/features/preferences'
+import {
+  setTweak,
+  useDrives,
+  useSelection,
+  useTweakBusy,
+  useTweaks,
+  useTweaksLoaded,
+  useWatchDrives,
+  useWatchTweaks,
+} from '@/features/selection'
+import { ConfigRow, type Choice } from './ConfigRow'
 import s from './Config.module.css'
 
-const GROUPS: { name: string; scope: string; keys: readonly DefaultKey[] }[] = [
-  { name: 'COMO INSTALAR', scope: 'VALE PARA TODOS', keys: ['scope', 'locale', 'interactive'] },
-  { name: 'DEPOIS DE INSTALAR', scope: 'VALE PARA TODOS', keys: ['desktopShortcut', 'autostart'] },
+const KEEP = 'manter'
+
+interface Row {
+  key: DefaultKey
+  name: string
+  hint: string
+  choices: readonly Choice[]
+}
+
+const ROWS: readonly Row[] = [
+  {
+    key: 'scope',
+    name: 'Instalar para quem',
+    hint: 'Para todos deste PC costuma pedir a permissão de administrador uma vez por programa.',
+    choices: [
+      { id: KEEP, label: 'DO JEITO DO PROGRAMA' },
+      { id: 'user', label: 'SÓ PARA MIM' },
+      { id: 'machine', label: 'PARA TODOS' },
+    ],
+  },
+  {
+    key: 'locale',
+    name: 'Idioma dos programas',
+    hint: 'Quem só existe num idioma vem nele mesmo, e o resumo avisa em vez de falhar.',
+    choices: [
+      { id: KEEP, label: 'DO JEITO QUE VIER' },
+      ...LOCALES.map((locale) => ({ id: locale.id, label: locale.name.toUpperCase() })),
+    ],
+  },
+  {
+    key: 'interactive',
+    name: 'Janela do instalador',
+    hint: 'Em silêncio é mais rápido e não pede nada no meio do caminho. Mostrar serve quando o silencioso falha.',
+    choices: [
+      { id: 'false', label: 'EM SILÊNCIO' },
+      { id: 'true', label: 'MOSTRAR' },
+    ],
+  },
+  {
+    key: 'desktopShortcut',
+    name: 'Atalho na área de trabalho',
+    hint: 'Copiado do menu Iniciar depois que o programa entra. Quem não aparece no menu Iniciar não tem o que copiar.',
+    choices: [
+      { id: KEEP, label: 'COMO O INSTALADOR DEIXOU' },
+      { id: 'true', label: 'CRIAR' },
+      { id: 'false', label: 'NÃO CRIAR' },
+    ],
+  },
+  {
+    key: 'autostart',
+    name: 'Abrir com o Windows',
+    hint: 'É o mesmo interruptor da aba Inicializar do Gerenciador de Tarefas.',
+    choices: [
+      { id: KEEP, label: 'COMO ESTÁ' },
+      { id: 'true', label: 'ABRIR' },
+      { id: 'false', label: 'NÃO ABRIR' },
+    ],
+  },
 ]
 
-const ROW_NAME: Record<DefaultKey, string> = {
-  scope: 'Instalar para quem',
-  locale: 'Idioma dos programas',
-  interactive: 'Janela do instalador',
-  desktopShortcut: 'Atalho na área de trabalho',
-  autostart: 'Abrir com o Windows',
+const INSTALL_KEYS: readonly DefaultKey[] = ['scope', 'locale', 'interactive']
+
+function chosenOf(defaults: Defaults, key: DefaultKey): string {
+  const value = defaults[key]
+  if (value !== undefined) return String(value)
+  return key === 'interactive' ? 'false' : KEEP
+}
+
+function valueFor(key: DefaultKey, picked: string): Defaults[DefaultKey] {
+  if (picked === KEEP) return undefined
+  if (key === 'scope') return picked === 'machine' ? 'machine' : 'user'
+  if (key === 'locale') return picked
+  return picked === 'true'
+}
+
+function namesOf(ids: readonly string[]): string[] {
+  return ids.map((id) => getProgram(id)?.name ?? id)
 }
 
 export function Config() {
   const defaults = useDefaults()
+  const prefs = usePreferences()
   const settingsByApp = useSelection((st) => st.settings)
+  const drivesByApp = useSelection((st) => st.drives)
   const programs = usePrograms()
+  const drives = useDrives()
+  const tweaks = useTweaks()
+  const tweaksLoaded = useTweaksLoaded()
+
+  useWatchDrives()
+  useWatchTweaks(true)
+
+  function pick(key: DefaultKey, picked: string): void {
+    const next: Defaults = { ...defaults }
+    const value = valueFor(key, picked)
+
+    if (value === undefined) delete next[key]
+    else Object.assign(next, { [key]: value })
+
+    void savePreference({ defaults: next })
+  }
+
+  const lendoDiscos = drives.length === 0
+  const driveChoices: Choice[] = lendoDiscos
+    ? [{ id: '', label: 'LENDO OS DISCOS…' }]
+    : drives.map((drive) => ({
+        id: drive.letter,
+        label: `${drive.letter} · ${formatGb(drive.freeBytes)} LIVRES`,
+      }))
+
+  const driveExceptions = namesOf(
+    Object.entries(drivesByApp)
+      .filter(([, letter]) => letter !== prefs.drive)
+      .map(([id]) => id),
+  )
 
   return (
     <div className={s.screen}>
@@ -33,32 +144,59 @@ export function Config() {
       </p>
 
       <div className={s.sections}>
-        {GROUPS.map((group) => (
-          <section key={group.name} className={s.section}>
-            <div className={s.header}>
-              <span className={s.name}>{group.name}</span>
-              <span className={s.line} aria-hidden />
-              <span className={s.scope}>{group.scope}</span>
-            </div>
+        <section className={s.section}>
+          <div className={s.header}>
+            <span className={s.name}>COMO INSTALAR</span>
+            <span className={s.line} aria-hidden />
+            <span className={s.scope}>VALE PARA TODOS</span>
+          </div>
 
-            <div className={s.rows}>
-              {group.keys.map((key) => {
-                const fugindo = programsOverriding(settingsByApp, defaults, key)
-                return (
-                  <div key={key} className={s.row}>
-                    <span className={s.rowName}>{ROW_NAME[key]}</span>
-                    <span className={s.rowValue}>{defaultLabel(key, defaults)}</span>
-                    {fugindo.length > 0 && (
-                      <span className={s.rowExceptions}>
-                        {fugindo.length} {fugindo.length === 1 ? 'exceção' : 'exceções'}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        ))}
+          <div className={s.rows}>
+            <ConfigRow
+              name="Disco onde instalar"
+              hint="Vale para todo programa cujo instalador deixa escolher a pasta. Quem não deixa vai para o disco do sistema e avisa no resumo."
+              choices={driveChoices}
+              chosen={lendoDiscos ? '' : (prefs.drive ?? '')}
+              busy={lendoDiscos}
+              exceptions={driveExceptions}
+              onPick={(letter) => void savePreference({ drive: letter })}
+            />
+
+            {ROWS.filter((row) => INSTALL_KEYS.includes(row.key)).map((row) => (
+              <ConfigRow
+                key={row.key}
+                name={row.name}
+                hint={row.hint}
+                choices={row.choices}
+                chosen={chosenOf(defaults, row.key)}
+                exceptions={namesOf(programsOverriding(settingsByApp, defaults, row.key))}
+                onPick={(picked) => pick(row.key, picked)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className={s.section}>
+          <div className={s.header}>
+            <span className={s.name}>DEPOIS DE INSTALAR</span>
+            <span className={s.line} aria-hidden />
+            <span className={s.scope}>VALE PARA TODOS</span>
+          </div>
+
+          <div className={s.rows}>
+            {ROWS.filter((row) => !INSTALL_KEYS.includes(row.key)).map((row) => (
+              <ConfigRow
+                key={row.key}
+                name={row.name}
+                hint={row.hint}
+                choices={row.choices}
+                chosen={chosenOf(defaults, row.key)}
+                exceptions={namesOf(programsOverriding(settingsByApp, defaults, row.key))}
+                onPick={(picked) => pick(row.key, picked)}
+              />
+            ))}
+          </div>
+        </section>
 
         <section className={s.section}>
           <div className={s.header}>
@@ -69,21 +207,50 @@ export function Config() {
 
           <div className={s.rows}>
             {TWEAKS.map((tweak) => (
-              <div key={tweak.id} className={s.row}>
-                <span className={s.rowName}>{tweak.name}</span>
-              </div>
+              <TweakRow
+                key={tweak.id}
+                id={tweak.id}
+                name={tweak.name}
+                hint={tweak.hint}
+                on={tweaks[tweak.id] === true}
+                ready={tweaksLoaded}
+              />
             ))}
           </div>
-        </section>
 
-        <p className={s.pending}>
-          Os controles ainda estão na tela de cada programa e no fim da Seleção. O próximo passo
-          traz todos para cá, e é quando esta tela passa a mandar de verdade. Hoje ela já mostra o
-          padrão que está valendo e quantos programas fogem de cada um.
-        </p>
+          <p className={s.note}>
+            Estes não são programas e não entram na fila. Entram na hora, valem só para a sua conta
+            do Windows e desfazem clicando de novo.
+          </p>
+        </section>
       </div>
     </div>
   )
 }
 
-export const CONFIG_KEYS = DEFAULT_KEYS
+interface TweakProps {
+  id: string
+  name: string
+  hint: string
+  on: boolean
+  ready: boolean
+}
+
+function TweakRow({ id, name, hint, on, ready }: TweakProps) {
+  const busy = useTweakBusy(id)
+
+  return (
+    <ConfigRow
+      name={name}
+      hint={busy ? 'aplicando…' : hint}
+      choices={[
+        { id: 'true', label: 'LIGADO' },
+        { id: 'false', label: 'DESLIGADO' },
+      ]}
+      chosen={String(on)}
+      busy={!ready || busy}
+      exceptions={[]}
+      onPick={(picked) => void setTweak(id, picked === 'true')}
+    />
+  )
+}
