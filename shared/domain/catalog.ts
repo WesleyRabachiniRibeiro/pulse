@@ -19,6 +19,7 @@ export const programSchema = z.object({
   category: z.string().min(1),
   hints: z.array(z.string()),
   notice: z.string().optional(),
+  icon: z.string().optional(),
   settingsKind: settingsKindSchema.optional(),
   family: z
     .object({

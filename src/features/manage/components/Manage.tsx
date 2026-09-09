@@ -423,6 +423,7 @@ function AdoptButton({ node }: { node: InstalledNode }) {
       .invoke('catalog:add', {
         name: node.name,
         ...(node.version ? { version: node.version } : {}),
+        ...(node.icon ? { icon: node.icon } : {}),
       })
       .catch(() => null)
 

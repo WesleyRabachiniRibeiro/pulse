@@ -28,3 +28,14 @@
   font-size: calc(var(--side) * 0.35);
   color: var(--tint);
 }
+
+.tile[data-own='true'] {
+  background: var(--bg-subtle);
+  border-color: var(--border-card);
+}
+
+.photo {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}

@@ -288,3 +288,19 @@ describe('selectable', () => {
     expect(selectable(tree.nodes).map((n) => n.name)).toEqual(['Google Chrome'])
   })
 })
+
+describe('ícone do item', () => {
+  it('leva para o nó o caminho que o programa registrou', () => {
+    const tree = buildInstalled(
+      [entry({ key: 'a', name: 'Coisa', icon: 'D:\Coisa\coisa.exe,0' })],
+      getPrograms(),
+    )
+
+    expect(tree.nodes[0]?.icon).toBe('D:\Coisa\coisa.exe')
+  })
+
+  it('não inventa ícone quando o programa não registrou', () => {
+    const tree = buildInstalled([entry({ key: 'a', name: 'Coisa' })], getPrograms())
+    expect(tree.nodes[0]).not.toHaveProperty('icon')
+  })
+})

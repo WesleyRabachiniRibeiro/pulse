@@ -119,7 +119,11 @@ export const ipcContracts = {
     output: inventorySchema,
   },
   'catalog:add': {
-    input: z.object({ name: z.string().min(1), version: z.string().optional() }),
+    input: z.object({
+      name: z.string().min(1),
+      version: z.string().optional(),
+      icon: z.string().optional(),
+    }),
     output: z.object({
       status: z.enum(['added', 'exists', 'not-found', 'failed']),
       id: z.string().optional(),

@@ -4,6 +4,7 @@ import { getPrograms } from '@shared/domain/catalog'
 import { readWingetId, suggestedEntry } from '@shared/domain/inventory'
 import { addToCatalog } from './remote.service'
 import { forgetInventory } from './inventory.service'
+import { readFileIcon } from '../system/icon.service'
 
 const exec = promisify(execFile)
 
@@ -12,6 +13,7 @@ const CALL_TIMEOUT_MS = 30_000
 export interface AdoptInput {
   name: string
   version?: string
+  icon?: string
 }
 
 export interface AdoptResult {
@@ -44,7 +46,13 @@ export async function adoptProgram(input: AdoptInput): Promise<AdoptResult> {
   const taken = getPrograms().map((program) => program.id)
   const entry = suggestedEntry({ name, wingetId }, taken)
 
-  const program = { ...entry, ...(input.version ? { version: input.version } : {}) }
+  const image = input.icon ? await readFileIcon(input.icon).catch(() => null) : null
+
+  const program = {
+    ...entry,
+    ...(input.version ? { version: input.version } : {}),
+    ...(image ? { icon: image } : {}),
+  }
 
   try {
     const status = await addToCatalog(program)
