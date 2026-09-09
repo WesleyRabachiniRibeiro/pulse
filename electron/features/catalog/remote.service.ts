@@ -8,7 +8,9 @@ import {
   setCatalog,
   type Catalog,
 } from '@shared/domain/catalog'
+import type { Program } from '@shared/domain/catalog'
 import { forgetVersions, knownVersions, refreshVersions } from './versions.service'
+import { readExtras, saveExtras } from './extras.service'
 
 const SOURCE_URL =
   'https://raw.githubusercontent.com/WesleyRabachiniRibeiro/pulse/main/catalog.json'
@@ -89,9 +91,13 @@ function announce(catalog: Catalog): void {
 let loading: Promise<Catalog> | null = null
 let base: Catalog = BUILTIN_CATALOG
 let versions: Record<string, string> = {}
+let extras: Program[] = []
 
 function publish(): Catalog {
-  const programs = base.programs.map((program) => {
+  const known = new Set(base.programs.map((program) => program.id))
+  const mine = extras.filter((program) => !known.has(program.id))
+
+  const programs = [...base.programs, ...mine].map((program) => {
     const fresh = versions[program.id]
     return fresh && fresh !== program.version ? { ...program, version: fresh } : program
   })
@@ -108,6 +114,7 @@ export function loadCatalog(): Promise<Catalog> {
 async function start(): Promise<Catalog> {
   const cached = await readCached()
   if (cached) base = cached
+  extras = await readExtras()
   versions = await knownVersions()
   return publish()
 }
@@ -133,6 +140,23 @@ export async function refreshVersionsFromWinget(): Promise<boolean> {
   versions = fresh
   announce(publish())
   return true
+}
+
+/**
+ * Programa que a pessoa achou no PC e mandou entrar no catálogo dela. Fica num
+ * arquivo só dela, ao lado do catálogo baixado, e sobrevive à atualização do
+ * catálogo publicado.
+ */
+export async function addToCatalog(program: Program): Promise<'added' | 'exists'> {
+  await loadCatalog()
+
+  const known = new Set([...base.programs, ...extras].map((one) => one.id))
+  if (known.has(program.id)) return 'exists'
+
+  extras = [...extras, program]
+  await saveExtras(extras)
+  announce(publish())
+  return 'added'
 }
 
 export function forgetRemoteCatalog(): void {

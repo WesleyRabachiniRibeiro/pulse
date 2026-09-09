@@ -153,6 +153,25 @@ function fromTokens(output: string, known: ReadonlySet<string>): Upgrade[] {
   return found
 }
 
+/**
+ * O identificador na resposta de `winget list --name`. A tabela muda de
+ * idioma e de largura, mas o identificador tem forma própria e só ele parece
+ * com isso na linha.
+ */
+export function readWingetId(output: string): string | null {
+  const lines = output.split(/\r?\n/)
+  const rule = lines.findIndex((line) => /^-{5,}$/.test(line.trim()))
+  if (rule < 0) return null
+
+  for (const line of lines.slice(rule + 1)) {
+    const tokens = line.trim().split(/\s+/).filter(Boolean)
+    const found = tokens.find((token) => looksLikeId(token))
+    if (found) return found
+  }
+
+  return null
+}
+
 export function readUpgrades(output: string, knownIds: readonly string[] = []): Upgrade[] {
   const known = new Set(knownIds.map((id) => id.toLowerCase()))
   return fromTable(output, known) ?? fromTokens(output, known)
@@ -278,6 +297,3 @@ export function suggestedEntry(app: InstalledApp, taken: readonly string[] = [])
   }
 }
 
-export function suggestedText(app: InstalledApp, taken: readonly string[] = []): string {
-  return JSON.stringify(suggestedEntry(app, taken), null, 2)
-}

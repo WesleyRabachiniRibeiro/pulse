@@ -85,6 +85,13 @@ export const ipcContracts = {
     input: freshInputSchema,
     output: inventorySchema,
   },
+  'catalog:add': {
+    input: z.object({ name: z.string().min(1), version: z.string().optional() }),
+    output: z.object({
+      status: z.enum(['added', 'exists', 'not-found', 'failed']),
+      id: z.string().optional(),
+    }),
+  },
   'catalog:startup': {
     input: z.void(),
     output: z.array(startupEntrySchema),

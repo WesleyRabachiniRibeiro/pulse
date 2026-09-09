@@ -693,3 +693,18 @@ button.disclosure:hover {
     transform: rotate(360deg);
   }
 }
+
+.icon[data-state='added'] {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
+  opacity: 1;
+}
+
+.icon[data-state='missing'] {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+}
+
+.icon svg[data-busy='true'] {
+  animation: ia-spin 1.1s linear infinite;
+}

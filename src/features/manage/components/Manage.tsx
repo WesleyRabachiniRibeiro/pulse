@@ -3,13 +3,14 @@ import {
   LuCheck,
   LuChevronDown,
   LuChevronRight,
-  LuCopy,
   LuExternalLink,
+  LuPlus,
   LuRotateCw,
   LuSearch,
+  LuTriangleAlert,
 } from 'react-icons/lu'
-import { getProgram, getPrograms } from '@shared/domain/catalog'
-import { suggestedText, type Upgrade } from '@shared/domain/inventory'
+import { getProgram } from '@shared/domain/catalog'
+import type { Upgrade } from '@shared/domain/inventory'
 import {
   filterInstalled,
   selectable,
@@ -334,30 +335,54 @@ function Installed({ loaded, onQueue }: InstalledProps) {
   )
 }
 
-function SuggestButton({ node }: { node: InstalledNode }) {
-  const [copied, setCopied] = useState(false)
+type AdoptState = 'idle' | 'working' | 'added' | 'missing' | 'failed'
 
-  async function copy() {
-    const taken = getPrograms().map((p) => p.id)
-    const app = { name: node.name, ...(node.wingetId ? { wingetId: node.wingetId } : {}) }
-    await bridge.invoke('system:copy', { text: suggestedText(app, taken) }).catch(() => undefined)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+const ADOPT_TITLE: Record<AdoptState, string> = {
+  idle: 'Pôr no seu catálogo, para poder instalar este programa em outro PC',
+  working: 'Procurando este programa no winget…',
+  added: 'Entrou no seu catálogo',
+  missing: 'O winget não conhece este programa, então o Pulse não teria como instalá-lo',
+  failed: 'Não deu para pôr no catálogo. Tente de novo.',
+}
+
+function AdoptButton({ node }: { node: InstalledNode }) {
+  const [state, setState] = useState<AdoptState>('idle')
+
+  async function adopt() {
+    setState('working')
+
+    const answer = await bridge
+      .invoke('catalog:add', {
+        name: node.name,
+        ...(node.version ? { version: node.version } : {}),
+      })
+      .catch(() => null)
+
+    if (!answer) return setState('failed')
+
+    if (answer.status === 'added' || answer.status === 'exists') {
+      setState('added')
+      void reloadInventory(true)
+      return
+    }
+
+    setState(answer.status === 'not-found' ? 'missing' : 'failed')
   }
 
   return (
     <button
       type="button"
       className={s.icon}
-      onClick={() => void copy()}
-      aria-label={`Sugerir ${node.name} para o catálogo do Pulse`}
-      title={
-        copied
-          ? 'Copiado, cole no catálogo'
-          : 'Copia uma entrada pronta para o catálogo do Pulse, com o resto para você preencher'
-      }
+      data-state={state}
+      disabled={state === 'working' || state === 'added'}
+      onClick={() => void adopt()}
+      aria-label={`Pôr ${node.name} no seu catálogo`}
+      title={ADOPT_TITLE[state]}
     >
-      {copied ? <LuCheck size={15} data-done="true" /> : <LuCopy size={15} />}
+      {state === 'added' && <LuCheck size={15} />}
+      {state === 'working' && <LuRotateCw size={15} data-busy="true" />}
+      {state === 'missing' && <LuTriangleAlert size={15} />}
+      {(state === 'idle' || state === 'failed') && <LuPlus size={15} />}
     </button>
   )
 }
@@ -583,7 +608,7 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
 
         {!program && node.kind === 'app' && (
           <span className={s.actions}>
-            <SuggestButton node={node} />
+            <AdoptButton node={node} />
           </span>
         )}
       </div>

@@ -6,10 +6,10 @@ import {
   EMPTY_INVENTORY,
   inventorySchema,
   readUpgrades,
+  readWingetId,
   strangers,
   suggestedEntry,
   suggestedId,
-  suggestedText,
   SUGGESTED_CATEGORY,
   upgradeFor,
 } from './inventory'
@@ -286,10 +286,32 @@ describe('suggestedEntry', () => {
   })
 })
 
-describe('suggestedText', () => {
-  it('sai como JSON indentado, pronto para colar no catálogo', () => {
-    const text = suggestedText({ name: 'Parsec', wingetId: 'Parsec.Parsec' })
-    expect(text.split('\n')[0]).toBe('{')
-    expect(JSON.parse(text)).toEqual(suggestedEntry({ name: 'Parsec', wingetId: 'Parsec.Parsec' }))
+describe('readWingetId', () => {
+  const TABELA = [
+    'Nome            ID                  Versão   Origem',
+    '---------------------------------------------------',
+    'Proton VPN      Proton.ProtonVPN    4.9.2    winget',
+  ].join('\n')
+
+  it('acha o identificador na linha de resposta', () => {
+    expect(readWingetId(TABELA)).toBe('Proton.ProtonVPN')
+  })
+
+  it('não se perde com nome que tem espaço', () => {
+    const table = [
+      'Nome                  ID                       Versão',
+      '------------------------------------------------------',
+      'Adobe Premiere Pro    Adobe.PremierePro        25.1',
+    ].join('\n')
+    expect(readWingetId(table)).toBe('Adobe.PremierePro')
+  })
+
+  it('devolve nada quando o winget não achou', () => {
+    expect(readWingetId('Nenhum pacote instalado foi encontrado.')).toBeNull()
+  })
+
+  it('devolve nada quando a linha não tem identificador', () => {
+    const table = ['Nome    Versão', '--------------', 'Coisa   1.0'].join('\n')
+    expect(readWingetId(table)).toBeNull()
   })
 })

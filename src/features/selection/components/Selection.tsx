@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { LuSearch } from 'react-icons/lu'
+import { LuSearch, LuSettings } from 'react-icons/lu'
 import { settingsAreEmpty, settingsSummary } from '@shared/domain/settings'
 import { applyDefaults, DEFAULT_KEYS, overriddenKeys } from '@shared/domain/defaults'
 import {
@@ -215,7 +215,13 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
           )}
         </div>
 
-        <button type="button" className={s.defaults} onClick={onGoToConfig}>
+        <button
+          type="button"
+          className={s.defaults}
+          onClick={onGoToConfig}
+          title="Abrir a Configuração, onde ficam os padrões de todos os programas"
+        >
+          <LuSettings size={14} aria-hidden />
           Padrões: {defaultsLine}
         </button>
       </header>
