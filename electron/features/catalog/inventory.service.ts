@@ -16,6 +16,7 @@ const exec = promisify(execFile)
 
 const CALL_TIMEOUT_MS = 90_000
 const REUSE_MS = 120_000
+const RETRY_WAIT_MS = 1_500
 
 async function readWingetIds(): Promise<string[]> {
   const folder = await mkdtemp(join(tmpdir(), 'pulse-export-')).catch(() => null)
@@ -51,7 +52,11 @@ async function readWingetIds(): Promise<string[]> {
   }
 }
 
-async function readUpgradeTable(): Promise<string> {
+function answered(output: string): boolean {
+  return output.split(/\r?\n/).some((line) => /^-{5,}$/.test(line.trim()))
+}
+
+async function askWinget(): Promise<string> {
   const { stdout } = await exec(
     'winget',
     ['list', '--upgrade-available', '--disable-interactivity', '--accept-source-agreements'],
@@ -59,6 +64,16 @@ async function readUpgradeTable(): Promise<string> {
   ).catch(() => ({ stdout: '' }))
 
   return stdout
+}
+
+async function readUpgradeTable(): Promise<string | null> {
+  const first = await askWinget()
+  if (answered(first)) return first
+
+  await new Promise((done) => setTimeout(done, RETRY_WAIT_MS))
+
+  const second = await askWinget()
+  return answered(second) ? second : null
 }
 
 let last: { at: number; inventory: Inventory } | null = null
@@ -76,14 +91,14 @@ async function read(): Promise<Inventory> {
     readUpgradeTable(),
   ])
 
-  const upgrades = readUpgrades(table, wingetIds)
+  const upgrades = table === null ? [] : readUpgrades(table, wingetIds)
 
   const inventory = buildInventory(
     { names, wingetIds, upgrades, programs: getPrograms() },
     new Date().toISOString(),
   )
 
-  last = { at: Date.now(), inventory }
+  if (table !== null) last = { at: Date.now(), inventory }
   return inventory
 }
 

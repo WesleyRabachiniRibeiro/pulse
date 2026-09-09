@@ -195,3 +195,37 @@ describe('inventorySchema', () => {
     expect(inventorySchema.safeParse(null).success).toBe(false)
   })
 })
+
+describe('atualização casada com o catálogo', () => {
+  const programs = getPrograms()
+  const agora = '2026-09-09T00:00:00.000Z'
+
+  function inventarioCom(upgrades: ReturnType<typeof readUpgrades>) {
+    return buildInventory({ names: [], wingetIds: [], upgrades, programs }, agora)
+  }
+
+  it('liga a atualização ao programa do catálogo', () => {
+    const inv = inventarioCom(readUpgrades(TABLE))
+    const blender = inv.upgrades.find((u) => u.wingetId === 'BlenderFoundation.Blender')
+    expect(blender?.programId).toBe('blender')
+  })
+
+  it('não liga quem não está no catálogo', () => {
+    const inv = inventarioCom(readUpgrades(TABLE))
+    const zoomExe = inv.upgrades.find((u) => u.wingetId === 'Zoom.Zoom.EXE')
+    expect(zoomExe?.programId).toBeUndefined()
+  })
+
+  it('casa sem ligar para maiúscula', () => {
+    const inv = inventarioCom([
+      { wingetId: 'blenderfoundation.blender', name: 'x', current: '1', available: '2' },
+    ])
+    expect(inv.upgrades[0]?.programId).toBe('blender')
+  })
+
+  it('não mexe na lista que recebeu', () => {
+    const original = readUpgrades(TABLE)
+    inventarioCom(original)
+    expect(original[0]).not.toHaveProperty('programId')
+  })
+})

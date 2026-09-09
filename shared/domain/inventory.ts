@@ -6,6 +6,7 @@ export const upgradeSchema = z.object({
   name: z.string(),
   current: z.string(),
   available: z.string(),
+  programId: z.string().optional(),
 })
 export type Upgrade = z.infer<typeof upgradeSchema>
 
@@ -197,7 +198,17 @@ export function buildInventory(input: InventoryInput, readAt: string): Inventory
 
   apps.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }))
 
-  return { apps, upgrades: [...input.upgrades], readAt }
+  const byWinget = new Map<string, string>()
+  for (const program of input.programs) {
+    if (program.winget) byWinget.set(program.winget.toLowerCase(), program.id)
+  }
+
+  const upgrades = input.upgrades.map((upgrade) => {
+    const programId = byWinget.get(upgrade.wingetId.toLowerCase())
+    return programId ? { ...upgrade, programId } : upgrade
+  })
+
+  return { apps, upgrades, readAt }
 }
 
 export function catalogued(inventory: Inventory): InstalledApp[] {

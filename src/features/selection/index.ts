@@ -10,3 +10,8 @@ export {
   useTweaksLoaded,
   useWatchTweaks,
 } from './store/useTweaks'
+export {
+  uninstallProgram,
+  useUninstalled,
+  useUninstalling,
+} from './store/useUninstall'

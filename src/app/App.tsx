@@ -155,7 +155,7 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
               />
             )}
             {screen === 'config' && <Config />}
-            {screen === 'manage' && <Manage />}
+            {screen === 'manage' && <Manage onGoToInstallation={() => setScreen('run')} />}
           </div>
         </div>
       </div>

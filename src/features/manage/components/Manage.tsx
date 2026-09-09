@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getProgram } from '@shared/domain/catalog'
+import type { InstalledApp, Upgrade } from '@shared/domain/inventory'
 import type { StartupEntry } from '@shared/domain/windows'
 import {
   reloadInventory,
@@ -7,6 +8,17 @@ import {
   useInventoryBusy,
   useInventoryLoaded,
 } from '@/features/catalog'
+import {
+  appendToQueue,
+  openProgram,
+  startInstallation,
+  useCanOpen,
+  useOpening,
+  useRun,
+  useWatchOpenable,
+} from '@/features/installation'
+import { usePreferences } from '@/features/preferences'
+import { uninstallProgram, useUninstalled, useUninstalling } from '@/features/selection'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import {
   setStartup,
@@ -19,15 +31,34 @@ import s from './Manage.module.css'
 
 type Tab = 'installed' | 'updates' | 'startup'
 
-export function Manage() {
+interface Props {
+  onGoToInstallation: () => void
+}
+
+export function Manage({ onGoToInstallation }: Props) {
   const [tab, setTab] = useState<Tab>('installed')
   const inventory = useInventory()
   const loaded = useInventoryLoaded()
   const busy = useInventoryBusy()
   const startup = useStartup()
   const startupLoaded = useStartupLoaded()
+  const prefs = usePreferences()
+  const run = useRun()
 
   useWatchStartup(true)
+  useWatchOpenable(loaded)
+
+  const atualizaveis = inventory.upgrades.filter((u) => u.programId !== undefined)
+
+  async function enfileirar(ids: readonly string[]): Promise<void> {
+    const drive = prefs.drive ?? 'C:'
+    const requests = ids.map((id) => ({ id, drive }))
+    if (requests.length === 0) return
+
+    if (run) await appendToQueue(requests)
+    else await startInstallation(requests, drive)
+    onGoToInstallation()
+  }
 
   const tabs: { id: Tab; label: string; count: number }[] = [
     { id: 'installed', label: 'INSTALADOS', count: inventory.apps.length },
@@ -60,6 +91,16 @@ export function Manage() {
 
         <span className={s.spacer} />
 
+        {tab === 'updates' && atualizaveis.length > 0 && (
+          <button
+            type="button"
+            className={s.headline}
+            onClick={() => void enfileirar(atualizaveis.map((u) => u.programId as string))}
+          >
+            ATUALIZAR OS {atualizaveis.length} DO CATÁLOGO
+          </button>
+        )}
+
         <button
           type="button"
           className={s.refresh}
@@ -72,7 +113,9 @@ export function Manage() {
 
       <div className={s.list}>
         {tab === 'installed' && <Installed loaded={loaded} />}
-        {tab === 'updates' && <Updates loaded={loaded} />}
+        {tab === 'updates' && (
+          <Updates loaded={loaded} onUpdate={(id) => void enfileirar([id])} />
+        )}
         {tab === 'startup' && <Startup entries={startup} loaded={startupLoaded} />}
       </div>
     </div>
@@ -89,30 +132,71 @@ function Installed({ loaded }: { loaded: boolean }) {
 
   return (
     <>
-      {inventory.apps.map((app) => {
-        const program = app.programId ? getProgram(app.programId) : undefined
-        return (
-          <div key={app.name} className={s.item}>
-            {program ? (
-              <AppIcon id={program.id} name={program.name} size={28} />
-            ) : (
-              <span className={s.stranger}>—</span>
-            )}
-
-            <span className={s.body}>
-              <span className={s.name}>{app.name}</span>
-              <span className={s.note}>
-                {app.wingetId ?? (program ? 'do catálogo do Pulse' : 'fora do catálogo do Pulse')}
-              </span>
-            </span>
-          </div>
-        )
-      })}
+      {inventory.apps.map((app) => (
+        <InstalledItem key={app.name} app={app} />
+      ))}
     </>
   )
 }
 
-function Updates({ loaded }: { loaded: boolean }) {
+function InstalledItem({ app }: { app: InstalledApp }) {
+  const program = app.programId ? getProgram(app.programId) : undefined
+  const canOpen = useCanOpen(app.programId ?? '')
+  const opening = useOpening(app.programId ?? '')
+  const removing = useUninstalling(app.programId ?? '')
+  const removed = useUninstalled(app.programId ?? '')
+
+  return (
+    <div className={s.item}>
+      {program ? (
+        <AppIcon id={program.id} name={program.name} size={28} />
+      ) : (
+        <span className={s.stranger}>—</span>
+      )}
+
+      <span className={s.body}>
+        <span className={s.name}>{app.name}</span>
+        <span className={s.note}>
+          {removed
+            ? 'tirado deste PC'
+            : (app.wingetId ?? (program ? 'do catálogo do Pulse' : 'fora do catálogo do Pulse'))}
+        </span>
+      </span>
+
+      {program && !removed && (
+        <span className={s.actions}>
+          {canOpen && (
+            <button
+              type="button"
+              className={s.action}
+              disabled={opening}
+              onClick={() => void openProgram(program.id)}
+            >
+              {opening ? 'ABRINDO…' : 'ABRIR'}
+            </button>
+          )}
+
+          <button
+            type="button"
+            className={s.action}
+            data-tone="danger"
+            disabled={removing}
+            onClick={() => void uninstallProgram(program.id)}
+          >
+            {removing ? 'TIRANDO…' : 'DESINSTALAR'}
+          </button>
+        </span>
+      )}
+    </div>
+  )
+}
+
+interface UpdatesProps {
+  loaded: boolean
+  onUpdate: (programId: string) => void
+}
+
+function Updates({ loaded, onUpdate }: UpdatesProps) {
   const inventory = useInventory()
 
   if (!loaded) return <p className={s.empty}>Perguntando ao winget quem tem versão nova…</p>
@@ -123,20 +207,47 @@ function Updates({ loaded }: { loaded: boolean }) {
   return (
     <>
       {inventory.upgrades.map((upgrade) => (
-        <div key={upgrade.wingetId} className={s.item}>
-          <span className={s.body}>
-            <span className={s.name}>{upgrade.name}</span>
-            <span className={s.note}>{upgrade.wingetId}</span>
-          </span>
-
-          <span className={s.versions}>
-            {upgrade.current}
-            <span className={s.arrow}>→</span>
-            <span className={s.fresh}>{upgrade.available}</span>
-          </span>
-        </div>
+        <UpdateItem key={upgrade.wingetId} upgrade={upgrade} onUpdate={onUpdate} />
       ))}
     </>
+  )
+}
+
+function UpdateItem({ upgrade, onUpdate }: { upgrade: Upgrade; onUpdate: (id: string) => void }) {
+  const program = upgrade.programId ? getProgram(upgrade.programId) : undefined
+
+  return (
+    <div className={s.item}>
+      {program ? (
+        <AppIcon id={program.id} name={program.name} size={28} />
+      ) : (
+        <span className={s.stranger}>—</span>
+      )}
+
+      <span className={s.body}>
+        <span className={s.name}>{upgrade.name}</span>
+        <span className={s.note}>{upgrade.wingetId}</span>
+      </span>
+
+      <span className={s.versions}>
+        {upgrade.current}
+        <span className={s.arrow}>→</span>
+        <span className={s.fresh}>{upgrade.available}</span>
+      </span>
+
+      {program && (
+        <span className={s.actions}>
+          <button
+            type="button"
+            className={s.action}
+            data-tone="main"
+            onClick={() => onUpdate(program.id)}
+          >
+            ATUALIZAR
+          </button>
+        </span>
+      )}
+    </div>
   )
 }
 
