@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
-import type { Preferences } from '@shared/domain/preferences'
+import { defaultsOf, type Preferences } from '@shared/domain/preferences'
 import { bridge } from '@/shared/lib/bridge'
 
 interface PreferencesStore {
@@ -49,4 +49,8 @@ export function usePreferences(): Preferences {
 
 export function usePreferencesLoaded(): boolean {
   return usePreferencesStore((s) => s.loaded)
+}
+
+export function useDefaults(): ReturnType<typeof defaultsOf> {
+  return usePreferencesStore((s) => defaultsOf(s.prefs))
 }

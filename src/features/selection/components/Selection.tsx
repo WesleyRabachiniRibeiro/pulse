@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
-import { settingsSummary } from '@shared/domain/settings'
+import { settingsAreEmpty, settingsSummary } from '@shared/domain/settings'
+import { applyDefaults } from '@shared/domain/defaults'
 import {
   bundleIsActive,
   estimatedMinutes,
@@ -18,6 +19,7 @@ import { useWatchTweaks } from '../store/useTweaks'
 import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
 import { useSelection } from '../store/useSelection'
 import { useTourStore } from '@/features/tour'
+import { useDefaults } from '@/features/preferences'
 import { AppSettings } from './AppSettings'
 import { WindowsTweaks } from './WindowsTweaks'
 import { AppCard, AppCardSkeleton } from './AppCard'
@@ -51,6 +53,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const autostart = useAutostart()
   const programs = usePrograms()
   const bundles = useBundles()
+  const defaults = useDefaults()
 
   useWatchDrives()
   useWatchTweaks(true)
@@ -70,12 +73,15 @@ export function Selection({ drive, onGoToInstallation }: Props) {
         if (installed.has(p.id)) return Boolean(settingsByApp[p.id])
         if (p.source === 'pages') return selected.has(p.id) || Boolean(settingsByApp[p.id])
         return selected.has(p.id)
-      }).map((p) => ({
-        id: p.id,
-        drive: drivesByApp[p.id] ?? drive,
-        ...(settingsByApp[p.id] ? { settings: settingsByApp[p.id] } : {}),
-      })),
-    [programs, selected, installed, drivesByApp, settingsByApp, drive],
+      }).map((p) => {
+        const settings = applyDefaults(settingsByApp[p.id], defaults)
+        return {
+          id: p.id,
+          drive: drivesByApp[p.id] ?? drive,
+          ...(settingsAreEmpty(settings) ? {} : { settings }),
+        }
+      }),
+    [programs, selected, installed, drivesByApp, settingsByApp, drive, defaults],
   )
   const fresh = useMemo(() => requestsToAppend(checked, run), [checked, run])
   const totalMb = totalSizeMb(fresh.map((r) => r.id))
@@ -85,7 +91,12 @@ export function Selection({ drive, onGoToInstallation }: Props) {
 
   async function applyAlone(id: string) {
     setError(null)
-    const request = { id, drive: drivesByApp[id] ?? drive, settings: settingsByApp[id] }
+    const settings = applyDefaults(settingsByApp[id], defaults)
+    const request = {
+      id,
+      drive: drivesByApp[id] ?? drive,
+      ...(settingsAreEmpty(settings) ? {} : { settings }),
+    }
     try {
       if (hasQueue) await appendToQueue([request])
       else await startInstallation([request], drive)
