@@ -3,7 +3,6 @@ import { create } from 'zustand'
 import {
   getBundles,
   getCategories,
-  getProgram,
   getPrograms,
   setCatalog,
   type Bundle,
@@ -18,7 +17,10 @@ import { bridge } from '@/shared/lib/bridge'
 export type CatalogPhase = 'looking' | 'ready' | 'failed'
 
 interface CatalogStore {
-  revision: number
+  programs: readonly Program[]
+  categories: readonly Category[]
+  bundles: readonly Bundle[]
+  byId: ReadonlyMap<string, Program>
   phase: CatalogPhase
   source: CatalogSource
   adopt: (catalog: Catalog) => void
@@ -26,13 +28,23 @@ interface CatalogStore {
   looking: () => void
 }
 
+function readRegistry() {
+  const programs = getPrograms()
+  return {
+    programs,
+    categories: getCategories(),
+    bundles: getBundles(),
+    byId: new Map(programs.map((program) => [program.id, program])),
+  }
+}
+
 export const useCatalogStore = create<CatalogStore>((set) => ({
-  revision: 0,
+  ...readRegistry(),
   phase: 'looking',
   source: 'none',
   adopt: (catalog) => {
     setCatalog(catalog)
-    set((state) => ({ revision: state.revision + 1 }))
+    set(readRegistry())
   },
   settle: (state) =>
     set({
@@ -85,17 +97,17 @@ export function useWatchCatalog(): void {
 }
 
 export function usePrograms(): readonly Program[] {
-  return useCatalogStore(() => getPrograms())
+  return useCatalogStore((s) => s.programs)
 }
 
 export function useCategories(): readonly Category[] {
-  return useCatalogStore(() => getCategories())
+  return useCatalogStore((s) => s.categories)
 }
 
 export function useBundles(): readonly Bundle[] {
-  return useCatalogStore(() => getBundles())
+  return useCatalogStore((s) => s.bundles)
 }
 
 export function useProgram(id: string | null): Program | undefined {
-  return useCatalogStore(() => (id ? getProgram(id) : undefined))
+  return useCatalogStore((s) => (id ? s.byId.get(id) : undefined))
 }
