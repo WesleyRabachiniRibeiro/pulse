@@ -18,7 +18,7 @@ export const useAutostartStore = create<AutostartStore>((set) => ({
 
 export async function reloadAutostart(): Promise<void> {
   try {
-    const list = await bridge.invoke('catalog:autostart', undefined)
+    const list = await bridge.invoke('catalog:autostart')
     useAutostartStore.getState().set(Object.fromEntries(list.map((i) => [i.id, i.state])))
   } catch {
     useAutostartStore.getState().set({})

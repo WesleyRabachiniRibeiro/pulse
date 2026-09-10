@@ -20,7 +20,7 @@ export function useWatchHistory(trigger: unknown): void {
     let alive = true
 
     void bridge
-      .invoke('history:read', undefined)
+      .invoke('history:read')
       .then((runs) => {
         if (alive) useHistoryStore.getState().set(runs)
       })

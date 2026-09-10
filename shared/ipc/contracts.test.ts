@@ -85,6 +85,20 @@ describe('contrato de IPC', () => {
     }
   })
 
+  it('a saída recusa payload fora do formato', () => {
+    expect(ipcContracts['installation:state'].output.safeParse({ items: 'nada' }).success).toBe(
+      false,
+    )
+    expect(ipcContracts['catalog:mine'].output.safeParse([1, 2]).success).toBe(false)
+    expect(ipcContracts['window:toggleMaximize'].output.safeParse('sim').success).toBe(false)
+  })
+
+  it('a saída aceita o que o processo principal devolve de verdade', () => {
+    expect(ipcContracts['installation:state'].output.safeParse(null).success).toBe(true)
+    expect(ipcContracts['catalog:mine'].output.safeParse(['vscode']).success).toBe(true)
+    expect(ipcContracts['window:toggleMaximize'].output.safeParse(true).success).toBe(true)
+  })
+
   it('todo evento declara um schema', () => {
     for (const event of ipcEventChannels) {
       expect(typeof ipcEvents[event].safeParse).toBe('function')

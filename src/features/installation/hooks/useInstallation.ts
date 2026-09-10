@@ -19,7 +19,7 @@ export function useInstallation() {
   }, [run])
 
   const cancel = useCallback(() => {
-    void bridge.invoke('installation:cancel', undefined)
+    void bridge.invoke('installation:cancel')
   }, [])
 
   const cancelItem = useCallback((id: string) => {

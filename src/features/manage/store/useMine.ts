@@ -13,7 +13,7 @@ const useMineStore = create<MineStore>((set) => ({
 }))
 
 export async function reloadMine(): Promise<void> {
-  const ids = await bridge.invoke('catalog:mine', undefined).catch((): string[] => [])
+  const ids = await bridge.invoke('catalog:mine').catch((): string[] => [])
   useMineStore.getState().set(ids)
 }
 

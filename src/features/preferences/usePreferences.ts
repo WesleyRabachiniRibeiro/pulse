@@ -19,7 +19,7 @@ export function useLoadPreferences(): void {
   useEffect(() => {
     let alive = true
     void bridge
-      .invoke('prefs:read', undefined)
+      .invoke('prefs:read')
       .then((prefs) => {
         if (alive) usePreferencesStore.getState().set(prefs)
       })

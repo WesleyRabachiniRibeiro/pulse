@@ -17,7 +17,7 @@ export function useWatchUpdate(): void {
   useEffect(() => {
     const set = useUpdateStore.getState().set
     const unsubscribe = bridge.on('update:event', set)
-    void bridge.invoke('update:state', undefined).then(set).catch(() => undefined)
+    void bridge.invoke('update:state').then(set).catch(() => undefined)
     return unsubscribe
   }, [])
 }
@@ -27,5 +27,5 @@ export function useUpdate(): UpdateState {
 }
 
 export async function installUpdate(): Promise<void> {
-  await bridge.invoke('update:install', undefined).catch(() => undefined)
+  await bridge.invoke('update:install').catch(() => undefined)
 }

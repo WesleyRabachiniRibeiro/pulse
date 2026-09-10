@@ -5,6 +5,7 @@ import { alertFrom } from '../alerts'
 import { isGranted, readParental } from '../parental'
 import { blockedAmong } from '@shared/domain/parental'
 import type { Request } from '@shared/domain/installation'
+import type { Refusal } from '@shared/features/installation/contracts'
 import { openableIds, openProgram, type LaunchResult } from './launch'
 import { readHistory } from './history.service'
 import {
@@ -25,14 +26,10 @@ async function openById(id: string): Promise<LaunchResult> {
   return program ? openProgram(program) : 'not-found'
 }
 
-async function pass(requests: readonly Request[]): Promise<Request[]> {
+async function pass(requests: readonly Request[]): Promise<Request[] | Refusal> {
   const free = await allowed(requests)
   if (free.length === 0 && requests.length > 0) {
-    throw new Error(
-      requests.length === 1
-        ? 'Este programa está bloqueado pelo controle dos pais.'
-        : 'Todos os programas escolhidos estão bloqueados pelo controle dos pais.',
-    )
+    return requests.length === 1 ? 'one-blocked' : 'all-blocked'
   }
   return free
 }
@@ -42,8 +39,18 @@ function listOpenable(): Promise<string[]> {
 }
 
 export function registerInstallation(): void {
-  register('installation:start', async (input) => start(await pass(input.requests), input.drive))
-  register('installation:append', async (input) => append(await pass(input.requests)))
+  register('installation:start', async (input) => {
+    const free = await pass(input.requests)
+    if (!Array.isArray(free)) return { ok: false as const, refused: free }
+    return { ok: true as const, run: start(free, input.drive) }
+  })
+
+  register('installation:append', async (input) => {
+    const free = await pass(input.requests)
+    if (!Array.isArray(free)) return { ok: false as const, refused: free }
+    return { ok: true as const, run: append(free) }
+  })
+
   register('installation:state', () => currentState())
   register('installation:cancel', () => cancel())
   register('installation:cancelItem', (input) => cancelItem(input.id))
@@ -55,7 +62,7 @@ export function registerInstallation(): void {
     const parental = await readParental().catch(() => null)
     const trancado = parental ? parental.on && Boolean(parental.secret) : false
     if (trancado && !isGranted(input.id)) {
-      throw new Error('Com o controle dos pais ligado, tirar programa do PC pede o PIN.')
+      return { ok: false, verified: false, refused: 'needs-pin' as const }
     }
     return uninstall(input.id)
   })

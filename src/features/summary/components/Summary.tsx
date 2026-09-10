@@ -105,12 +105,12 @@ export function Summary({ onChooseMore, onSeeInstallation, onGoToManage }: Props
 
   function restart() {
     setRestarting(true)
-    void bridge.invoke('system:restart', undefined)
+    void bridge.invoke('system:restart')
   }
 
   function giveUp() {
     setRestarting(false)
-    void bridge.invoke('system:cancelRestart', undefined)
+    void bridge.invoke('system:cancelRestart')
   }
 
   return (

@@ -34,7 +34,7 @@ export function useWatchTweaks(enabled: boolean): void {
     let alive = true
 
     void bridge
-      .invoke('windows:tweaks', undefined)
+      .invoke('windows:tweaks')
       .then((states) => {
         if (alive) useTweaksStore.getState().set(states)
       })

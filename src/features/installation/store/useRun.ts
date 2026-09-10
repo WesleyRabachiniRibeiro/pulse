@@ -17,7 +17,7 @@ export function useWatchInstallation(): void {
   useEffect(() => {
     const set = useRunStore.getState().set
     const unsubscribe = bridge.on('installation:event', set)
-    void bridge.invoke('installation:state', undefined).then(set)
+    void bridge.invoke('installation:state').then(set)
     return unsubscribe
   }, [])
 }

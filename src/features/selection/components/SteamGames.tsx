@@ -20,7 +20,7 @@ export function SteamGames({ chosen, onToggle }: Props) {
   const reload = useCallback(() => {
     setLibrary(null)
     void bridge
-      .invoke('steam:library', undefined)
+      .invoke('steam:library')
       .then(setLibrary)
       .catch(() => setLibrary({ hasSteam: false, installed: [], owned: [] }))
   }, [])

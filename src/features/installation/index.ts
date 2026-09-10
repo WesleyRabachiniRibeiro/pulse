@@ -1,4 +1,5 @@
 export { Installation } from './components/Installation'
 export { appendToQueue, startInstallation } from './lib/actions'
+export { refusalText } from './lib/refusal'
 export { useRun, useWatchInstallation } from './store/useRun'
 export { openProgram, useCanOpen, useOpening, useWatchOpenable } from './store/useOpen'

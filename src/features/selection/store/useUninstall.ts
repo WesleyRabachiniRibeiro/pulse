@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { bridge } from '@/shared/lib/bridge'
 import { onUninstalled } from '@/features/catalog'
+import { refusalText } from '@/features/installation'
 
 const FALLBACK = 'Não foi possível desinstalar.'
 
@@ -60,7 +61,8 @@ export async function uninstallProgram(id: string): Promise<void> {
       return
     }
 
-    useUninstallStore.getState().fail(id, result.error ?? FALLBACK)
+    const said = result.refused ? refusalText(result.refused) : result.error
+    useUninstallStore.getState().fail(id, said ?? FALLBACK)
   } catch (e) {
     useUninstallStore.getState().fail(id, e instanceof Error ? e.message : FALLBACK)
   }

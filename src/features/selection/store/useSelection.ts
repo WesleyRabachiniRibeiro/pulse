@@ -107,7 +107,7 @@ function hydrate(profile: Profile): void {
 
 export async function reloadSelection(): Promise<void> {
   const profile = await bridge
-    .invoke('profile:read', undefined)
+    .invoke('profile:read')
     .catch((): Profile => EMPTY_PROFILE)
 
   hydrate(profile)
@@ -118,7 +118,7 @@ export function useLoadSelection(): void {
     let alive = true
 
     bridge
-      .invoke('profile:read', undefined)
+      .invoke('profile:read')
       .then((profile) => {
         if (alive) hydrate(profile)
       })

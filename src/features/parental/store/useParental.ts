@@ -23,7 +23,7 @@ const useStore = create<ParentalStore>((set) => ({
 }))
 
 export async function reloadParental(): Promise<void> {
-  const view = await bridge.invoke('parental:read', undefined).catch(() => EMPTY)
+  const view = await bridge.invoke('parental:read').catch(() => EMPTY)
   useStore.getState().set(view)
 }
 

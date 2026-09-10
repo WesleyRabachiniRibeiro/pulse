@@ -33,7 +33,7 @@ export function useWatchStartup(enabled: boolean): void {
     let alive = true
 
     void bridge
-      .invoke('catalog:startup', undefined)
+      .invoke('catalog:startup')
       .then((entries) => {
         if (alive) useStartupStore.getState().set(entries)
       })

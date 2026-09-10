@@ -34,21 +34,21 @@ export function TitleBar({ version, onHome, onHelp, slot }: Props) {
         </button>
         <button
           className={s.control}
-          onClick={() => void bridge.invoke('window:minimize', undefined)}
+          onClick={() => void bridge.invoke('window:minimize')}
           aria-label="Minimizar"
         >
           &#8211;
         </button>
         <button
           className={s.control}
-          onClick={() => void bridge.invoke('window:toggleMaximize', undefined)}
+          onClick={() => void bridge.invoke('window:toggleMaximize')}
           aria-label="Maximizar"
         >
           &#9634;
         </button>
         <button
           className={`${s.control} ${s.close}`}
-          onClick={() => void bridge.invoke('window:close', undefined)}
+          onClick={() => void bridge.invoke('window:close')}
           aria-label="Fechar"
         >
           &#10005;

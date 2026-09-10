@@ -102,7 +102,7 @@ export function AppSettings({
     if (kind !== 'git') return
     let vivo = true
     void bridge
-      .invoke('git:config', undefined)
+      .invoke('git:config')
       .then((c) => {
         if (vivo) setGitDaMaquina(c)
       })

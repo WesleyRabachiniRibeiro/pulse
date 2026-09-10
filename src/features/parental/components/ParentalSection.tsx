@@ -189,7 +189,7 @@ export function ParentalSection({ onOpenBlocked }: Props) {
               <button
                 type="button"
                 className={s.primary}
-                onClick={() => void bridge.invoke('system:openFamily', undefined)}
+                onClick={() => void bridge.invoke('system:openFamily')}
               >
                 Abrir contas do Windows
                 <LuExternalLink size={13} aria-hidden />

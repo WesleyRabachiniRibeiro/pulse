@@ -63,7 +63,7 @@ export function ProfileBlock({ onGoToInstallation }: Props) {
   useEffect(() => {
     let alive = true
     void bridge
-      .invoke('profile:folders', undefined)
+      .invoke('profile:folders')
       .then((found) => {
         if (alive) setFolders(found)
       })
@@ -154,7 +154,7 @@ export function ProfileBlock({ onGoToInstallation }: Props) {
   }
 
   async function escolherPasta() {
-    const chosen = await bridge.invoke('profile:pickFolder', undefined).catch(() => null)
+    const chosen = await bridge.invoke('profile:pickFolder').catch(() => null)
     if (chosen) void savePreference({ profileFolder: chosen })
   }
 

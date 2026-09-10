@@ -33,7 +33,7 @@ export const useOpenStore = create<OpenStore>((set) => ({
 
 export function reloadOpenable(): void {
   void bridge
-    .invoke('installation:openable', undefined)
+    .invoke('installation:openable')
     .then((ids) => useOpenStore.getState().set(ids))
     .catch(() => undefined)
 }

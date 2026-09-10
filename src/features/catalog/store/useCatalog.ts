@@ -43,14 +43,14 @@ export const useCatalogStore = create<CatalogStore>((set) => ({
 }))
 
 async function ask(): Promise<void> {
-  const state = await bridge.invoke('catalog:state', undefined).catch(() => null)
+  const state = await bridge.invoke('catalog:state').catch(() => null)
   if (state) useCatalogStore.getState().settle(state)
 }
 
 export async function retryCatalog(): Promise<void> {
   useCatalogStore.getState().looking()
 
-  const state = await bridge.invoke('catalog:retry', undefined).catch(() => null)
+  const state = await bridge.invoke('catalog:retry').catch(() => null)
   if (state) useCatalogStore.getState().settle(state)
   else useCatalogStore.getState().settle({ source: 'none', checkedAt: null, programs: 0 })
 }
@@ -68,7 +68,7 @@ export function useWatchCatalog(): void {
     })
 
     void bridge
-      .invoke('catalog:list', undefined)
+      .invoke('catalog:list')
       .then((catalog) => {
         if (alive) useCatalogStore.getState().adopt(catalog)
       })
