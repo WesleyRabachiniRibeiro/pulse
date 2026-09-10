@@ -342,12 +342,12 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
                 <p className={s.awayTitle}>
                   {phase === 'looking'
                     ? 'Buscando a lista de programas…'
-                    : 'Não deu para buscar a lista de programas.'}
+                    : 'Ops! Ocorreu um erro.'}
                 </p>
                 <p className={s.awayText}>
                   {phase === 'looking'
                     ? 'O Pulse baixa o catálogo ao abrir. Leva um instante.'
-                    : 'O catálogo vem da internet, e desta vez não chegou. Sem ele o Pulse não sabe o que oferecer.'}
+                    : 'Verifique sua conexão com a internet. A lista de programas vem de lá, e sem ela o Pulse não sabe o que oferecer.'}
                 </p>
                 {phase !== 'looking' && (
                   <button

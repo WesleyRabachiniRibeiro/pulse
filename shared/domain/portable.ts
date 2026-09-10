@@ -13,6 +13,7 @@ export const portableSchema = z.object({
   drives: z.record(z.string(), z.string()),
   settings: z.record(z.string(), settingsSchema),
   extras: z.array(programSchema).optional(),
+  vscode: z.array(z.string()).optional(),
 })
 export type Portable = z.infer<typeof portableSchema>
 
@@ -29,12 +30,18 @@ export const FORMAT_FILE: Record<ExportFormat, { name: string; extension: string
   csv: { name: 'Planilha', extension: 'csv' },
 }
 
+export interface Baggage {
+  extras?: readonly Program[]
+  vscode?: readonly string[]
+}
+
 export function portableOf(
   profile: Profile,
   drive?: string,
   at = new Date(),
-  extras: readonly Program[] = [],
+  baggage: Baggage = {},
 ): Portable {
+  const extras = baggage.extras ?? []
   const wanted = new Set(profile.selected)
   const mine = extras.filter((program) => wanted.has(program.id))
 
@@ -46,6 +53,27 @@ export function portableOf(
     drives: { ...profile.drives },
     settings: { ...profile.settings },
     ...(mine.length > 0 ? { extras: mine.map((program) => ({ ...program })) } : {}),
+    ...(baggage.vscode?.length ? { vscode: [...baggage.vscode] } : {}),
+  }
+}
+
+/**
+ * As extensões do arquivo entram como ajuste do VS Code, que é o caminho que o
+ * Pulse já usa para instalar extensão. Somando, as duas listas se juntam.
+ */
+export function withVsCode(profile: Profile, portable: Portable, mode: ImportMode): Profile {
+  const coming = portable.vscode ?? []
+  if (coming.length === 0) return profile
+
+  const current = mode === 'merge' ? (profile.settings['vscode']?.extensions ?? []) : []
+  const extensions = [...new Set([...current, ...coming])].sort()
+
+  return {
+    ...profile,
+    settings: {
+      ...profile.settings,
+      vscode: { ...profile.settings['vscode'], extensions },
+    },
   }
 }
 
@@ -149,7 +177,7 @@ export function fileFor(
   format: ExportFormat,
   profile: Profile,
   drive?: string,
-  extras: readonly Program[] = [],
+  baggage: Baggage = {},
 ): string {
   const ids = [...profile.selected]
 
@@ -157,5 +185,5 @@ export function fileFor(
   if (format === 'script') return scriptOf(ids)
   if (format === 'csv') return csvOf(ids)
 
-  return `${JSON.stringify(portableOf(profile, drive, new Date(), extras), null, 2)}\n`
+  return `${JSON.stringify(portableOf(profile, drive, new Date(), baggage), null, 2)}\n`
 }

@@ -13,10 +13,12 @@ import {
   profileOf,
   readPortable,
   unknownOf,
+  withVsCode,
   type ExportFormat,
   type ImportMode,
 } from '@shared/domain/portable'
 import { readProfile, writeProfile } from './profile.service'
+import { listVsCodeExtensions } from './vscode.service'
 import { readPreferences } from './preferences.service'
 
 const FETCH_TIMEOUT_MS = 10_000
@@ -82,9 +84,11 @@ export async function exportProfile(
   const prefs = await readPreferences()
 
   try {
+    const vscode = format === 'pulse' ? await listVsCodeExtensions().catch(() => []) : []
+
     await writeFile(
       chosen.filePath,
-      fileFor(format, profile, prefs.drive, myPrograms()),
+      fileFor(format, profile, prefs.drive, { extras: myPrograms(), vscode }),
       'utf8',
     )
     return { status: 'saved', path: chosen.filePath }
@@ -108,7 +112,8 @@ async function adopt(raw: unknown, mode: ImportMode): Promise<ImportResult> {
   }
 
   const current = await readProfile().catch(() => EMPTY_PROFILE)
-  const merged = cleanProfile(profileOf(portable, mode, current), hasProgram)
+  const trazido = withVsCode(profileOf(portable, mode, current), portable, mode)
+  const merged = cleanProfile(trazido, hasProgram)
 
   await writeProfile(merged)
 

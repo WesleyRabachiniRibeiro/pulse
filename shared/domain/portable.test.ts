@@ -8,6 +8,7 @@ import {
   readPortable,
   scriptOf,
   unknownOf,
+  withVsCode,
   wingetImportOf,
   type Portable,
 } from './portable'
@@ -165,34 +166,89 @@ describe('bagagem do arquivo', () => {
 
   it('leva a ficha de quem o catálogo publicado não tem', () => {
     const perfil = { ...PROFILE, selected: ['chrome', 'protonvpn'] }
-    const saved = portableOf(perfil, undefined, new Date(), [adotado])
+    const saved = portableOf(perfil, undefined, new Date(), { extras: [adotado] })
 
     expect(saved.extras).toEqual([adotado])
   })
 
   it('não leva ficha de quem não está marcado', () => {
-    const saved = portableOf(PROFILE, undefined, new Date(), [adotado])
+    const saved = portableOf(PROFILE, undefined, new Date(), { extras: [adotado] })
     expect(saved).not.toHaveProperty('extras')
   })
 
   it('diz quem do arquivo o catálogo daqui não conhece', () => {
-    const saved = portableOf({ ...PROFILE, selected: ['protonvpn'] }, undefined, new Date(), [
-      adotado,
-    ])
+    const saved = portableOf({ ...PROFILE, selected: ['protonvpn'] }, undefined, new Date(), { extras: [adotado] })
 
     const desconhecidos = unknownOf(saved, (id) => id === 'chrome')
     expect(desconhecidos.map((p) => p.id)).toEqual(['protonvpn'])
   })
 
   it('não repete quem o catálogo daqui já conhece', () => {
-    const saved = portableOf({ ...PROFILE, selected: ['protonvpn'] }, undefined, new Date(), [
-      adotado,
-    ])
+    const saved = portableOf({ ...PROFILE, selected: ['protonvpn'] }, undefined, new Date(), { extras: [adotado] })
 
     expect(unknownOf(saved, () => true)).toEqual([])
   })
 
   it('arquivo sem bagagem não quebra a leitura', () => {
     expect(unknownOf(portableOf(PROFILE), () => false)).toEqual([])
+  })
+})
+
+describe('extensões do VS Code', () => {
+  const comExtensoes = portableOf(PROFILE, undefined, new Date(), {
+    vscode: ['dbaeumer.vscode-eslint', 'esbenp.prettier-vscode'],
+  })
+
+  it('leva a lista quando a máquina tem alguma', () => {
+    expect(comExtensoes.vscode).toEqual(['dbaeumer.vscode-eslint', 'esbenp.prettier-vscode'])
+  })
+
+  it('não cria o campo quando a máquina não tem nenhuma', () => {
+    expect(portableOf(PROFILE, undefined, new Date(), { vscode: [] })).not.toHaveProperty('vscode')
+  })
+
+  it('ao trazer, elas viram ajuste do VS Code', () => {
+    const perfil = profileOf(comExtensoes, 'replace', PROFILE)
+    const depois = withVsCode(perfil, comExtensoes, 'replace')
+
+    expect(depois.settings['vscode']?.extensions).toEqual([
+      'dbaeumer.vscode-eslint',
+      'esbenp.prettier-vscode',
+    ])
+  })
+
+  it('somando, junta com as que já estavam marcadas aqui', () => {
+    const daqui = {
+      ...PROFILE,
+      settings: { vscode: { extensions: ['ms-vscode.live-server'] } },
+    }
+
+    const depois = withVsCode(profileOf(comExtensoes, 'merge', daqui), comExtensoes, 'merge')
+
+    expect(depois.settings['vscode']?.extensions).toEqual([
+      'dbaeumer.vscode-eslint',
+      'esbenp.prettier-vscode',
+      'ms-vscode.live-server',
+    ])
+  })
+
+  it('substituindo, fica só a lista do arquivo', () => {
+    const daqui = {
+      ...PROFILE,
+      settings: { vscode: { extensions: ['ms-vscode.live-server'] } },
+    }
+
+    const depois = withVsCode(profileOf(comExtensoes, 'replace', daqui), comExtensoes, 'replace')
+
+    expect(depois.settings['vscode']?.extensions).not.toContain('ms-vscode.live-server')
+  })
+
+  it('arquivo sem extensões não mexe no que já existe', () => {
+    const daqui = {
+      ...PROFILE,
+      settings: { vscode: { extensions: ['ms-vscode.live-server'] } },
+    }
+
+    expect(withVsCode(daqui, portableOf(PROFILE), 'merge')).toBe(daqui)
   })
 })
