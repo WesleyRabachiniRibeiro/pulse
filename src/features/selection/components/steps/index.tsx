@@ -1,6 +1,6 @@
 import { runtimeToolsFor } from '@shared/domain/runtime'
 import type { AnyStep, StepId, Steps } from '@shared/domain/steps'
-import s from '../AppSettings.module.css'
+import s from '../panels.module.css'
 import { OptionListPanel } from './OptionListPanel'
 import { SteamGamesPanel } from './SteamGamesPanel'
 import { BrowserDefaultPanel } from './BrowserDefaultPanel'

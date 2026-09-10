@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { DEFAULT_GIT, LINE_ENDINGS, type GitConfig } from '@shared/domain/git'
 import { bridge } from '@/shared/lib/bridge'
-import s from '../AppSettings.module.css'
+import s from '../panels.module.css'
 import type { PanelProps } from './panel'
 
 export function GitConfigPanel({ value, onChange }: PanelProps<GitConfig>) {

@@ -1,5 +1,5 @@
 import type { BrowserChoice } from '@shared/domain/steps'
-import s from '../AppSettings.module.css'
+import s from '../panels.module.css'
 import type { PanelProps } from './panel'
 
 export function BrowserDefaultPanel({ value, onChange }: PanelProps<BrowserChoice>) {

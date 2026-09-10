@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
 import { categoriesOf } from '@shared/domain/steps'
-import s from '../AppSettings.module.css'
+import s from '../panels.module.css'
 import type { PanelProps } from './panel'
 
 function normalize(text: string): string {
