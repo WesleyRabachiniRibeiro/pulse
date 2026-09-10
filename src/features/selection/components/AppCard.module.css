@@ -131,6 +131,9 @@
   font-size: 10px;
   color: var(--tx-5);
   margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .settings {
@@ -184,10 +187,10 @@
 .tag {
   flex: 0 0 auto;
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  border-radius: 6px;
-  padding: 4px 7px;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  border-radius: 5px;
+  padding: 3px 5px;
   white-space: nowrap;
   color: var(--warning);
   background: color-mix(in srgb, var(--warning) 14%, transparent);

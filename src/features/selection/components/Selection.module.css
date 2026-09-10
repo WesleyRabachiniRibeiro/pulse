@@ -471,3 +471,10 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* O miolo rola por baixo; sem isto o ícone da linha seguinte vaza no rodapé. */
+.top,
+.footer {
+  position: relative;
+  z-index: 1;
+}

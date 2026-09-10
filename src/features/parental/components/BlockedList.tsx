@@ -203,7 +203,7 @@ export function BlockedList({ onDone }: Props) {
         <span className={s.summary}>
           {blocked.size === 0
             ? 'nada bloqueado'
-            : `${blocked.size} ${blocked.size === 1 ? 'bloqueado' : 'bloqueados'} · ela vê todos na lista, trancados`}
+            : `${blocked.size} ${blocked.size === 1 ? 'bloqueado' : 'bloqueados'}`}
         </span>
 
         <button type="button" className={s.primary} onClick={() => void done()}>

@@ -70,7 +70,9 @@ export function AppCard({
                 ? 'já está no seu PC'
                 : program.source === 'pages'
                   ? 'você escolhe quais baixar'
-                  : `${program.version} · ${formatMb(program.mb)}`}
+                  : blocked
+                    ? formatMb(program.mb)
+                    : `${program.version} · ${formatMb(program.mb)}`}
             </span>
           </span>
         </button>
