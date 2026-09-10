@@ -4,7 +4,7 @@ import { getPrograms } from '@shared/domain/catalog'
 import { readWingetId, suggestedEntry } from '@shared/domain/inventory'
 import { addToCatalog } from './remote.service'
 import { forgetInventory } from './inventory.service'
-import { readFileIcon } from '../system/icon.service'
+import { readFileIcon } from '../system'
 
 const exec = promisify(execFile)
 

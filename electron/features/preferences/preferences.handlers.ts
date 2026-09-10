@@ -1,7 +1,7 @@
 import { register } from '../../ipc/register'
 import { readPreferences, writePreferences } from './preferences.service'
 import { readProfile, writeProfile } from './profile.service'
-import { readGitConfig } from '../git/git.service'
+import { readGitConfig } from '../git'
 import {
   allowOnce,
   changePin,

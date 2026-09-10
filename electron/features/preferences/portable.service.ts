@@ -4,8 +4,8 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { access } from 'node:fs/promises'
 import { hasProgram } from '@shared/domain/catalog'
-import { addToCatalog, myPrograms } from '../catalog/remote.service'
-import { installedIdsNow } from '../catalog/inventory.service'
+import { addToCatalog, myPrograms } from '../catalog'
+import { installedIdsNow } from '../catalog'
 import { cleanProfile, EMPTY_PROFILE, type Profile } from '@shared/domain/profile'
 import {
   fileFor,

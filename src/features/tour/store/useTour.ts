@@ -1,7 +1,7 @@
 import type { Screen } from '@/shared/ui/StepRail/screens'
 import { useEffect } from 'react'
 import { create } from 'zustand'
-import { savePreference, usePreferencesStore } from '@/features/preferences/usePreferences'
+import { savePreference, usePreferences, usePreferencesLoaded } from '@/features/preferences'
 
 export type Contexto = 'grade' | 'ajustes'
 
@@ -33,8 +33,8 @@ export const useTourStore = create<TourStore>((set) => ({
 }))
 
 export function useAbrirNaPrimeiraVez(): void {
-  const carregado = usePreferencesStore((s) => s.loaded)
-  const jaViu = usePreferencesStore((s) => s.prefs.tourSeen)
+  const carregado = usePreferencesLoaded()
+  const jaViu = usePreferences().tourSeen
 
   useEffect(() => {
     if (!carregado || jaViu) return

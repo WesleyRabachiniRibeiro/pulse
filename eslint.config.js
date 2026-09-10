@@ -86,7 +86,7 @@ export default tseslint.config(
         },
       ],
       'boundaries/entry-point': [
-        'warn',
+        'error',
         {
           default: 'disallow',
           rules: [

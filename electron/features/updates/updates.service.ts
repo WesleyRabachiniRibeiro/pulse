@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import updater from 'electron-updater'
 import { EMPTY_UPDATE, type UpdateState } from '@shared/domain/update'
-import { currentState, subscribe as onInstallation } from '../installation/installation.service'
+import { currentState, subscribe as onInstallation } from '../installation'
 
 const { autoUpdater } = updater
 

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { powershellOut } from './tools'
+import { powershellOut } from '../tools'
 
 export interface UserRunOutput {
   code: number

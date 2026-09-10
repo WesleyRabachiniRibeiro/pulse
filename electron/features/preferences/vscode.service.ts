@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { locateVsCode } from '../installation/tools'
+import { locateVsCode } from '../tools'
 
 const exec = promisify(execFile)
 
