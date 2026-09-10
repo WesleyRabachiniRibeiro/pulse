@@ -7,8 +7,7 @@ import {
   tweaksTouchingExplorer,
   type TweakState,
 } from '@shared/domain/windows'
-import { run } from '@main/core/powershell'
-import refreshExplorerScript from './infrastructure/powershell/RefreshExplorer.ps1?raw'
+import { refreshExplorer } from './infrastructure/explorer'
 
 const exec = promisify(execFile)
 
@@ -31,10 +30,6 @@ async function writeValue(key: string, name: string, value: number): Promise<boo
   })
     .then(() => true)
     .catch(() => false)
-}
-
-async function refreshExplorer(): Promise<void> {
-  await run(refreshExplorerScript, { timeoutMs: CALL_TIMEOUT_MS }).catch(() => undefined)
 }
 
 export async function readTweaks(): Promise<TweakState[]> {

@@ -42,5 +42,5 @@ export async function runSteps(ctx: StepContext): Promise<StepResult> {
   return found
 }
 
-export { setAutostart, type AutostartResult } from './autostart'
+export { setAutostart, type AutostartResult } from '../infrastructure/autostart'
 export type { StepContext, StepOutput, StepResult, StepRunner } from './context'

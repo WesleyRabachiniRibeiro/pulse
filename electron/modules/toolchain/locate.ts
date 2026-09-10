@@ -1,6 +1,6 @@
 import { access } from 'node:fs/promises'
 import { join } from 'node:path'
-import { currentPath } from './environment'
+import { currentPath } from './infrastructure/environment'
 
 async function exists(path: string): Promise<boolean> {
   try {

@@ -2,17 +2,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { SteamGame, SteamLibrary } from '@shared/domain/steam'
 import { readKnownApps, readLicenses } from './vdf'
-import { textOr } from '@main/core/powershell'
-import steamPathScript from './infrastructure/powershell/GetSteamPath.ps1?raw'
-import activeUserScript from './infrastructure/powershell/GetActiveSteamUser.ps1?raw'
-
-const LOOKUP_TIMEOUT_MS = 15_000
-
-async function steamPath(): Promise<string | null> {
-  const found = await textOr('', steamPathScript, { timeoutMs: LOOKUP_TIMEOUT_MS })
-  const path = found.replace(/\//g, '\\')
-  return path ? path : null
-}
+import { readActiveUser, readSteamPath } from './infrastructure/steamRegistry'
 
 async function libraryFolders(steam: string): Promise<string[]> {
   const byKey = new Map<string, string>()
@@ -88,7 +78,7 @@ async function accountGames(steam: string): Promise<SteamGame[]> {
 }
 
 export async function readLibrary(): Promise<SteamLibrary> {
-  const steam = await steamPath()
+  const steam = await readSteamPath()
   if (!steam) return { hasSteam: false, installed: [], owned: [] }
 
   const folders = await libraryFolders(steam)
@@ -118,13 +108,7 @@ export async function readLibrary(): Promise<SteamLibrary> {
 }
 
 export async function isSignedIn(): Promise<boolean> {
-  return (await activeUser()) !== null
-}
-
-async function activeUser(): Promise<string | null> {
-  const raw = await textOr('0', activeUserScript, { timeoutMs: LOOKUP_TIMEOUT_MS })
-  const account = Number(raw)
-  return Number.isFinite(account) && account !== 0 ? String(account) : null
+  return (await readActiveUser()) !== null
 }
 
 async function appsOf(steam: string, userId: string): Promise<Set<string>> {
@@ -165,7 +149,7 @@ async function appsOf(steam: string, userId: string): Promise<Set<string>> {
 }
 
 async function otherAccountGames(steam: string): Promise<Set<string>> {
-  const active = await activeUser()
+  const active = await readActiveUser()
   if (!active) return new Set()
 
   const users = await readdir(join(steam, 'userdata')).catch((): string[] => [])
@@ -183,7 +167,7 @@ async function otherAccountGames(steam: string): Promise<Set<string>> {
 }
 
 export async function hasManifest(appid: string): Promise<boolean> {
-  const steam = await steamPath()
+  const steam = await readSteamPath()
   if (!steam) return false
 
   const folders = await libraryFolders(steam)

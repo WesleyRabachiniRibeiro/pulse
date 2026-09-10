@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { toolEnv } from './environment'
+import { toolEnv } from './infrastructure/environment'
 
 function quote(value: string): string {
   return `"${value.replace(/"/g, '""')}"`

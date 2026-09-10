@@ -1,5 +1,5 @@
 import { textOr } from '@main/core/powershell'
-import systemPathScript from './infrastructure/powershell/GetSystemPath.ps1?raw'
+import systemPathScript from './powershell/GetSystemPath.ps1?raw'
 
 const PATH_TIMEOUT_MS = 60_000
 

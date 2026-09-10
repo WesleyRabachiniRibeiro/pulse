@@ -1,7 +1,6 @@
 import { spawn } from 'node:child_process'
-import { stdoutOr } from '@main/core/powershell'
 import { hasManifest, isSignedIn } from '../steam'
-import steamDialogScript from './infrastructure/powershell/IsSteamDialogOpen.ps1?raw'
+import { steamDialogOpen } from './infrastructure/steamWindows'
 
 export type SteamAnswer = 'confirmed' | 'refused' | 'timeout'
 
@@ -65,9 +64,3 @@ export async function requestSteamGame(appid: string): Promise<SteamAnswer> {
   return (await hasManifest(appid)) ? 'confirmed' : 'timeout'
 }
 
-const SCRIPT_LIMIT_MS = 25_000
-
-async function steamDialogOpen(): Promise<boolean> {
-  const output = await stdoutOr('', steamDialogScript, { timeoutMs: SCRIPT_LIMIT_MS })
-  return output.includes('open')
-}

@@ -124,4 +124,30 @@ describe('fronteiras', () => {
     const seen = ROOTS.map((folder) => [...graph.keys()].some((file) => slug(file).startsWith(folder)))
     expect(seen).toEqual([true, true, true])
   })
+
+  it('só a infraestrutura de um módulo chama o PowerShell', () => {
+    const runner = 'electron/core/powershell'
+    const guilty: string[] = []
+
+    for (const [file, imports] of graph) {
+      const from = slug(file)
+      if (from.startsWith(runner)) continue
+      if (from.includes('/infrastructure/')) continue
+      if (imports.some((target) => slug(target).startsWith(runner))) guilty.push(from)
+    }
+
+    expect(guilty).toEqual([])
+  })
+
+  it('o renderer não alcança o processo principal', () => {
+    const guilty: string[] = []
+
+    for (const [file, imports] of graph) {
+      const from = slug(file)
+      if (!from.startsWith('src/')) continue
+      if (imports.some((target) => slug(target).startsWith('electron/'))) guilty.push(from)
+    }
+
+    expect(guilty).toEqual([])
+  })
 })
