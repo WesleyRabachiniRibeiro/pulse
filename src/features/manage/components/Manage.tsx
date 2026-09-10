@@ -55,6 +55,7 @@ import {
 } from '../store/useStartup'
 import { useFileIcon } from '../store/useFileIcon'
 import { reloadMine, useMine, useWatchMine } from '../store/useMine'
+import { PinDialog, useLockedNow } from '@/features/parental'
 import { useHistory, useHistoryLoaded, useWatchHistory } from '../store/useHistory'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
@@ -604,7 +605,9 @@ interface RowProps {
 
 function InstalledRow({ node, picked, onPick }: RowProps) {
   const [open, setOpen] = useState(false)
+  const [asking, setAsking] = useState(false)
   const mine = useMine()
+  const trancado = useLockedNow()
   const program = node.programId ? getProgram(node.programId) : undefined
   const canOpen = useCanOpen(node.programId ?? '')
   const opening = useOpening(node.programId ?? '')
@@ -677,7 +680,7 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
               className={s.action}
               data-tone="danger"
               disabled={removing}
-              onClick={() => void uninstallProgram(program.id)}
+              onClick={() => (trancado ? setAsking(true) : void uninstallProgram(program.id))}
             >
               {removing ? 'TIRANDO…' : 'DESINSTALAR'}
             </button>
@@ -690,6 +693,24 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
           </span>
         )}
       </div>
+
+      {asking && program && (
+        <PinDialog
+          purpose="uninstall"
+          extra={`Com o controle dos pais ligado, tirar ${program.name} deste PC pede o PIN.`}
+          onDone={async (pin) => {
+            const ok = await bridge
+              .invoke('parental:allowOnce', { pin, id: program.id })
+              .catch(() => false)
+            if (!ok) return 'PIN incorreto.'
+
+            setAsking(false)
+            void uninstallProgram(program.id)
+            return null
+          }}
+          onClose={() => setAsking(false)}
+        />
+      )}
 
       {open &&
         node.children.map((child) => (

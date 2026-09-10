@@ -6,6 +6,7 @@ import { StepRail } from '@/shared/ui/StepRail/StepRail'
 import type { Screen } from '@/shared/ui/StepRail/screens'
 import { Home } from '@/features/home'
 import { Config } from '@/features/config'
+import { BlockedList, useLoadParental } from '@/features/parental'
 import { Manage } from '@/features/manage'
 import { useUpdateCount, useWatchCatalog, useWatchInventory } from '@/features/catalog'
 import {
@@ -41,6 +42,7 @@ const VERSION = __APP_VERSION__
 export function App() {
   useLoadPreferences()
   useLoadSelection()
+  useLoadParental()
   useWatchCatalog()
   useWatchPreflight()
   useWatchUpdate()
@@ -65,6 +67,7 @@ export function App() {
 
 function Shell({ driveSalvo }: { driveSalvo: string | null }) {
   const [screen, setScreen] = useState<Screen>('home')
+  const [blocking, setBlocking] = useState(false)
   const [drive, setDrive] = useState<string | null>(driveSalvo)
   const selected = useSelection((st) => st.selected)
   const settingsByApp = useSelection((st) => st.settings)
@@ -161,7 +164,15 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
                 onGoToManage={() => setScreen('manage')}
               />
             )}
-            {screen === 'config' && <Config onGoToInstallation={() => setScreen('run')} />}
+            {screen === 'config' && !blocking && (
+              <Config
+                onGoToInstallation={() => setScreen('run')}
+                onOpenBlocked={() => setBlocking(true)}
+              />
+            )}
+            {screen === 'config' && blocking && (
+              <BlockedList onDone={() => setBlocking(false)} />
+            )}
             {screen === 'manage' && <Manage onGoToInstallation={() => setScreen('run')} />}
           </div>
         </div>

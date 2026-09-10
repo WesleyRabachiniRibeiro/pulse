@@ -16,6 +16,7 @@ import {
   useWatchTweaks,
 } from '@/features/selection'
 import { ConfigRow, type Choice } from './ConfigRow'
+import { ParentalSection } from '@/features/parental'
 import { ProfileBlock } from './ProfileBlock'
 import s from './Config.module.css'
 
@@ -100,9 +101,10 @@ function namesOf(ids: readonly string[]): string[] {
 
 interface Props {
   onGoToInstallation: () => void
+  onOpenBlocked: () => void
 }
 
-export function Config({ onGoToInstallation }: Props) {
+export function Config({ onGoToInstallation, onOpenBlocked }: Props) {
   const defaults = useDefaults()
   const prefs = usePreferences()
   const settingsByApp = useSelection((st) => st.settings)
@@ -149,6 +151,8 @@ export function Config({ onGoToInstallation }: Props) {
       </p>
 
       <div className={s.sections}>
+        <ParentalSection onOpenBlocked={onOpenBlocked} />
+
         <ProfileBlock onGoToInstallation={onGoToInstallation} />
 
         <section className={s.section}>

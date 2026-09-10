@@ -165,3 +165,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.card[data-blocked='true'] {
+  border-color: color-mix(in srgb, var(--warning) 32%, transparent);
+  background: color-mix(in srgb, var(--warning) 6%, var(--bg-card));
+}
+
+.card[data-blocked='true'] .box {
+  border-color: color-mix(in srgb, var(--warning) 50%, transparent);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+
+.card[data-blocked='true'] .meta {
+  color: var(--warning);
+}

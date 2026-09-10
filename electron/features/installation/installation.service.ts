@@ -24,6 +24,8 @@ import {
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import { rememberRun } from './history.service'
+import { isGranted, readParental } from '../preferences/parental.service'
+import { blockedAmong } from '@shared/domain/parental'
 import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
 import { applyEditorTweaks, type EditorResult } from './editor'
 import { ensureSshKey, type SshOutcome, type SshResult } from './ssh'
@@ -1208,6 +1210,26 @@ async function processQueue(): Promise<void> {
 
 export function currentState(): Run | null {
   return run ? structuredClone(run) : null
+}
+
+/**
+ * Programa bloqueado não entra na fila, venha ele de onde vier: da seleção, de
+ * um combo, de um perfil importado ou do botão de atualizar.
+ */
+export async function allowed(requests: readonly Request[]): Promise<Request[]> {
+  const parental = await readParental().catch(() => null)
+  if (!parental) return [...requests]
+
+  const wall = new Set(
+    blockedAmong(parental, requests.map((one) => one.id)).filter((id) => !isGranted(id)),
+  )
+  if (wall.size === 0) return [...requests]
+
+  for (const id of wall) {
+    note(`${getProgram(id)?.name ?? id}: bloqueado pelo controle dos pais`, 'error')
+  }
+
+  return requests.filter((one) => !wall.has(one.id))
 }
 
 export function start(requests: readonly Request[], drive: string): Run {

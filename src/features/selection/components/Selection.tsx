@@ -5,6 +5,7 @@ import { applyDefaults, DEFAULT_KEYS, overriddenKeys } from '@shared/domain/defa
 import {
   estimatedMinutes,
   filterCatalog,
+  getProgram,
   formatMb,
   groupByCategory,
   totalSizeMb,
@@ -13,11 +14,13 @@ import { useBundles, useCategories, useProgram, usePrograms } from '@/features/c
 import { requestsToAppend, type Request } from '@shared/domain/installation'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { TINTS } from '@/shared/ui/AppIcon/tints'
+import { bridge } from '@/shared/lib/bridge'
 import { useDrives, useWatchDrives } from '../store/useDrives'
 import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
 import { useSelection } from '../store/useSelection'
 import { useTourStore } from '@/features/tour'
 import { useDefaults } from '@/features/preferences'
+import { PinDialog, useParental } from '@/features/parental'
 import { AppSettings } from './AppSettings'
 import { AppCard, AppCardSkeleton } from './AppCard'
 import s from './Selection.module.css'
@@ -30,6 +33,10 @@ interface Props {
 
 function messageOf(e: unknown): string {
   return e instanceof Error ? e.message : 'Não foi possível montar a fila.'
+}
+
+function nameOf(id: string): string {
+  return getProgram(id)?.name ?? id
 }
 
 function byName(a: { name: string }, b: { name: string }): number {
@@ -63,6 +70,17 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
   const categories = useCategories()
   const bundles = useBundles()
   const defaults = useDefaults()
+  const parental = useParental()
+  const [freeing, setFreeing] = useState<string | null>(null)
+  const [freed, setFreed] = useState<ReadonlySet<string>>(new Set())
+
+  const wall = useMemo(
+    () =>
+      parental.on && parental.hasPin
+        ? new Set(parental.blocked.filter((id) => !freed.has(id)))
+        : new Set<string>(),
+    [parental, freed],
+  )
 
   useWatchDrives()
 
@@ -89,7 +107,7 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
     [found, category],
   )
 
-  const openable = shown.filter((p) => !installed.has(p.id))
+  const openable = shown.filter((p) => !installed.has(p.id) && !wall.has(p.id))
   const allOn = openable.length > 0 && openable.every((p) => selected.has(p.id))
   const chosenCategory = categories.find((c) => c.id === category)
   const listTitle = searching
@@ -132,6 +150,23 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
     const ids = new Set(fresh.map((r) => r.id))
     return groupByCategory(programs.filter((p) => ids.has(p.id)))
   }, [fresh, programs])
+
+  function pickOrAsk(id: string) {
+    if (wall.has(id)) return setFreeing(id)
+    toggle(id)
+  }
+
+  async function freeOnce(pin: string): Promise<string | null> {
+    if (!freeing) return null
+
+    const ok = await bridge.invoke('parental:allowOnce', { pin, id: freeing }).catch(() => false)
+    if (!ok) return 'PIN incorreto.'
+
+    setFreed((old) => new Set([...old, freeing]))
+    toggle(freeing)
+    setFreeing(null)
+    return null
+  }
 
   function removeFromList(id: string) {
     if (selected.has(id)) toggle(id)
@@ -310,7 +345,8 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
                         installed={installed.has(p.id)}
                         chosenDrive={drivesByApp[p.id] ?? null}
                         settingsSummary={settingsSummary(settingsByApp[p.id])}
-                        onToggle={toggle}
+                        blocked={wall.has(p.id)}
+                        onToggle={pickOrAsk}
                         onOpenSettings={setInSettings}
                       />
                     ))
@@ -375,6 +411,15 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
           </div>
         </aside>
       </div>
+
+      {freeing && (
+        <PinDialog
+          purpose="install"
+          extra={`${nameOf(freeing)} está na lista de bloqueados. Com o seu PIN ele libera até o Pulse fechar.`}
+          onDone={freeOnce}
+          onClose={() => setFreeing(null)}
+        />
+      )}
 
       <footer className={s.footer} data-tour="rodape">
         <div className={s.summary}>

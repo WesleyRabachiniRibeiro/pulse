@@ -1,3 +1,4 @@
+import { LuBan } from 'react-icons/lu'
 import { formatMb, type Program } from '@shared/domain/catalog'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import s from './AppCard.module.css'
@@ -8,6 +9,7 @@ interface Props {
   installed: boolean
   chosenDrive: string | null
   settingsSummary: string | null
+  blocked?: boolean
   onToggle: (id: string) => void
   onOpenSettings: (id: string) => void
 }
@@ -31,14 +33,20 @@ export function AppCard({
   installed,
   chosenDrive,
   settingsSummary,
+  blocked = false,
   onToggle,
   onOpenSettings,
 }: Props) {
-  const checked = installed || selected
+  const checked = !blocked && (installed || selected)
   const note = settingsSummary ?? (chosenDrive ? `vai para o disco ${chosenDrive}` : null)
 
   return (
-    <div className={s.card} data-installed={installed} data-checked={checked}>
+    <div
+      className={s.card}
+      data-installed={installed}
+      data-checked={checked}
+      data-blocked={blocked}
+    >
       <div className={s.row}>
         <button
           type="button"
@@ -50,7 +58,7 @@ export function AppCard({
           onClick={() => onToggle(program.id)}
         >
           <span className={s.box} aria-hidden>
-            {checked ? '✓' : ''}
+            {blocked ? <LuBan size={11} /> : checked ? '✓' : ''}
           </span>
 
           <AppIcon id={program.id} name={program.name} size={27} />
@@ -58,7 +66,9 @@ export function AppCard({
           <span className={s.body}>
             <span className={s.name}>{program.name}</span>
             <span className={s.meta}>
-              {installed
+              {blocked
+                ? 'bloqueado pelo controle dos pais'
+                : installed
                 ? 'já está no seu PC'
                 : program.source === 'pages'
                   ? 'você escolhe quais baixar'

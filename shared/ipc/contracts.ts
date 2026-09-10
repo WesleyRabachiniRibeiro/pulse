@@ -44,6 +44,17 @@ export const importResultSchema = z.object({
   missing: z.array(z.string()).optional(),
 })
 
+export const parentalViewSchema = z.object({
+  on: z.boolean(),
+  hasPin: z.boolean(),
+  blocked: z.array(z.string()),
+})
+
+export const pinResultSchema = z.object({
+  ok: z.boolean(),
+  view: parentalViewSchema.optional(),
+})
+
 export const ipcContracts = {
   'preflight:drives': {
     input: freshInputSchema,
@@ -68,6 +79,34 @@ export const ipcContracts = {
   'catalog:installed': {
     input: freshInputSchema,
     output: z.array(z.string()),
+  },
+  'parental:read': {
+    input: z.void(),
+    output: parentalViewSchema,
+  },
+  'parental:turnOn': {
+    input: z.object({ pin: z.string() }),
+    output: pinResultSchema,
+  },
+  'parental:turnOff': {
+    input: z.object({ pin: z.string() }),
+    output: pinResultSchema,
+  },
+  'parental:change': {
+    input: z.object({ current: z.string(), next: z.string() }),
+    output: pinResultSchema,
+  },
+  'parental:check': {
+    input: z.object({ pin: z.string() }),
+    output: z.boolean(),
+  },
+  'parental:allowOnce': {
+    input: z.object({ pin: z.string(), id: z.string() }),
+    output: z.boolean(),
+  },
+  'parental:setBlocked': {
+    input: z.object({ ids: z.array(z.string()) }),
+    output: parentalViewSchema,
   },
   'prefs:read': {
     input: z.void(),
@@ -190,6 +229,10 @@ export const ipcContracts = {
     input: z.void(),
     output: z.array(z.string()),
   },
+  'installation:mayInstall': {
+    input: idInputSchema,
+    output: z.boolean(),
+  },
   'installation:uninstall': {
     input: idInputSchema,
     output: z.object({
@@ -224,6 +267,10 @@ export const ipcContracts = {
   },
   'system:copy': {
     input: copyInputSchema,
+    output: z.void(),
+  },
+  'system:openFamily': {
+    input: z.void(),
     output: z.void(),
   },
   'system:restart': {
