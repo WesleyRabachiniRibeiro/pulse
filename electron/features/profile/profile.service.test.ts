@@ -91,7 +91,7 @@ describe('writeProfile', () => {
     const escrito = await writeProfile({
       selected: [],
       drives: {},
-      settings: { vim: { extensions: [] } },
+      settings: { vim: { steps: { vscodeExtensions: [] } } },
     })
     expect(escrito.settings).toEqual({})
   })

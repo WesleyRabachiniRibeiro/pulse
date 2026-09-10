@@ -467,7 +467,8 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
   const settings = target.settings
   if (!settings) return
 
-  const extensions = settings.extensions ?? []
+  const steps = settings.steps ?? {}
+  const extensions = steps.vscodeExtensions ?? []
   const result: NonNullable<Item['result']> = {
     extensions: 0,
     extensionsRequested: extensions.length,
@@ -510,7 +511,7 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
     }
   }
 
-  const wanted = knownPackages(program.id, settings.globalPackages ?? [])
+  const wanted = knownPackages(program.id, steps.runtimePackages ?? [])
   const tools = runtimeToolsFor(program.id)
   if (wanted.length > 0 && tools) {
     target.detail = `Instalando ${wanted.length} ${wanted.length === 1 ? 'ferramenta' : 'ferramentas'}`
@@ -537,7 +538,7 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
     emitState()
   }
 
-  const editorTweaks = settings.editorTweaks ?? []
+  const editorTweaks = steps.editorTweaks ?? []
   if (editorTweaks.length > 0) {
     target.detail = 'Gravando os ajustes do editor'
     emitState()
@@ -557,7 +558,7 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
     note(said[written], written === 'written' ? 'ok' : 'error')
   }
 
-  const git = settings.git
+  const git = steps.gitConfig
   if (git && !gitIsEmpty(git)) {
     target.detail = 'Configurando o Git'
     emitState()
@@ -655,7 +656,7 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
     )
   }
 
-  const games = settings.games ?? []
+  const games = steps.steamGames ?? []
   if (games.length > 0) {
     let signedIn = await isSignedIn()
 
@@ -699,7 +700,7 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
     note(`${program.name}: ${result.gamesAccepted.length} de ${games.length} jogos aceitos`, 'ok')
   }
 
-  const pages = settings.tibia ?? []
+  const pages = steps.tibiaPages ?? []
   if (pages.length > 0) {
     target.status = 'configuring'
     emitState()
@@ -722,7 +723,7 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
     }
   }
 
-  const riot = settings.riot ?? []
+  const riot = steps.riotProducts ?? []
   if (riot.length > 0) {
     const system = (process.env['SystemDrive'] ?? 'C:').toUpperCase()
 
@@ -774,7 +775,7 @@ function findItem(id: string): Item | undefined {
 }
 
 function workloadOverride(settings: Settings | undefined, destination?: string): string | undefined {
-  const workloads = settings?.workloads ?? []
+  const workloads = settings?.steps?.vsWorkloads ?? []
   if (workloads.length === 0) return undefined
 
   const parts = ['--quiet', '--norestart', '--wait', '--includeRecommended']
@@ -1063,7 +1064,7 @@ function chooseDefaultBrowser(items: readonly Item[]): Item | null {
 
   if (browsers.length === 0) return null
 
-  const marked = browsers.filter((i) => i.settings?.makeDefault)
+  const marked = browsers.filter((i) => i.settings?.steps?.browserDefault?.makeDefault)
   return (marked.length > 0 ? marked : browsers).at(-1) ?? null
 }
 
@@ -1088,7 +1089,7 @@ async function finishBrowsers(): Promise<void> {
   const addresses: string[] = []
 
   for (const item of run.items) {
-    if (item.status !== 'done' || !item.settings?.openAfter) continue
+    if (item.status !== 'done' || !item.settings?.steps?.browserDefault?.openAfter) continue
     if (openedAfterRun.has(item.id)) continue
     const program = getProgram(item.id)
     if (!program) continue

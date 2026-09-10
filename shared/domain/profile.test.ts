@@ -22,7 +22,7 @@ describe('profileSchema', () => {
     const lido = profileSchema.safeParse({
       selected: ['vscode'],
       drives: { vscode: 'D:' },
-      settings: { vscode: { extensions: ['esbenp.prettier-vscode'] } },
+      settings: { vscode: { steps: { vscodeExtensions: ['esbenp.prettier-vscode'] } } },
     })
     expect(lido.success).toBe(true)
   })
@@ -54,7 +54,7 @@ describe('cleanProfile', () => {
   })
 
   it('joga fora ajuste que ficou vazio', () => {
-    const limpo = cleanProfile(profile({ settings: { vim: { extensions: [] } } }), known)
+    const limpo = cleanProfile(profile({ settings: { vim: { steps: { vscodeExtensions: [] } } } }), known)
     expect(limpo.settings).toEqual({})
   })
 

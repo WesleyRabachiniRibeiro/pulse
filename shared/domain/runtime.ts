@@ -1,4 +1,4 @@
-import type { SettingsOption } from './settings'
+import type { SettingsOption } from './steps/option'
 
 export type RuntimeRunner = 'npm' | 'pip'
 

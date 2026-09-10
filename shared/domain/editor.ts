@@ -1,4 +1,4 @@
-import type { SettingsOption } from './settings'
+import type { SettingsOption } from './steps/option'
 
 export interface EditorTweak extends SettingsOption {
   patch: Readonly<Record<string, unknown>>

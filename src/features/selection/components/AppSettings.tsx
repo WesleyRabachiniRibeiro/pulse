@@ -1,21 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { LuSearch } from 'react-icons/lu'
-import {
-  categoriesOf,
-  DEFAULT_GIT,
-  optionsFor,
-  settingsAreEmpty,
-  type GitConfig,
-  type Settings,
-} from '@shared/domain/settings'
+import { useState } from 'react'
+import { settingsAreEmpty, stepsFor, type Settings } from '@shared/domain/settings'
 import { formatMb, type Program } from '@shared/domain/catalog'
-import { EDITOR_TWEAKS } from '@shared/domain/editor'
-import { LINE_ENDINGS } from '@shared/domain/git'
-import { runtimeToolsFor } from '@shared/domain/runtime'
 import type { Defaults } from '@shared/domain/defaults'
 import type { Drive } from '@shared/domain/preflight'
-import type { SteamGame } from '@shared/domain/steam'
-import { bridge } from '@/shared/lib/bridge'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import {
   uninstallProgram,
@@ -24,9 +11,9 @@ import {
   useUninstallError,
 } from '../store/useUninstall'
 import s from './AppSettings.module.css'
-import { SteamGames } from './SteamGames'
 import { PackageVersions } from './PackageVersions'
 import { ProgramExceptions } from './ProgramExceptions'
+import { StepSection } from './steps'
 
 interface Props {
   program: Program
@@ -42,39 +29,6 @@ interface Props {
   onBack: () => void
 }
 
-const TITLE: Record<string, string> = {
-  vscode: 'EXTENSÕES PARA INSTALAR JUNTO',
-  steam: 'JOGOS PARA BAIXAR DEPOIS',
-  git: 'COMO ASSINAR SEUS COMMITS',
-  tibia: 'QUAIS TIBIAS VOCÊ QUER',
-  riot: 'JOGOS PARA INSTALAR JUNTO',
-  vs: 'LINGUAGENS PARA INSTALAR',
-  browser: 'QUANDO A INSTALAÇÃO TERMINAR',
-}
-
-const DESCRIPTION: Record<string, string> = {
-  vscode:
-    'Marcadas aqui, elas entram sozinhas assim que o VS Code terminar de instalar. Dá para mudar de ideia depois, dentro do próprio editor.',
-  steam:
-    'A Steam só baixa com a sua conta conectada. Na hora de instalar, o app espera você entrar e depois abre o pedido de cada jogo, que você confirma na janela dela.',
-  git: 'É o nome e o email que aparecem em cada commit seu. Os campos já vêm com o que está cadastrado nesta máquina, lido na hora. Mude só o que quiser mudar: o que você não tocar continua como está.',
-  browser:
-    'O Windows não deixa um programa se tornar o navegador padrão sozinho, e faz bem. O Pulse pede ao próprio navegador, que ou se define, ou abre a tela do Windows para você confirmar. No fim o resumo diz qual dos dois aconteceu.',
-  vs:
-    'O Visual Studio não instala linguagens soltas, instala cargas de trabalho. Marque as que você usa e elas entram junto, na mesma instalação. C e C++ vêm na mesma carga, porque compartilham o compilador.',
-  riot:
-    'Entram logo depois do cliente da Riot, um de cada vez, no mesmo disco que você escolheu. O League of Legends já vem com o cliente, e o Teamfight Tactics vem dentro dele.',
-  tibia:
-    'Cada Tibia tem o seu próprio cliente, baixado do site de quem faz o servidor. O Pulse abre a página oficial dos que você marcar, uma de cada vez, e você baixa e instala de lá. Ele não baixa esses arquivos sozinho porque não há como conferir se veio o que devia.',
-}
-
-function normalize(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-}
-
 export function AppSettings({
   program,
   installed,
@@ -88,82 +42,14 @@ export function AppSettings({
   onApplyNow,
   onBack,
 }: Props) {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('Tudo')
   const [confirming, setConfirming] = useState(false)
   const removing = useUninstalling(program.id)
   const removed = useUninstalled(program.id)
   const error = useUninstallError(program.id)
-  const [gitDaMaquina, setGitDaMaquina] = useState<GitConfig | null>(null)
 
-  const kind = program.settingsKind
-
-  useEffect(() => {
-    if (kind !== 'git') return
-    let vivo = true
-    void bridge
-      .invoke('git:config')
-      .then((c) => {
-        if (vivo) setGitDaMaquina(c)
-      })
-      .catch(() => {
-        if (vivo) setGitDaMaquina(DEFAULT_GIT)
-      })
-    return () => {
-      vivo = false
-    }
-  }, [kind])
   const installsItself = program.source !== 'pages'
-  const runtime = kind === 'runtime' ? runtimeToolsFor(program.id) : null
-  const options = kind ? optionsFor(kind) : []
-  const categories = useMemo(() => categoriesOf(options), [options])
-
-  const term = normalize(search.trim())
-  const visible = options.filter(
-    (o) =>
-      (filter === 'Tudo' || o.category === filter) && (!term || normalize(o.name).includes(term)),
-  )
-
-  const picksClients = kind === 'tibia'
-  const picksGames = kind === 'riot'
-  const picksWorkloads = kind === 'vs'
-  const checked: readonly string[] =
-    (picksClients
-      ? settings.tibia
-      : picksGames
-        ? settings.riot
-        : picksWorkloads
-          ? settings.workloads
-          : settings.extensions) ?? []
-
-  const git: GitConfig = settings.git ?? gitDaMaquina ?? DEFAULT_GIT
+  const steps = stepsFor(program)
   const canApply = installed && !settingsAreEmpty(settings)
-
-  function toggleOption(id: string) {
-    const next = checked.includes(id) ? checked.filter((x) => x !== id) : [...checked, id]
-    onChangeSettings(
-      program.id,
-      picksClients
-        ? { ...settings, tibia: next }
-        : picksGames
-          ? { ...settings, riot: next }
-          : picksWorkloads
-            ? { ...settings, workloads: next }
-            : { ...settings, extensions: next },
-    )
-  }
-
-  function toggleGame(game: SteamGame) {
-    const current = settings.games ?? []
-    const next = current.some((g) => g.appid === game.appid)
-      ? current.filter((g) => g.appid !== game.appid)
-      : [...current, game]
-    onChangeSettings(program.id, { ...settings, games: next })
-  }
-
-  function changeGit(field: keyof GitConfig, value: string) {
-    onChangeSettings(program.id, { ...settings, git: { ...git, [field]: value } })
-  }
 
   function remove() {
     setConfirming(false)
@@ -231,379 +117,16 @@ export function AppSettings({
           </section>
         )}
 
-        {kind === 'steam' && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE.steam}</div>
-            <p className={s.description}>{DESCRIPTION.steam}</p>
-            <SteamGames chosen={settings.games ?? []} onToggle={toggleGame} />
-          </section>
-        )}
+        {steps.map((step) => (
+          <StepSection
+            key={step.id}
+            step={step}
+            programId={program.id}
+            steps={settings.steps}
+            onChangeSteps={(next) => onChangeSettings(program.id, { ...settings, steps: next })}
+          />
+        ))}
 
-        {(kind === 'vscode' || kind === 'tibia' || kind === 'riot' || kind === 'vs') && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE[kind]}</div>
-            <p className={s.description}>{DESCRIPTION[kind]}</p>
-
-            <div className={s.search}>
-              <LuSearch className={s.magnifier} size={15} aria-hidden />
-              <input
-                className={s.searchInput}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={
-                  picksClients
-                    ? 'Buscar um Tibia…'
-                    : picksGames
-                      ? 'Buscar um jogo…'
-                      : picksWorkloads
-                        ? 'Buscar uma linguagem…'
-                        : 'Buscar extensão…'
-                }
-                aria-label="Buscar"
-              />
-              <span className={s.count}>
-                {visible.length} de {options.length}
-              </span>
-            </div>
-
-            <div className={s.filters}>
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={s.filter}
-                  aria-pressed={filter === c}
-                  onClick={() => setFilter(c)}
-                >
-                  {c} · {c === 'Tudo' ? options.length : options.filter((o) => o.category === c).length}
-                </button>
-              ))}
-            </div>
-
-            <div className={s.options}>
-              {visible.length === 0 ? (
-                <p className={s.empty}>Nada com esse nome por aqui.</p>
-              ) : (
-                visible.map((o) => (
-                  <button
-                    key={o.id}
-                    type="button"
-                    role="checkbox"
-                    aria-checked={checked.includes(o.id)}
-                    className={s.option}
-                    onClick={() => toggleOption(o.id)}
-                  >
-                    <span className={s.box} aria-hidden>
-                      {checked.includes(o.id) ? '✓' : ''}
-                    </span>
-                    <span className={s.optionBody}>
-                      <span className={s.optionName}>{o.name}</span>
-                      <span className={s.optionHint}>{o.hint}</span>
-                    </span>
-                    <span className={s.optionCategory}>{o.category}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          </section>
-        )}
-
-        {runtime && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>FERRAMENTAS PARA INSTALAR JUNTO</div>
-            <p className={s.description}>{runtime.note}</p>
-
-            <div className={s.options}>
-              {runtime.packages.map((tool) => {
-                const on = (settings.globalPackages ?? []).includes(tool.id)
-                return (
-                  <button
-                    key={tool.id}
-                    type="button"
-                    role="checkbox"
-                    aria-checked={on}
-                    className={s.option}
-                    onClick={() => {
-                      const current = settings.globalPackages ?? []
-                      const next = on ? current.filter((x) => x !== tool.id) : [...current, tool.id]
-                      onChangeSettings(program.id, {
-                        ...settings,
-                        globalPackages: next.length > 0 ? next : undefined,
-                      })
-                    }}
-                  >
-                    <span className={s.box} aria-hidden>
-                      {on ? '✓' : ''}
-                    </span>
-                    <span className={s.optionBody}>
-                      <span className={s.optionName}>{tool.name}</span>
-                      <span className={s.optionHint}>{tool.hint}</span>
-                    </span>
-                    <span className={s.optionCategory}>{tool.category.toUpperCase()}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        {kind === 'vscode' && (
-          <section className={s.section}>
-            <div className={s.label}>COMO O EDITOR SE COMPORTA</div>
-            <p className={s.description}>
-              O Pulse grava isso no settings.json do editor, na sua pasta de usuário. Se o arquivo
-              já tiver comentário ou estiver fora do formato JSON, o Pulse não encosta nele e avisa
-              no resumo, para não estragar o que você já ajustou.
-            </p>
-
-            <div className={s.options}>
-              {EDITOR_TWEAKS.map((tweak) => {
-                const on = (settings.editorTweaks ?? []).includes(tweak.id)
-                return (
-                  <button
-                    key={tweak.id}
-                    type="button"
-                    role="checkbox"
-                    aria-checked={on}
-                    className={s.option}
-                    onClick={() => {
-                      const current = settings.editorTweaks ?? []
-                      const next = on
-                        ? current.filter((x) => x !== tweak.id)
-                        : [...current, tweak.id]
-                      onChangeSettings(program.id, {
-                        ...settings,
-                        editorTweaks: next.length > 0 ? next : undefined,
-                      })
-                    }}
-                  >
-                    <span className={s.box} aria-hidden>
-                      {on ? '✓' : ''}
-                    </span>
-                    <span className={s.optionBody}>
-                      <span className={s.optionName}>{tweak.name}</span>
-                      <span className={s.optionHint}>{tweak.hint}</span>
-                    </span>
-                    <span className={s.optionCategory}>{tweak.category.toUpperCase()}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        {kind === 'browser' && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE.browser}</div>
-            <p className={s.description}>{DESCRIPTION.browser}</p>
-
-            <div className={s.options}>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={settings.makeDefault === true}
-                className={s.option}
-                onClick={() =>
-                  onChangeSettings(program.id, { ...settings, makeDefault: !settings.makeDefault })
-                }
-              >
-                <span className={s.box} aria-hidden>
-                  {settings.makeDefault ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Deixar como navegador padrão</span>
-                  <span className={s.optionHint}>
-                    se você marcar mais de um, vale o último que terminar de instalar
-                  </span>
-                </span>
-                <span className={s.optionCategory}>PADRÃO</span>
-              </button>
-
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={settings.openAfter === true}
-                className={s.option}
-                onClick={() =>
-                  onChangeSettings(program.id, { ...settings, openAfter: !settings.openAfter })
-                }
-              >
-                <span className={s.box} aria-hidden>
-                  {settings.openAfter ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Abrir no fim para importar meus dados</span>
-                  <span className={s.optionHint}>
-                    o Firefox abre direto no assistente; Chrome, Opera e Brave não deixam abrir essa
-                    tela por fora, então o Pulse mostra o endereço e copia para você colar
-                  </span>
-                </span>
-                <span className={s.optionCategory}>DADOS</span>
-              </button>
-            </div>
-
-            <p className={s.description}>
-              Quem importa é o navegador, não o Pulse. Senha fica cifrada com uma chave que
-              só quem gravou possui, então ninguém de fora consegue trazer isso corretamente. O
-              assistente do Firefox traz favoritos, senhas, histórico, extensões e preenchimento
-              automático. Nada dos seus perfis é tocado por aqui.
-            </p>
-          </section>
-        )}
-
-        {kind === 'git' && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE.git}</div>
-            <p className={s.description}>{DESCRIPTION.git}</p>
-
-            <div className={s.fields}>
-              <label className={s.fieldBlock}>
-                <span className={s.fieldLabel}>SEU NOME</span>
-                <input
-                  className={s.input}
-                  value={git.name}
-                  onChange={(e) => changeGit('name', e.target.value)}
-                  placeholder="Maria Silva"
-                />
-                <span className={s.fieldHint}>aparece como autor de cada commit</span>
-              </label>
-
-              <label className={s.fieldBlock}>
-                <span className={s.fieldLabel}>SEU EMAIL</span>
-                <input
-                  className={s.input}
-                  value={git.email}
-                  onChange={(e) => changeGit('email', e.target.value)}
-                  placeholder="maria@exemplo.com"
-                />
-                <span className={s.fieldHint}>use o mesmo do GitHub para os commits contarem</span>
-              </label>
-
-              <label className={s.fieldBlock}>
-                <span className={s.fieldLabel}>BRANCH INICIAL</span>
-                <input
-                  className={s.input}
-                  value={git.branch}
-                  onChange={(e) => changeGit('branch', e.target.value)}
-                  placeholder="main"
-                />
-                <span className={s.fieldHint}>o nome do primeiro branch de todo repositório novo</span>
-              </label>
-            </div>
-
-            <div className={s.label}>FIM DE LINHA</div>
-            <p className={s.description}>
-              Windows e Linux marcam o fim da linha de jeitos diferentes, e é isso que faz um
-              arquivo aparecer inteiro modificado num diff sem ninguém ter tocado nele.
-            </p>
-
-            <div className={s.drives}>
-              {LINE_ENDINGS.map((choice) => (
-                <button
-                  key={choice.id}
-                  type="button"
-                  className={s.drive}
-                  aria-pressed={git.lineEnding === choice.id}
-                  onClick={() =>
-                    onChangeSettings(program.id, {
-                      ...settings,
-                      git: {
-                        ...git,
-                        lineEnding: git.lineEnding === choice.id ? undefined : choice.id,
-                      },
-                    })
-                  }
-                >
-                  <span className={s.driveName}>{choice.name}</span>
-                  <span className={s.driveNote}>{choice.hint}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className={s.options}>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={git.pullRebase === true}
-                className={s.option}
-                onClick={() =>
-                  onChangeSettings(program.id, {
-                    ...settings,
-                    git: { ...git, pullRebase: git.pullRebase ? undefined : true },
-                  })
-                }
-              >
-                <span className={s.box} aria-hidden>
-                  {git.pullRebase ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Puxar com rebase, não com merge</span>
-                  <span className={s.optionHint}>
-                    o histórico fica em linha reta, sem aquele commit de merge a cada git pull
-                  </span>
-                </span>
-                <span className={s.optionCategory}>HISTÓRICO</span>
-              </button>
-
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={git.sshKey === true}
-                className={s.option}
-                onClick={() =>
-                  onChangeSettings(program.id, {
-                    ...settings,
-                    git: { ...git, sshKey: git.sshKey ? undefined : true },
-                  })
-                }
-              >
-                <span className={s.box} aria-hidden>
-                  {git.sshKey ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Criar uma chave SSH, se você ainda não tiver</span>
-                  <span className={s.optionHint}>
-                    uma chave ed25519 sem senha, do jeito que o GitHub pede. A parte pública vai
-                    para a área de transferência, pronta para colar lá. Se você já tiver uma chave,
-                    o Pulse não encosta nela.
-                  </span>
-                </span>
-                <span className={s.optionCategory}>SSH</span>
-              </button>
-
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={git.saveLogin === true}
-                className={s.option}
-                onClick={() =>
-                  onChangeSettings(program.id, {
-                    ...settings,
-                    git: { ...git, saveLogin: !git.saveLogin },
-                  })
-                }
-              >
-                <span className={s.box} aria-hidden>
-                  {git.saveLogin ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Guardar o login do GitHub</span>
-                  <span className={s.optionHint}>
-                    no primeiro push o GitHub abre no navegador, você entra por lá e o Windows
-                    lembra dali em diante
-                  </span>
-                </span>
-                <span className={s.optionCategory}>CONTA</span>
-              </button>
-            </div>
-
-            <p className={s.description}>
-              O Pulse não pede nem guarda a sua senha. Ele só liga o gerenciador de
-              credenciais que já vem com o Git para Windows, e quem cuida do login é o próprio
-              GitHub, na janela do navegador.
-            </p>
-          </section>
-        )}
 
         {removed && !installed && (
           <section className={s.section}>

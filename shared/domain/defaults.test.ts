@@ -40,9 +40,9 @@ describe('applyDefaults', () => {
   })
 
   it('deixa em paz os campos que não são padrão global', () => {
-    const settings: Settings = { extensions: ['prettier'], packageId: 'X' }
+    const settings: Settings = { steps: { vscodeExtensions: ['prettier'] }, packageId: 'X' }
     const merged = applyDefaults(settings, padrao)
-    expect(merged.extensions).toEqual(['prettier'])
+    expect(merged.steps?.vscodeExtensions).toEqual(['prettier'])
     expect(merged.packageId).toBe('X')
   })
 
@@ -86,8 +86,8 @@ describe('contagem de exceções', () => {
   const porPrograma: Record<string, Settings> = {
     chrome: { scope: 'machine' },
     vim: { scope: 'user' },
-    docker: { locale: 'en-US', extensions: [] },
-    node: { extensions: ['typescript'] },
+    docker: { locale: 'en-US', steps: { vscodeExtensions: [] } },
+    node: { steps: { vscodeExtensions: ['typescript'] } },
   }
 
   it('conta só quem foge do padrão', () => {
@@ -95,7 +95,7 @@ describe('contagem de exceções', () => {
   })
 
   it('não conta ajuste que não é padrão global', () => {
-    expect(countOverrides({ node: { extensions: ['typescript'] } }, padrao)).toBe(0)
+    expect(countOverrides({ node: { steps: { vscodeExtensions: ['typescript'] } } }, padrao)).toBe(0)
   })
 
   it('diz quem foge de um padrão específico', () => {

@@ -21,6 +21,7 @@ export const programSchema = z.object({
   notice: z.string().optional(),
   icon: z.string().optional(),
   settingsKind: settingsKindSchema.optional(),
+  steps: z.array(z.string()).optional(),
   family: z
     .object({
       prefix: z.string().min(1),

@@ -211,7 +211,7 @@ describe('extensões do VS Code', () => {
     const perfil = profileOf(comExtensoes, 'replace', PROFILE)
     const depois = withVsCode(perfil, comExtensoes, 'replace')
 
-    expect(depois.settings['vscode']?.extensions).toEqual([
+    expect(depois.settings['vscode']?.steps?.vscodeExtensions).toEqual([
       'dbaeumer.vscode-eslint',
       'esbenp.prettier-vscode',
     ])
@@ -220,12 +220,12 @@ describe('extensões do VS Code', () => {
   it('somando, junta com as que já estavam marcadas aqui', () => {
     const daqui = {
       ...PROFILE,
-      settings: { vscode: { extensions: ['ms-vscode.live-server'] } },
+      settings: { vscode: { steps: { vscodeExtensions: ['ms-vscode.live-server'] } } },
     }
 
     const depois = withVsCode(profileOf(comExtensoes, 'merge', daqui), comExtensoes, 'merge')
 
-    expect(depois.settings['vscode']?.extensions).toEqual([
+    expect(depois.settings['vscode']?.steps?.vscodeExtensions).toEqual([
       'dbaeumer.vscode-eslint',
       'esbenp.prettier-vscode',
       'ms-vscode.live-server',
@@ -235,18 +235,18 @@ describe('extensões do VS Code', () => {
   it('substituindo, fica só a lista do arquivo', () => {
     const daqui = {
       ...PROFILE,
-      settings: { vscode: { extensions: ['ms-vscode.live-server'] } },
+      settings: { vscode: { steps: { vscodeExtensions: ['ms-vscode.live-server'] } } },
     }
 
     const depois = withVsCode(profileOf(comExtensoes, 'replace', daqui), comExtensoes, 'replace')
 
-    expect(depois.settings['vscode']?.extensions).not.toContain('ms-vscode.live-server')
+    expect(depois.settings['vscode']?.steps?.vscodeExtensions).not.toContain('ms-vscode.live-server')
   })
 
   it('arquivo sem extensões não mexe no que já existe', () => {
     const daqui = {
       ...PROFILE,
-      settings: { vscode: { extensions: ['ms-vscode.live-server'] } },
+      settings: { vscode: { steps: { vscodeExtensions: ['ms-vscode.live-server'] } } },
     }
 
     expect(withVsCode(daqui, portableOf(PROFILE), 'merge')).toBe(daqui)

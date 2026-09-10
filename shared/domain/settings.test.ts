@@ -8,12 +8,12 @@ describe('settingsAreEmpty', () => {
   })
 
   it('ignora listas vazias e campos apagados', () => {
-    expect(settingsAreEmpty({ extensions: [], riot: [], tibia: [] })).toBe(true)
+    expect(settingsAreEmpty({ steps: { vscodeExtensions: [], riotProducts: [], tibiaPages: [] } })).toBe(true)
     expect(settingsAreEmpty({ packageId: undefined, autostart: undefined })).toBe(true)
   })
 
   it('reconhece uma lista com item', () => {
-    expect(settingsAreEmpty({ extensions: ['esbenp.prettier-vscode'] })).toBe(false)
+    expect(settingsAreEmpty({ steps: { vscodeExtensions: ['esbenp.prettier-vscode'] } })).toBe(false)
   })
 
   it('reconhece a versão escolhida', () => {
@@ -26,15 +26,15 @@ describe('settingsAreEmpty', () => {
   })
 
   it('trata caixa de seleção desmarcada como vazio', () => {
-    expect(settingsAreEmpty({ makeDefault: false, openAfter: false })).toBe(true)
-    expect(settingsAreEmpty({ makeDefault: true })).toBe(false)
+    expect(settingsAreEmpty({ steps: { browserDefault: { makeDefault: false, openAfter: false } } })).toBe(true)
+    expect(settingsAreEmpty({ steps: { browserDefault: { makeDefault: true } } })).toBe(false)
   })
 
   it('olha dentro do git', () => {
-    expect(settingsAreEmpty({ git: { name: '', email: '', branch: '' } })).toBe(true)
-    expect(settingsAreEmpty({ git: { name: '  ', email: '', branch: '' } })).toBe(true)
-    expect(settingsAreEmpty({ git: { name: '', email: '', branch: 'main' } })).toBe(false)
-    expect(settingsAreEmpty({ git: { name: 'Wesley', email: '', branch: '' } })).toBe(false)
+    expect(settingsAreEmpty({ steps: { gitConfig: { name: '', email: '', branch: '' } } })).toBe(true)
+    expect(settingsAreEmpty({ steps: { gitConfig: { name: '  ', email: '', branch: '' } } })).toBe(true)
+    expect(settingsAreEmpty({ steps: { gitConfig: { name: '', email: '', branch: 'main' } } })).toBe(false)
+    expect(settingsAreEmpty({ steps: { gitConfig: { name: 'Wesley', email: '', branch: '' } } })).toBe(false)
   })
 })
 
@@ -44,8 +44,8 @@ describe('settingsKey', () => {
   })
 
   it('ignora a ordem das listas', () => {
-    const a: Settings = { extensions: ['b', 'a', 'c'] }
-    const b: Settings = { extensions: ['c', 'b', 'a'] }
+    const a: Settings = { steps: { vscodeExtensions: ['b', 'a', 'c'] } }
+    const b: Settings = { steps: { vscodeExtensions: ['c', 'b', 'a'] } }
     expect(settingsKey(a)).toBe(settingsKey(b))
   })
 
@@ -71,14 +71,14 @@ describe('settingsKey', () => {
   })
 
   it('enxerga mudança dentro do git', () => {
-    const antes = settingsKey({ git: { name: 'Wesley', email: 'a@b.c', branch: 'main' } })
-    const depois = settingsKey({ git: { name: 'Wesley', email: 'a@b.c', branch: 'master' } })
+    const antes = settingsKey({ steps: { gitConfig: { name: 'Wesley', email: 'a@b.c', branch: 'main' } } })
+    const depois = settingsKey({ steps: { gitConfig: { name: 'Wesley', email: 'a@b.c', branch: 'master' } } })
     expect(antes).not.toBe(depois)
   })
 
   it('enxerga mudança na lista de jogos', () => {
-    const antes = settingsKey({ games: [{ appid: '730', name: 'CS' }] })
-    const depois = settingsKey({ games: [{ appid: '570', name: 'Dota' }] })
+    const antes = settingsKey({ steps: { steamGames: [{ appid: '730', name: 'CS' }] } })
+    const depois = settingsKey({ steps: { steamGames: [{ appid: '570', name: 'Dota' }] } })
     expect(antes).not.toBe(depois)
   })
 })

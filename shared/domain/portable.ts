@@ -61,14 +61,15 @@ export function withVsCode(profile: Profile, portable: Portable, mode: ImportMod
   const coming = portable.vscode ?? []
   if (coming.length === 0) return profile
 
-  const current = mode === 'merge' ? (profile.settings['vscode']?.extensions ?? []) : []
-  const extensions = [...new Set([...current, ...coming])].sort()
+  const mine = profile.settings['vscode']
+  const current = mode === 'merge' ? (mine?.steps?.vscodeExtensions ?? []) : []
+  const vscodeExtensions = [...new Set([...current, ...coming])].sort()
 
   return {
     ...profile,
     settings: {
       ...profile.settings,
-      vscode: { ...profile.settings['vscode'], extensions },
+      vscode: { ...mine, steps: { ...mine?.steps, vscodeExtensions } },
     },
   }
 }

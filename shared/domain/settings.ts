@@ -1,7 +1,12 @@
 import { z } from 'zod'
-import { steamGameSchema } from './steam'
 import { installScopeSchema, LOCALE_BY_ID, scopeLabel } from './winget'
-import { gitSchema as gitConfigSchema, gitSummary } from './git'
+import {
+  stepsAreEmpty,
+  stepsSchema,
+  stepsSummary,
+  STEPS_BY_KIND,
+  type Steps,
+} from './steps'
 
 export const settingsKindSchema = z.enum([
   'vscode',
@@ -15,148 +20,82 @@ export const settingsKindSchema = z.enum([
 ])
 export type SettingsKind = z.infer<typeof settingsKindSchema>
 
-export interface SettingsOption {
-  id: string
-  name: string
-  hint: string
-  category: string
-  url?: string
-}
-
-export const VSCODE_EXTENSIONS: readonly SettingsOption[] = [
-  {
-    id: 'dracula-theme.theme-dracula',
-    name: 'Dracula Official',
-    hint: 'tema escuro',
-    category: 'Temas',
-  },
-  {
-    id: 'PKief.material-icon-theme',
-    name: 'Material Icon Theme',
-    hint: 'ícones nos arquivos',
-    category: 'Temas',
-  },
-  {
-    id: 'esbenp.prettier-vscode',
-    name: 'Prettier',
-    hint: 'formata o código sozinho',
-    category: 'Ferramentas',
-  },
-  {
-    id: 'dbaeumer.vscode-eslint',
-    name: 'ESLint',
-    hint: 'aponta erros enquanto você escreve',
-    category: 'Ferramentas',
-  },
-  {
-    id: 'eamodio.gitlens',
-    name: 'GitLens',
-    hint: 'mostra quem mudou cada linha',
-    category: 'Ferramentas',
-  },
-  {
-    id: 'ritwickdey.LiveServer',
-    name: 'Live Server',
-    hint: 'abre seu site no navegador na hora',
-    category: 'Ferramentas',
-  },
-  {
-    id: 'MS-CEINTL.vscode-language-pack-pt-BR',
-    name: 'Pacote de idioma pt-BR',
-    hint: 'menus em português',
-    category: 'Idioma',
-  },
-]
-
-export const TIBIA_CLIENTS: readonly SettingsOption[] = [
-  {
-    id: 'tibia-oficial',
-    name: 'Tibia (oficial)',
-    hint: 'da CipSoft, pede aceitar o contrato antes de baixar',
-    category: 'Oficial',
-    url: 'https://www.tibia.com/support/?subtopic=downloads',
-  },
-  {
-    id: 'medivia',
-    name: 'Medivia Online',
-    hint: 'nasceu de um servidor privado e virou jogo próprio',
-    category: 'Old school',
-    url: 'https://www.medivia.online/',
-  },
-]
-
-export const TIBIA_BY_ID: ReadonlyMap<string, SettingsOption> = new Map(
-  TIBIA_CLIENTS.map((client) => [client.id, client]),
-)
-
-export const RIOT_GAMES: readonly SettingsOption[] = [
-  {
-    id: 'RiotGames.Valorant.BR',
-    name: 'VALORANT',
-    hint: 'servidor Brasil',
-    category: 'Jogos',
-  },
-  {
-    id: 'RiotGames.LegendsOfRuneterra.Americas',
-    name: 'Legends of Runeterra',
-    hint: 'servidor Américas',
-    category: 'Jogos',
-  },
-]
-
-export const RIOT_BY_ID: ReadonlyMap<string, SettingsOption> = new Map(
-  RIOT_GAMES.map((game) => [game.id, game]),
-)
-
-export const VS_WORKLOADS: readonly SettingsOption[] = [
-  {
-    id: 'Microsoft.VisualStudio.Workload.NativeDesktop',
-    name: 'C e C++',
-    hint: 'compilador, depurador e projetos de desktop',
-    category: 'Linguagens',
-  },
-  {
-    id: 'Microsoft.VisualStudio.Workload.ManagedDesktop',
-    name: 'C#',
-    hint: '.NET para desktop, WPF e Windows Forms',
-    category: 'Linguagens',
-  },
-]
+export {
+  byId,
+  categoriesOf,
+  RIOT_BY_ID,
+  RIOT_GAMES,
+  stepsFor,
+  stepIdsFor,
+  STEPS,
+  TIBIA_BY_ID,
+  TIBIA_CLIENTS,
+  VS_WORKLOADS,
+  VSCODE_EXTENSIONS,
+  type SettingsOption,
+  type StepDescriptor,
+  type StepId,
+  type Steps,
+} from './steps'
 
 export { DEFAULT_GIT, gitSchema, type GitConfig } from './git'
 
-export const settingsSchema = z.object({
+const LIFTED: Readonly<Record<string, string>> = {
+  extensions: 'vscodeExtensions',
+  editorTweaks: 'editorTweaks',
+  globalPackages: 'runtimePackages',
+  git: 'gitConfig',
+  games: 'steamGames',
+  tibia: 'tibiaPages',
+  riot: 'riotProducts',
+  workloads: 'vsWorkloads',
+}
+
+export function upgradeSettings(raw: unknown): unknown {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return raw
+
+  const old = raw as Record<string, unknown>
+  const flat: Record<string, unknown> = {}
+  const steps: Record<string, unknown> = { ...((old['steps'] as object) ?? {}) }
+
+  for (const [key, value] of Object.entries(old)) {
+    if (key === 'steps') continue
+
+    const lifted = LIFTED[key]
+    if (lifted !== undefined) {
+      if (value !== undefined && steps[lifted] === undefined) steps[lifted] = value
+      continue
+    }
+
+    if (key === 'makeDefault' || key === 'openAfter') {
+      if (value === undefined) continue
+      const browser = (steps['browserDefault'] as Record<string, unknown>) ?? {}
+      if (browser[key] === undefined) steps['browserDefault'] = { ...browser, [key]: value }
+      continue
+    }
+
+    flat[key] = value
+  }
+
+  if (Object.keys(steps).length > 0) flat['steps'] = steps
+  return flat
+}
+
+const nestedSettingsSchema = z.object({
   packageId: z.string().optional(),
   scope: installScopeSchema.optional(),
   locale: z.string().optional(),
   interactive: z.boolean().optional(),
   desktopShortcut: z.boolean().optional(),
   autostart: z.boolean().optional(),
-  extensions: z.array(z.string()).optional(),
-  editorTweaks: z.array(z.string()).optional(),
-  globalPackages: z.array(z.string()).optional(),
-  games: z.array(steamGameSchema).optional(),
-  git: gitConfigSchema.optional(),
-  tibia: z.array(z.string()).optional(),
-  riot: z.array(z.string()).optional(),
-  workloads: z.array(z.string()).optional(),
-  makeDefault: z.boolean().optional(),
-  openAfter: z.boolean().optional(),
+  steps: stepsSchema.optional(),
 })
-export type Settings = z.infer<typeof settingsSchema>
 
-export function optionsFor(kind: SettingsKind): readonly SettingsOption[] {
-  if (kind === 'vscode') return VSCODE_EXTENSIONS
-  if (kind === 'tibia') return TIBIA_CLIENTS
-  if (kind === 'riot') return RIOT_GAMES
-  if (kind === 'vs') return VS_WORKLOADS
-  return []
-}
+export const settingsSchema = z.preprocess(upgradeSettings, nestedSettingsSchema)
+export type Settings = z.infer<typeof nestedSettingsSchema>
 
-export function categoriesOf(options: readonly SettingsOption[]): string[] {
-  const seen: string[] = []
-  for (const option of options) if (!seen.includes(option.category)) seen.push(option.category)
-  return ['Tudo', ...seen]
+export function optionsFor(kind: SettingsKind): readonly string[] {
+  return STEPS_BY_KIND[kind] ?? []
 }
 
 const TRISTATE_FIELDS: readonly string[] = ['autostart', 'desktopShortcut']
@@ -174,7 +113,11 @@ function fieldMatters(key: string, value: unknown): boolean {
 
 export function settingsAreEmpty(settings: Settings | undefined): boolean {
   if (!settings) return true
-  return !Object.entries(settings).some(([key, value]) => fieldMatters(key, value))
+
+  const { steps, ...flat } = settings
+  const flatMatters = Object.entries(flat).some(([key, value]) => fieldMatters(key, value))
+
+  return !flatMatters && stepsAreEmpty(steps)
 }
 
 export function settingsKey(settings: Settings | undefined): string {
@@ -198,8 +141,6 @@ export function settingsSummary(settings: Settings | undefined): string | null {
   if (!settings) return null
 
   const parts: string[] = []
-  const extensions = settings.extensions?.length ?? 0
-  const games = settings.games ?? []
 
   if (settings.scope) parts.push(scopeLabel(settings.scope))
   if (settings.locale) parts.push(LOCALE_BY_ID.get(settings.locale)?.name ?? settings.locale)
@@ -207,28 +148,12 @@ export function settingsSummary(settings: Settings | undefined): string | null {
   if (settings.desktopShortcut === true) parts.push('atalho na área de trabalho')
   if (settings.desktopShortcut === false) parts.push('sem atalho na área de trabalho')
 
-  if (extensions) parts.push(`${extensions} ${extensions === 1 ? 'extensão' : 'extensões'}`)
-  const packages = settings.globalPackages?.length ?? 0
-  if (packages) {
-    parts.push(packages + (packages === 1 ? ' ferramenta' : ' ferramentas'))
-  }
-  const editorTweaks = settings.editorTweaks?.length ?? 0
-  if (editorTweaks) {
-    parts.push(`${editorTweaks} ${editorTweaks === 1 ? 'ajuste do editor' : 'ajustes do editor'}`)
-  }
-  if (games.length > 0 && games.length <= 2) parts.push(games.map((g) => g.name).join(' e '))
-  else if (games.length > 2) parts.push(`${games.length} jogos`)
-  const tibia = settings.tibia?.length ?? 0
-  if (tibia) parts.push(`${tibia} ${tibia === 1 ? 'cliente' : 'clientes'}`)
-  const riot = settings.riot?.length ?? 0
-  if (riot) parts.push(`${riot} ${riot === 1 ? 'jogo da Riot' : 'jogos da Riot'}`)
-  const workloads = settings.workloads?.length ?? 0
-  if (workloads) parts.push(`${workloads} ${workloads === 1 ? 'linguagem' : 'linguagens'}`)
-  parts.push(...gitSummary(settings.git))
-  if (settings.makeDefault) parts.push('navegador padrão')
-  if (settings.openAfter) parts.push('abre no fim')
+  parts.push(...stepsSummary(settings.steps))
+
   if (settings.autostart === true) parts.push('abre com o Windows')
   if (settings.autostart === false) parts.push('não abre sozinho')
 
   return parts.length ? parts.join(' · ') : null
 }
+
+export type { Steps as SettingsSteps }

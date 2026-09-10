@@ -39,8 +39,8 @@ describe('requestChanged', () => {
   })
 
   it('não reclama quando nada mudou', () => {
-    const settings: Settings = { extensions: ['a', 'b'], autostart: true }
-    const antes = done('vscode', { extensions: ['b', 'a'], autostart: true })
+    const settings: Settings = { steps: { vscodeExtensions: ['a', 'b'] }, autostart: true }
+    const antes = done('vscode', { steps: { vscodeExtensions: ['b', 'a'] }, autostart: true })
     expect(requestChanged(request('vscode', settings), antes)).toBe(false)
   })
 
@@ -114,7 +114,7 @@ describe('hasSettings', () => {
 
   it('não enxerga ajuste onde não há', () => {
     expect(hasSettings(done('vim'))).toBe(false)
-    expect(hasSettings(done('vim', { extensions: [] }))).toBe(false)
+    expect(hasSettings(done('vim', { steps: { vscodeExtensions: [] } }))).toBe(false)
   })
 })
 
