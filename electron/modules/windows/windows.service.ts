@@ -7,19 +7,12 @@ import {
   tweaksTouchingExplorer,
   type TweakState,
 } from '@shared/domain/windows'
+import { run } from '@main/core/powershell'
+import refreshExplorerScript from './infrastructure/powershell/RefreshExplorer.ps1?raw'
 
 const exec = promisify(execFile)
 
 const CALL_TIMEOUT_MS = 10_000
-
-const REFRESH_SCRIPT = `
-$signature = @'
-[DllImport("shell32.dll")]
-public static extern void SHChangeNotify(int eventId, uint flags, IntPtr item1, IntPtr item2);
-'@
-$shell = Add-Type -MemberDefinition $signature -Name 'PulseShell' -Namespace 'Pulse' -PassThru
-$shell::SHChangeNotify(0x8000000, 0x1000, [IntPtr]::Zero, [IntPtr]::Zero)
-`
 
 async function readValue(key: string, name: string): Promise<number | null> {
   const { stdout } = await exec('reg', ['query', key, '/v', name], {
@@ -41,12 +34,7 @@ async function writeValue(key: string, name: string, value: number): Promise<boo
 }
 
 async function refreshExplorer(): Promise<void> {
-  const encoded = Buffer.from(REFRESH_SCRIPT, 'utf16le').toString('base64')
-  await exec(
-    'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-    { windowsHide: true, timeout: CALL_TIMEOUT_MS },
-  ).catch(() => undefined)
+  await run(refreshExplorerScript, { timeoutMs: CALL_TIMEOUT_MS }).catch(() => undefined)
 }
 
 export async function readTweaks(): Promise<TweakState[]> {

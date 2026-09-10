@@ -1,7 +1,7 @@
 import { homedir } from 'node:os'
 import { mkdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
-import { runTool } from '../tools'
+import { runTool } from '../toolchain'
 
 export type SshResult = 'created' | 'existed' | 'no-tool' | 'failed'
 

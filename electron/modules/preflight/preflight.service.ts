@@ -1,5 +1,3 @@
-import { execFile, spawn } from 'node:child_process'
-import { promisify } from 'node:util'
 import {
   CHECK_ORDER,
   MINIMUM_BUILD,
@@ -12,61 +10,11 @@ import {
   type PreflightPartial,
 } from '@shared/domain/preflight'
 import type { FreshInput } from '@shared/ipc/contracts'
-
-const exec = promisify(execFile)
-
-async function powershell(script: string): Promise<unknown> {
-  const encoded = Buffer.from(script, 'utf16le').toString('base64')
-  const { stdout } = await exec(
-    'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-    { windowsHide: true, timeout: 25_000, maxBuffer: 4 * 1024 * 1024 },
-  )
-  return JSON.parse(stdout)
-}
-
-function asArray<T>(v: T | T[]): T[] {
-  return Array.isArray(v) ? v : [v]
-}
-
-const DRIVES_SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-
-$vols = @(Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | ForEach-Object {
-  [pscustomobject]@{
-    letter     = [string]$_.DeviceID
-    label      = [string]$_.VolumeName
-    media      = 'Desconhecido'
-    freeBytes  = [int64]$_.FreeSpace
-    totalBytes = [int64]$_.Size
-    system     = ([string]$_.DeviceID -eq $env:SystemDrive)
-  }
-})
-
-$vols | ConvertTo-Json -Compress -Depth 3
-
-$ns = 'root/Microsoft/Windows/Storage'
-
-$media = @{}
-foreach ($d in @(Get-CimInstance -Namespace $ns -ClassName MSFT_PhysicalDisk)) {
-  $media[[int]$d.DeviceId] = switch ([int]$d.MediaType) { 3 { 'HDD' } 4 { 'SSD' } default { 'Desconhecido' } }
-}
-
-$disk = @{}
-foreach ($p in @(Get-CimInstance -Namespace $ns -ClassName MSFT_Partition)) {
-  if ($p.DriveLetter) { $disk[[string]$p.DriveLetter] = [int]$p.DiskNumber }
-}
-
-foreach ($v in $vols) {
-  $short = $v.letter.TrimEnd(':')
-  if ($disk.ContainsKey($short)) {
-    $n = $disk[$short]
-    if ($media.ContainsKey($n)) { $v.media = $media[$n] }
-  }
-}
-
-$vols | ConvertTo-Json -Compress -Depth 3
-`
+import {
+  readDrives,
+  readSystemFacts,
+  type SystemFacts,
+} from './infrastructure/systemProbe'
 
 function sortDrives(drives: Drive[]): Drive[] {
   return [...drives].sort((a, b) => {
@@ -75,66 +23,8 @@ function sortDrives(drives: Drive[]): Drive[] {
   })
 }
 
-function readDrives(onEnriched?: (drives: Drive[]) => void): Promise<Drive[]> {
-  return new Promise((resolve, reject) => {
-    const encoded = Buffer.from(DRIVES_SCRIPT, 'utf16le').toString('base64')
-    const child = spawn(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-      { windowsHide: true },
-    )
-
-    const kill = setTimeout(() => child.kill(), 25_000)
-
-    let buffer = ''
-    let first = true
-
-    const take = (line: string): void => {
-      const clean = line.trim()
-      if (!clean) return
-      let parsed: unknown
-      try {
-        parsed = JSON.parse(clean)
-      } catch {
-        return
-      }
-      const drives = sortDrives(asArray(parsed as Drive | Drive[]))
-      if (first) {
-        first = false
-        resolve(drives)
-        return
-      }
-      onEnriched?.(drives)
-    }
-
-    child.stderr?.resume()
-
-    child.stdout?.setEncoding('utf8')
-    child.stdout?.on('data', (chunk: string) => {
-      buffer += chunk
-      for (;;) {
-        const cut = buffer.indexOf('\n')
-        if (cut < 0) break
-        take(buffer.slice(0, cut))
-        buffer = buffer.slice(cut + 1)
-      }
-    })
-
-    child.on('error', () => {
-      clearTimeout(kill)
-      if (first) reject(new Error('Nao foi possivel listar os discos deste computador.'))
-    })
-
-    child.on('close', () => {
-      clearTimeout(kill)
-      take(buffer)
-      if (first) reject(new Error('Nao foi possivel listar os discos deste computador.'))
-    })
-  })
-}
-
-export function listDrives(): Promise<Drive[]> {
-  return readDrives()
+export async function listDrives(): Promise<Drive[]> {
+  return sortDrives(await readDrives())
 }
 
 const REUSE_MS = 20_000
@@ -155,46 +45,19 @@ export async function drivesForScreen(input: FreshInput = {}): Promise<Drive[]> 
 
   const detailed: { drives: Drive[] | null } = { drives: null }
 
-  const drives = await readDrives((enriched) => {
-    detailed.drives = enriched
-    lastDrives = { at: Date.now(), drives: enriched }
-    publishPartial({ drives: enriched })
-  })
+  const drives = sortDrives(
+    await readDrives((raw) => {
+      const enriched = sortDrives(raw)
+      detailed.drives = enriched
+      lastDrives = { at: Date.now(), drives: enriched }
+      publishPartial({ drives: enriched })
+    }),
+  )
 
   if (detailed.drives) return detailed.drives
 
   lastDrives = { at: Date.now(), drives }
   return drives
-}
-
-const SYSTEM_SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-$k   = Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion'
-$cs  = Get-CimInstance Win32_ComputerSystem
-$cpu = Get-CimInstance Win32_Processor -Property VirtualizationFirmwareEnabled | Select-Object -First 1
-$wg  = try { (winget --version) -replace '^v','' } catch { $null }
-$adm = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-[pscustomobject]@{
-  product      = [string]$k.ProductName
-  version      = if ($k.DisplayVersion) { [string]$k.DisplayVersion } else { [string]$k.ReleaseId }
-  build        = [int]$k.CurrentBuild
-  revision     = [int]$k.UBR
-  admin        = [bool]$adm
-  winget       = if ($wg) { [string]$wg } else { $null }
-  hypervisor   = [bool]$cs.HypervisorPresent
-  virtFirmware = [bool]$cpu.VirtualizationFirmwareEnabled
-} | ConvertTo-Json -Compress
-`
-
-interface SystemFacts {
-  product: string
-  version: string
-  build: number
-  revision: number
-  admin: boolean
-  winget: string | null
-  hypervisor: boolean
-  virtFirmware: boolean
 }
 
 const NETWORK_ENDPOINTS = [
@@ -342,7 +205,7 @@ export async function runPreflight(input: PreflightInput = {}): Promise<Prefligh
     if (early) publish(checkDrive(early, ready.find((x) => x.system)))
   }
 
-  const systemStep = (powershell(SYSTEM_SCRIPT) as Promise<SystemFacts>).then((f) => {
+  const systemStep = readSystemFacts().then((f) => {
     publish(checkWindows(f), checkAdmin(f), checkWinget(f), checkVirtualization(f))
     return f
   })

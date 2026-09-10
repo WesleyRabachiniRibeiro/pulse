@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { powershellOut } from '../tools'
+import { stdoutOr } from '@main/core/powershell'
 
 export interface AdminRunOutput {
   code: number
@@ -50,7 +50,7 @@ try {
 }
 `
 
-  const raw = await powershellOut(script, timeoutMs + 30_000)
+  const raw = await stdoutOr('', script, { timeoutMs: timeoutMs + 30_000 })
   const numbers = raw
     .split(/\r?\n/)
     .map((line) => line.trim())

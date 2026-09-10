@@ -16,6 +16,24 @@ function encode(script: string): string {
   return Buffer.from(script, 'utf16le').toString('base64')
 }
 
+export function quote(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`
+}
+
+function literal(value: string | number | boolean): string {
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'boolean') return value ? '$true' : '$false'
+  return quote(value)
+}
+
+export function withParams(
+  script: string,
+  params: Readonly<Record<string, string | number | boolean>>,
+): string {
+  const lines = Object.entries(params).map(([name, value]) => `$${name} = ${literal(value)}`)
+  return [...lines, script].join('\n')
+}
+
 function execute(
   script: string,
   options: PowerShellOptions,
@@ -119,6 +137,16 @@ export async function textOr(
   options: PowerShellOptions = {},
 ): Promise<string> {
   return text(script, options).catch(() => fallback)
+}
+
+export async function stdoutOr(
+  fallback: string,
+  script: string,
+  options: PowerShellOptions = {},
+): Promise<string> {
+  return execute(script, options)
+    .then((result) => result.stdout.trim())
+    .catch(() => fallback)
 }
 
 export async function jsonOr<T>(

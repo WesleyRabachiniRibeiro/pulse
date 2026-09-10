@@ -1,75 +1,17 @@
 import { spawn } from 'node:child_process'
 import { entryMatchesProgram, type Program } from '@shared/domain/catalog'
+import {
+  isProcessRunning,
+  readDefaultProgId,
+  readRegisteredBrowsers,
+  type RegisteredBrowser,
+} from './infrastructure/browserRegistry'
 
-const REGISTERED_SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-@(foreach ($raiz in @('HKLM:\\SOFTWARE\\Clients\\StartMenuInternet', 'HKCU:\\SOFTWARE\\Clients\\StartMenuInternet')) {
-  Get-ChildItem $raiz | ForEach-Object {
-    [pscustomobject]@{
-      key    = [string]$_.PSChildName
-      exe    = [string](Get-ItemProperty "$($_.PSPath)\\shell\\open\\command").'(default)'
-      progId = [string](Get-ItemProperty "$($_.PSPath)\\Capabilities\\URLAssociations").http
-    }
-  }
-}) | ConvertTo-Json -Compress
-
-`
-
-const DEFAULT_SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-$k = Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice'
-if ($k.ProgId) { $k.ProgId } else { '' }
-`
-
-export interface RegisteredBrowser {
-  key: string
-  exe: string
-  progId: string
-}
-
-const POWERSHELL_LIMIT_MS = 25_000
-
-function powershell(script: string): Promise<string> {
-  const encoded = Buffer.from(script, 'utf16le').toString('base64')
-  return new Promise((resolve) => {
-    const child = spawn(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-      { windowsHide: true },
-    )
-    let out = ''
-    child.stdout?.on('data', (b: Buffer) => (out += b.toString('utf8')))
-    child.stderr?.resume()
-
-    const giveUp = setTimeout(() => child.kill(), POWERSHELL_LIMIT_MS)
-    const finish = (value: string): void => {
-      clearTimeout(giveUp)
-      resolve(value)
-    }
-
-    child.on('error', () => finish(''))
-    child.on('close', () => finish(out.trim()))
-  })
-}
-
-async function registered(): Promise<RegisteredBrowser[]> {
-  const raw = await powershell(REGISTERED_SCRIPT)
-  if (!raw) return []
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    return (Array.isArray(parsed) ? parsed : [parsed]) as RegisteredBrowser[]
-  } catch {
-    return []
-  }
-}
+export type { RegisteredBrowser }
 
 export async function findBrowser(program: Program): Promise<RegisteredBrowser | null> {
-  const all = await registered()
+  const all = await readRegisteredBrowsers()
   return all.find((b) => b?.key && entryMatchesProgram(b.key, b.exe ?? '', program)) ?? null
-}
-
-async function currentDefault(): Promise<string> {
-  return powershell(DEFAULT_SCRIPT)
 }
 
 function executable(command: string): string | null {
@@ -119,15 +61,6 @@ function importRoute(exe: string): ImportRoute | null {
   return IMPORT_ROUTES.find((r) => r.file.test(name)) ?? null
 }
 
-async function isRunning(exe: string): Promise<boolean> {
-  const file = fileName(exe)
-  const out = await powershell(
-    `$p = Get-Process -Name '${file.replace(/'/g, "''")}' -ErrorAction SilentlyContinue
-if ($p) { 'sim' } else { 'nao' }`,
-  )
-  return out.includes('sim')
-}
-
 export async function makeDefault(program: Program): Promise<DefaultResult> {
   const browser = await findBrowser(program)
   const exe = browser ? executable(browser.exe) : null
@@ -138,7 +71,7 @@ export async function makeDefault(program: Program): Promise<DefaultResult> {
 
   await wait(4000)
 
-  const now = await currentDefault()
+  const now = await readDefaultProgId()
   if (!now) return 'asked'
   return now.toLowerCase() === browser.progId.toLowerCase() ? 'yes' : 'asked'
 }
@@ -158,7 +91,7 @@ export async function openOnce(program: Program): Promise<OpenOutcome> {
   const route = importRoute(exe)
 
   if (route?.wizardArg) {
-    const running = await isRunning(exe)
+    const running = await isProcessRunning(fileName(exe))
     await launch(exe, running ? [] : [route.wizardArg])
     return { result: running ? 'already-running' : 'opened', address: null }
   }

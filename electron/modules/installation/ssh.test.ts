@@ -12,7 +12,7 @@ vi.mock('node:os', async () => {
   return { ...real, homedir: (): string => home }
 })
 
-vi.mock('../tools', () => ({
+vi.mock('../toolchain', () => ({
   runTool: async (exe: string, args: readonly string[]): Promise<boolean> => {
     calls.push([exe, ...args])
     const target = args[args.indexOf('-f') + 1]

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { powershellOut } from '../tools'
+import { stdoutOr } from '@main/core/powershell'
 
 export interface UserRunOutput {
   code: number
@@ -18,7 +18,7 @@ if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 let elevated: boolean | null = null
 
 export async function isElevated(): Promise<boolean> {
-  if (elevated === null) elevated = (await powershellOut(ELEVATION_SCRIPT)).includes('sim')
+  if (elevated === null) elevated = (await stdoutOr('', ELEVATION_SCRIPT)).includes('sim')
   return elevated
 }
 
@@ -32,7 +32,7 @@ if ($v -eq 0) { 'nao' } else { 'sim' }
 let uac: boolean | null = null
 
 export async function uacEnabled(): Promise<boolean> {
-  if (uac === null) uac = !(await powershellOut(UAC_SCRIPT)).includes('nao')
+  if (uac === null) uac = !(await stdoutOr('', UAC_SCRIPT)).includes('nao')
   return uac
 }
 
@@ -135,7 +135,7 @@ ${RUNNER}
 [PulseUserRunner]::Run(${literal(inner)}, ${literal(tmpdir())}, ${timeoutMs})
 `
 
-  const raw = await powershellOut(script, timeoutMs + 30_000)
+  const raw = await stdoutOr('', script, { timeoutMs: timeoutMs + 30_000 })
   const numbers = raw
     .split(/\r?\n/)
     .map((line) => line.trim())

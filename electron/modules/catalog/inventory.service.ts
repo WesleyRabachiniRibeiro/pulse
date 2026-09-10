@@ -11,7 +11,7 @@ import {
   type Inventory,
 } from '@shared/domain/inventory'
 import { listInstalledNames } from './catalog.service'
-import { readRegistryEntries } from './registry.service'
+import { readRegistryEntries } from './infrastructure/windowsRegistry'
 
 const exec = promisify(execFile)
 

@@ -1,31 +1,17 @@
-import { execFile } from 'node:child_process'
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { promisify } from 'node:util'
 import type { SteamGame, SteamLibrary } from '@shared/domain/steam'
 import { readKnownApps, readLicenses } from './vdf'
+import { textOr } from '@main/core/powershell'
+import steamPathScript from './infrastructure/powershell/GetSteamPath.ps1?raw'
+import activeUserScript from './infrastructure/powershell/GetActiveSteamUser.ps1?raw'
 
-const exec = promisify(execFile)
+const LOOKUP_TIMEOUT_MS = 15_000
 
 async function steamPath(): Promise<string | null> {
-  const script = `
-$ErrorActionPreference = 'SilentlyContinue'
-$p = (Get-ItemProperty 'HKCU:\\Software\\Valve\\Steam').SteamPath
-if (-not $p) { $p = (Get-ItemProperty 'HKLM:\\SOFTWARE\\WOW6432Node\\Valve\\Steam').InstallPath }
-if ($p) { $p } else { '' }
-`
-  const encoded = Buffer.from(script, 'utf16le').toString('base64')
-  try {
-    const { stdout } = await exec(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-      { windowsHide: true, timeout: 15_000 },
-    )
-    const path = stdout.trim().replace(/\//g, '\\')
-    return path ? path : null
-  } catch {
-    return null
-  }
+  const found = await textOr('', steamPathScript, { timeoutMs: LOOKUP_TIMEOUT_MS })
+  const path = found.replace(/\//g, '\\')
+  return path ? path : null
 }
 
 async function libraryFolders(steam: string): Promise<string[]> {
@@ -136,23 +122,9 @@ export async function isSignedIn(): Promise<boolean> {
 }
 
 async function activeUser(): Promise<string | null> {
-  const script = `
-$ErrorActionPreference = 'SilentlyContinue'
-$user = (Get-ItemProperty 'HKCU:\\Software\\Valve\\Steam\\ActiveProcess' -Name ActiveUser).ActiveUser
-if ($user) { [string][int]$user } else { '0' }
-`
-  const encoded = Buffer.from(script, 'utf16le').toString('base64')
-  try {
-    const { stdout } = await exec(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-      { windowsHide: true, timeout: 15_000 },
-    )
-    const account = Number(stdout.trim())
-    return Number.isFinite(account) && account !== 0 ? String(account) : null
-  } catch {
-    return null
-  }
+  const raw = await textOr('0', activeUserScript, { timeoutMs: LOOKUP_TIMEOUT_MS })
+  const account = Number(raw)
+  return Number.isFinite(account) && account !== 0 ? String(account) : null
 }
 
 async function appsOf(steam: string, userId: string): Promise<Set<string>> {

@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { DEFAULT_GIT, lineEndingSchema, type GitConfig } from '@shared/domain/git'
-import { locateGit } from '../tools'
+import { locateGit } from '../toolchain'
 
 function ler(exe: string, chave: string): Promise<string> {
   return new Promise((resolve) => {

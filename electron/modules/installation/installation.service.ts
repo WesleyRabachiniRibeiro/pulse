@@ -31,7 +31,7 @@ import {
   locateVsCode,
   runCommandLine,
   runTool,
-} from '../tools'
+} from '../toolchain'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import { rememberRun } from './history.service'

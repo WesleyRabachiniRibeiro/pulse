@@ -10,21 +10,15 @@ import {
   type PackageVersion,
 } from '@shared/domain/catalog'
 import type { FreshInput } from '@shared/ipc/contracts'
+import {
+  readAutostartEntries,
+  readInstalledDisplayNames,
+  readUninstallEntries,
+  type AutostartEntry,
+  type UninstallEntry,
+} from './infrastructure/windowsRegistry'
 
 const exec = promisify(execFile)
-
-const INSTALLED_SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$keys = @(
-  'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
-  'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
-  'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*'
-)
-$names = @(Get-ItemProperty $keys | Where-Object { $_.DisplayName } | ForEach-Object { [string]$_.DisplayName })
-$names += @(try { Get-StartApps | ForEach-Object { [string]$_.Name } } catch { @() })
-@($names | Sort-Object -Unique) | ConvertTo-Json -Compress
-`
 
 export async function listVersions(id: string): Promise<PackageVersion[]> {
   const program = getProgram(id)
@@ -56,29 +50,6 @@ export async function listVersions(id: string): Promise<PackageVersion[]> {
   return sortVersions(versions)
 }
 
-const UNINSTALL_SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$keys = @(
-  'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
-  'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
-  'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*'
-)
-@(Get-ItemProperty $keys | Where-Object { $_.DisplayName -and ($_.QuietUninstallString -or $_.UninstallString) } | ForEach-Object {
-  [pscustomobject]@{
-    name  = [string]$_.DisplayName
-    quiet = [string]$_.QuietUninstallString
-    plain = [string]$_.UninstallString
-  }
-}) | ConvertTo-Json -Compress
-`
-
-interface UninstallEntry {
-  name: string
-  quiet: string
-  plain: string
-}
-
 const MSI_CODE = /\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}/
 
 function silentCommand(entry: UninstallEntry): string | null {
@@ -95,23 +66,7 @@ export async function quietUninstallCommands(id: string): Promise<string[]> {
   const program = getProgram(id)
   if (!program) return []
 
-  const encoded = Buffer.from(UNINSTALL_SCRIPT, 'utf16le').toString('base64')
-  const { stdout } = await exec(
-    'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-    { windowsHide: true, timeout: 25_000, maxBuffer: 8 * 1024 * 1024 },
-  ).catch(() => ({ stdout: '' }))
-
-  if (!stdout.trim()) return []
-
-  let raw: unknown
-  try {
-    raw = JSON.parse(stdout)
-  } catch {
-    return []
-  }
-
-  const entries = (Array.isArray(raw) ? raw : [raw]) as UninstallEntry[]
+  const entries = await readUninstallEntries()
 
   const commands: string[] = []
   for (const entry of entries) {
@@ -122,78 +77,12 @@ export async function quietUninstallCommands(id: string): Promise<string[]> {
   return commands
 }
 
-const AUTOSTART_SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$runKeys = @(
-  'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
-  'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run',
-  'HKLM:\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run'
-)
-$approval = Get-Item 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run'
-$approved = @()
-if ($approval) { $approved = @($approval.GetValueNames()) }
-
-$appModel = 'HKCU:\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\SystemAppData'
-
-@(
-foreach ($key in $runKeys) {
-  $item = Get-Item $key
-  if (-not $item) { continue }
-  foreach ($name in $item.GetValueNames()) {
-    $enabled = $true
-    if ($approved -contains $name) {
-      $bytes = $approval.GetValue($name)
-      # Bit 0 of the first byte is the switch: even means approved, odd means
-      # turned off by the person. It is the same byte the Startup tab writes.
-      if ($bytes -and (($bytes[0] % 2) -eq 1)) { $enabled = $false }
-    }
-    [pscustomobject]@{
-      name    = [string]$name
-      value   = [string]$item.GetValue($name)
-      enabled = [bool]$enabled
-    }
-  }
-}
-
-foreach ($package in @(Get-ChildItem $appModel)) {
-  foreach ($task in @(Get-ChildItem $package.PSPath)) {
-    $state = $task.GetValue('State')
-    if ($null -eq $state) { continue }
-    [pscustomobject]@{
-      name    = [string]$package.PSChildName
-      value   = ''
-      enabled = ([int]$state -eq 2 -or [int]$state -eq 4)
-    }
-  }
-}
-) | ConvertTo-Json -Compress
-`
-
-export interface AutostartEntry {
-  name: string
-  value: string
-  enabled: boolean
-}
+export type { AutostartEntry }
 
 export type AutostartState = 'on' | 'off'
 
-export async function listAutostartEntries(): Promise<AutostartEntry[]> {
-  const encoded = Buffer.from(AUTOSTART_SCRIPT, 'utf16le').toString('base64')
-  const { stdout } = await exec(
-    'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-    { windowsHide: true, timeout: 25_000, maxBuffer: 8 * 1024 * 1024 },
-  ).catch(() => ({ stdout: '' }))
-
-  if (!stdout.trim()) return []
-
-  try {
-    const raw: unknown = JSON.parse(stdout)
-    return (Array.isArray(raw) ? raw : [raw]) as AutostartEntry[]
-  } catch {
-    return []
-  }
+export function listAutostartEntries(): Promise<AutostartEntry[]> {
+  return readAutostartEntries()
 }
 
 async function readAutostart(): Promise<{ id: string; state: AutostartState }[]> {
@@ -219,16 +108,8 @@ export async function isInstalled(id: string): Promise<boolean> {
   return ids.includes(id)
 }
 
-export async function listInstalledNames(): Promise<string[]> {
-  const encoded = Buffer.from(INSTALLED_SCRIPT, 'utf16le').toString('base64')
-  const { stdout } = await exec(
-    'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-    { windowsHide: true, timeout: 25_000, maxBuffer: 8 * 1024 * 1024 },
-  )
-
-  const raw: unknown = JSON.parse(stdout)
-  return Array.isArray(raw) ? raw.filter((n): n is string => typeof n === 'string') : []
+export function listInstalledNames(): Promise<string[]> {
+  return readInstalledDisplayNames()
 }
 
 async function readInstalledNames(): Promise<string[]> {
