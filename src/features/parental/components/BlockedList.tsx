@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { LuBan, LuSearch } from 'react-icons/lu'
-import { filterCatalog, formatMb, groupByCategory, getProgram } from '@shared/domain/catalog'
+import { filterCatalog, formatMb, groupByCategory } from '@shared/domain/catalog'
 import { useCategories, usePrograms } from '@/features/catalog'
+import { useInstalled } from '@/features/selection'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { bridge } from '@/shared/lib/bridge'
 import { applyParental, useParental } from '../store/useParental'
@@ -20,12 +21,18 @@ export function BlockedList({ onDone }: Props) {
   const view = useParental()
   const programs = usePrograms()
   const categories = useCategories()
+  const installed = useInstalled()
 
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<ReadonlySet<string>>(new Set(view.blocked))
 
-  const found = useMemo(() => filterCatalog(query), [query, programs])
+  // Bloquear serve para impedir download. O que já está no PC não se baixa de
+  // novo, então ele nem entra nesta lista.
+  const found = useMemo(
+    () => filterCatalog(query).filter((one) => !installed.has(one.id)),
+    [query, programs, installed],
+  )
 
   const counts = useMemo(() => {
     const map = new Map<string, number>()
@@ -79,7 +86,7 @@ export function BlockedList({ onDone }: Props) {
             className={s.searchInput}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Buscar entre ${programs.length} programas…`}
+            placeholder={`Buscar entre ${found.length} programas…`}
             aria-label="Buscar programas"
           />
         </div>
@@ -207,8 +214,4 @@ export function BlockedList({ onDone }: Props) {
       </footer>
     </div>
   )
-}
-
-export function blockedNameOf(id: string): string {
-  return getProgram(id)?.name ?? id
 }

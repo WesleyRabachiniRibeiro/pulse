@@ -1,7 +1,7 @@
 export { reloadSelection } from './store/useSelection'
 export { Selection } from './components/Selection'
 export { useLoadSelection, useSelection } from './store/useSelection'
-export { useWatchInstalled } from './store/useInstalled'
+export { useInstalled, useWatchInstalled } from './store/useInstalled'
 export { useWatchAutostart } from './store/useAutostart'
 export { useDrives, useWatchDrives } from './store/useDrives'
 export {
