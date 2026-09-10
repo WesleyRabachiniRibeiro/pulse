@@ -8,7 +8,7 @@ const root = join(here, '..')
 const target = join(root, 'catalog.json')
 
 const bundled = await build({
-  entryPoints: [join(root, 'shared', 'domain', 'catalog.ts')],
+  entryPoints: [join(root, 'shared', 'domain', 'catalog.seed.ts')],
   bundle: true,
   format: 'esm',
   platform: 'node',

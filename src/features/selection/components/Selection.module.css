@@ -478,3 +478,22 @@
   position: relative;
   z-index: 1;
 }
+
+.away {
+  max-width: 44ch;
+  margin: 48px auto 0;
+  text-align: center;
+}
+
+.awayTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.awayText {
+  margin: 10px 0 20px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--tx-5);
+}

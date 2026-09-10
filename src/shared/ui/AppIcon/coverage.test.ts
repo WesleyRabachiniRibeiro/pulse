@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { BUILTIN_PROGRAMS } from '@shared/domain/catalog'
+import { BUILTIN_PROGRAMS } from '@shared/domain/catalog.seed'
 import { TINTS } from './tints'
 
 const here = dirname(fileURLToPath(import.meta.url))

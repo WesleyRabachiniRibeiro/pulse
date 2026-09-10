@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { catalogSchema, packageVersionSchema } from '../domain/catalog'
+import {
+  catalogStateSchema,
+  packageVersionSchema,
+  runtimeCatalogSchema,
+} from '../domain/catalog'
 import {
   driveSchema,
   preflightInputSchema,
@@ -74,7 +78,15 @@ export const ipcContracts = {
   },
   'catalog:list': {
     input: z.void(),
-    output: catalogSchema,
+    output: runtimeCatalogSchema,
+  },
+  'catalog:state': {
+    input: z.void(),
+    output: catalogStateSchema,
+  },
+  'catalog:retry': {
+    input: z.void(),
+    output: catalogStateSchema,
   },
   'catalog:installed': {
     input: freshInputSchema,
@@ -307,7 +319,7 @@ export const ipcEvents = {
   'installation:event': runSchema,
   'preflight:event': preflightPartialSchema,
   'update:event': updateStateSchema,
-  'catalog:event': catalogSchema,
+  'catalog:event': runtimeCatalogSchema,
 } as const
 
 export type IpcEvents = typeof ipcEvents

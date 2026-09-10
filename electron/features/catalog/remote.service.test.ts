@@ -2,7 +2,14 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getProgram, getPrograms, hasProgram, type Catalog } from '@shared/domain/catalog'
+import {
+  catalogIsEmpty,
+  getProgram,
+  getPrograms,
+  hasProgram,
+  type Catalog,
+} from '@shared/domain/catalog'
+import { BUILTIN_CATALOG } from '@shared/domain/catalog.seed'
 
 let userData = ''
 
@@ -75,10 +82,10 @@ afterEach(async () => {
 })
 
 describe('loadCatalog', () => {
-  it('começa com o catálogo embutido quando não há cache', async () => {
+  it('começa vazio quando não há cache nem rede', async () => {
     const carregado = await loadCatalog()
-    expect(carregado.programs.length).toBeGreaterThan(1)
-    expect(hasProgram('chrome')).toBe(true)
+    expect(carregado.programs).toEqual([])
+    expect(catalogIsEmpty()).toBe(true)
   })
 
   it('usa o cache do disco quando existe', async () => {
@@ -87,16 +94,16 @@ describe('loadCatalog', () => {
     expect(carregado.programs.map((p) => p.id)).toEqual(['sete-zip'])
   })
 
-  it('ignora cache corrompido', async () => {
+  it('ignora cache corrompido e continua vazio', async () => {
     await writeFile(file(), 'nem json é', 'utf8')
     await loadCatalog()
-    expect(hasProgram('chrome')).toBe(true)
+    expect(catalogIsEmpty()).toBe(true)
   })
 
-  it('ignora cache fora do formato', async () => {
+  it('ignora cache fora do formato e continua vazio', async () => {
     await writeFile(file(), JSON.stringify({ version: 99, programs: [] }), 'utf8')
     await loadCatalog()
-    expect(hasProgram('chrome')).toBe(true)
+    expect(catalogIsEmpty()).toBe(true)
   })
 
   it('lê o disco uma vez só', async () => {
@@ -131,22 +138,30 @@ describe('refreshCatalog', () => {
     expect(ouviu.mock.calls[0]?.[0]?.programs).toHaveLength(1)
   })
 
-  it('fica no embutido quando a rede falha', async () => {
+  it('fica com o cache quando a rede falha', async () => {
+    await writeFile(file(), JSON.stringify(remote), 'utf8')
     refuses()
     await expect(refreshCatalog()).resolves.toBe(false)
-    expect(hasProgram('chrome')).toBe(true)
+    expect(hasProgram('sete-zip')).toBe(true)
   })
 
-  it('fica no embutido quando o servidor responde erro', async () => {
+  it('fica com o cache quando o servidor responde erro', async () => {
+    await writeFile(file(), JSON.stringify(remote), 'utf8')
     answers(remote, false)
     await expect(refreshCatalog()).resolves.toBe(false)
-    expect(hasProgram('chrome')).toBe(true)
+    expect(hasProgram('sete-zip')).toBe(true)
+  })
+
+  it('sem cache e com a rede fora, fica vazio em vez de inventar lista', async () => {
+    refuses()
+    await expect(refreshCatalog()).resolves.toBe(false)
+    expect(catalogIsEmpty()).toBe(true)
   })
 
   it('recusa catálogo com id repetido', async () => {
     answers({ ...remote, programs: [...remote.programs, ...remote.programs] })
     await expect(refreshCatalog()).resolves.toBe(false)
-    expect(hasProgram('chrome')).toBe(true)
+    expect(catalogIsEmpty()).toBe(true)
   })
 
   it('recusa catálogo com expressão de família quebrada', async () => {
@@ -155,7 +170,7 @@ describe('refreshCatalog', () => {
       programs: [{ ...remote.programs[0], family: { prefix: 'x', pattern: '([' } }],
     })
     await expect(refreshCatalog()).resolves.toBe(false)
-    expect(hasProgram('chrome')).toBe(true)
+    expect(catalogIsEmpty()).toBe(true)
   })
 
   it('não sobrescreve o cache bom com resposta ruim', async () => {
@@ -173,18 +188,21 @@ describe('refreshCatalog', () => {
 
 describe('versão vinda do winget', () => {
   it('aplica na abertura o que já estava guardado', async () => {
+    await writeFile(file(), JSON.stringify(BUILTIN_CATALOG), 'utf8')
     stored = { vim: '9.9.9' }
     await loadCatalog()
     expect(getProgram('vim')?.version).toBe('9.9.9')
   })
 
   it('substitui a versão do catálogo pela que o winget respondeu', async () => {
+    await writeFile(file(), JSON.stringify(BUILTIN_CATALOG), 'utf8')
     swept = { vim: '9.9.9' }
     await expect(refreshVersionsFromWinget()).resolves.toBe(true)
     expect(getProgram('vim')?.version).toBe('9.9.9')
   })
 
   it('deixa como está quem o winget não respondeu', async () => {
+    await writeFile(file(), JSON.stringify(BUILTIN_CATALOG), 'utf8')
     const antes = (await loadCatalog()).programs.find((p) => p.id === 'go')?.version
     swept = { vim: '9.9.9' }
     await refreshVersionsFromWinget()

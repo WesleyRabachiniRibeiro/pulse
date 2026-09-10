@@ -5,6 +5,8 @@ import { readInventory } from './inventory.service'
 import { adoptProgram } from './adopt.service'
 import { listStartup, setStartup } from './startup.service'
 import {
+  catalogState,
+  retryCatalog,
   myProgramIds,
   removeFromCatalog,
   loadCatalog,
@@ -23,6 +25,8 @@ export function registerCatalog(): void {
   })
 
   register('catalog:list', () => loadCatalog())
+  register('catalog:state', () => catalogState())
+  register('catalog:retry', () => retryCatalog())
   register('catalog:installed', (input) => listInstalled(input))
   register('catalog:inventory', (input) => readInventory(input.fresh === true))
   register('catalog:add', (input) => adoptProgram(input))

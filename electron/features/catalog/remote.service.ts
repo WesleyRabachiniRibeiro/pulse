@@ -2,11 +2,13 @@ import { app } from 'electron'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import {
-  BUILTIN_CATALOG,
   catalogSchema,
+  EMPTY_CATALOG,
   getCatalog,
   setCatalog,
   type Catalog,
+  type CatalogSource,
+  type CatalogState,
 } from '@shared/domain/catalog'
 import type { Program } from '@shared/domain/catalog'
 import { forgetVersions, knownVersions, refreshVersions } from './versions.service'
@@ -89,7 +91,9 @@ function announce(catalog: Catalog): void {
 }
 
 let loading: Promise<Catalog> | null = null
-let base: Catalog = BUILTIN_CATALOG
+let base: Catalog = EMPTY_CATALOG
+let source: CatalogSource = 'none'
+let checkedAt: string | null = null
 let versions: Record<string, string> = {}
 let extras: Program[] = []
 
@@ -113,22 +117,37 @@ export function loadCatalog(): Promise<Catalog> {
 
 async function start(): Promise<Catalog> {
   const cached = await readCached()
-  if (cached) base = cached
+  if (cached) {
+    base = cached
+    source = 'cache'
+  }
   extras = await readExtras()
   versions = await knownVersions()
   return publish()
+}
+
+export function catalogState(): CatalogState {
+  return { source, checkedAt, programs: getCatalog().programs.length }
 }
 
 export async function refreshCatalog(): Promise<boolean> {
   await loadCatalog()
 
   const remote = await fetchRemote()
+  checkedAt = new Date().toISOString()
   if (!remote) return false
 
   base = remote
+  source = 'network'
   await saveCached(remote)
   announce(publish())
   return true
+}
+
+/** Tentar de novo a pedido de quem está olhando a tela vazia. */
+export async function retryCatalog(): Promise<CatalogState> {
+  await refreshCatalog()
+  return catalogState()
 }
 
 export async function refreshVersionsFromWinget(): Promise<boolean> {
@@ -182,8 +201,10 @@ export async function removeFromCatalog(id: string): Promise<boolean> {
 
 export function forgetRemoteCatalog(): void {
   loading = null
-  base = BUILTIN_CATALOG
+  base = EMPTY_CATALOG
+  source = 'none'
+  checkedAt = null
   versions = {}
   forgetVersions()
-  setCatalog(BUILTIN_CATALOG)
+  setCatalog(EMPTY_CATALOG)
 }

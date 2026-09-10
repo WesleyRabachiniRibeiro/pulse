@@ -1,3 +1,4 @@
+export { retryCatalog, useCatalogPhase } from './store/useCatalog'
 export {
   useBundles,
   useCategories,

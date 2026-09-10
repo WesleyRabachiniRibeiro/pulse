@@ -1,7 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  BUILTIN_CATALOG,
-  BUILTIN_PROGRAMS,
   bundleIsActive,
   catalogSchema,
   entryMatchesProgram,
@@ -25,8 +23,9 @@ import {
   type Catalog,
   type PackageVersion,
 } from './catalog'
+import { BUILTIN_CATALOG, BUILTIN_PROGRAMS } from './catalog.seed'
 
-afterEach(resetCatalog)
+afterEach(() => setCatalog(BUILTIN_CATALOG))
 
 function version(winget: string, name = winget, raw = '1.0'): PackageVersion {
   return { winget, name, version: raw, recommended: false }
@@ -190,10 +189,11 @@ describe('registro do catálogo', () => {
     expect(getProgram('sete-zip')?.name).toBe('7-Zip')
   })
 
-  it('volta para o embutido', () => {
+  it('esvazia quando manda esquecer', () => {
     setCatalog(other)
     resetCatalog()
-    expect(hasProgram('chrome')).toBe(true)
+    expect(getPrograms()).toEqual([])
+    expect(hasProgram('sete-zip')).toBe(false)
   })
 
   it('descarta programa de categoria que não existe', () => {

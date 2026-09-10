@@ -10,7 +10,14 @@ import {
   groupByCategory,
   totalSizeMb,
 } from '@shared/domain/catalog'
-import { useBundles, useCategories, useProgram, usePrograms } from '@/features/catalog'
+import {
+  retryCatalog,
+  useBundles,
+  useCatalogPhase,
+  useCategories,
+  useProgram,
+  usePrograms,
+} from '@/features/catalog'
 import { requestsToAppend, type Request } from '@shared/domain/installation'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { TINTS } from '@/shared/ui/AppIcon/tints'
@@ -67,6 +74,7 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
   const installedFailed = useInstalledFailed()
   const drives = useDrives()
   const programs = usePrograms()
+  const phase = useCatalogPhase()
   const categories = useCategories()
   const bundles = useBundles()
   const defaults = useDefaults()
@@ -329,7 +337,29 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
           </div>
 
           <div className={s.list}>
-            {shown.length === 0 ? (
+            {programs.length === 0 ? (
+              <div className={s.away}>
+                <p className={s.awayTitle}>
+                  {phase === 'looking'
+                    ? 'Buscando a lista de programas…'
+                    : 'Não deu para buscar a lista de programas.'}
+                </p>
+                <p className={s.awayText}>
+                  {phase === 'looking'
+                    ? 'O Pulse baixa o catálogo ao abrir. Leva um instante.'
+                    : 'O catálogo vem da internet, e desta vez não chegou. Sem ele o Pulse não sabe o que oferecer.'}
+                </p>
+                {phase !== 'looking' && (
+                  <button
+                    type="button"
+                    className={s.primary}
+                    onClick={() => void retryCatalog()}
+                  >
+                    Tentar de novo
+                  </button>
+                )}
+              </div>
+            ) : shown.length === 0 ? (
               <p className={s.empty}>
                 Nenhum programa com esse nome. O catálogo tem {programs.length} — tente parte do
                 nome, como “chrome” ou “code”.
