@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process'
+import { stdoutOr } from '@main/core/powershell'
 import { hasManifest, isSignedIn } from '../steam'
+import steamDialogScript from './infrastructure/powershell/IsSteamDialogOpen.ps1?raw'
 
 export type SteamAnswer = 'confirmed' | 'refused' | 'timeout'
 
@@ -65,61 +67,7 @@ export async function requestSteamGame(appid: string): Promise<SteamAnswer> {
 
 const SCRIPT_LIMIT_MS = 25_000
 
-function steamDialogOpen(): Promise<boolean> {
-  const script = `
-$ErrorActionPreference = 'SilentlyContinue'
-Add-Type @"
-using System;
-using System.Text;
-using System.Runtime.InteropServices;
-public class SteamEye {
-  public delegate bool Callback(IntPtr h, IntPtr p);
-  [DllImport("user32.dll")] public static extern bool EnumWindows(Callback cb, IntPtr p);
-  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowTextW(IntPtr h, StringBuilder s, int n);
-  [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
-  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
-}
-"@
-
-$pids = @(Get-Process | Where-Object { $_.ProcessName -like 'steam*' } | ForEach-Object { $_.Id })
-if (-not $pids) { Write-Output 'closed'; exit }
-
-$found = $false
-$cb = [SteamEye+Callback]{
-  param($h, $p)
-  if (-not [SteamEye]::IsWindowVisible($h)) { return $true }
-  $owner = 0
-  [void][SteamEye]::GetWindowThreadProcessId($h, [ref]$owner)
-  if ($pids -notcontains $owner) { return $true }
-  $sb = New-Object Text.StringBuilder 512
-  [void][SteamEye]::GetWindowTextW($h, $sb, 512)
-  $t = $sb.ToString()
-  if ($t -like 'Instalar*' -or $t -like 'Install*') { $script:found = $true; return $false }
-  return $true
-}
-[void][SteamEye]::EnumWindows($cb, [IntPtr]::Zero)
-
-if ($found) { Write-Output 'open' } else { Write-Output 'closed' }
-`
-
-  const encoded = Buffer.from(script, 'utf16le').toString('base64')
-  return new Promise((resolve) => {
-    const child = spawn(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-      { windowsHide: true },
-    )
-    let output = ''
-    child.stdout?.on('data', (b: Buffer) => (output += b.toString('utf8')))
-    child.stderr?.resume()
-
-    const giveUp = setTimeout(() => child.kill(), SCRIPT_LIMIT_MS)
-    const finish = (value: boolean): void => {
-      clearTimeout(giveUp)
-      resolve(value)
-    }
-
-    child.on('error', () => finish(false))
-    child.on('close', () => finish(output.includes('open')))
-  })
+async function steamDialogOpen(): Promise<boolean> {
+  const output = await stdoutOr('', steamDialogScript, { timeoutMs: SCRIPT_LIMIT_MS })
+  return output.includes('open')
 }

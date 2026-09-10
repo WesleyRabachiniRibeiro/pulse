@@ -20,15 +20,22 @@ export function quote(value: string): string {
   return `'${value.replace(/'/g, "''")}'`
 }
 
-function literal(value: string | number | boolean): string {
+function scalar(value: string | number | boolean): string {
   if (typeof value === 'number') return String(value)
   if (typeof value === 'boolean') return value ? '$true' : '$false'
   return quote(value)
 }
 
+function literal(value: PowerShellParam): string {
+  if (Array.isArray(value)) return `@(${value.map(scalar).join(', ')})`
+  return scalar(value as string | number | boolean)
+}
+
+export type PowerShellParam = string | number | boolean | readonly string[]
+
 export function withParams(
   script: string,
-  params: Readonly<Record<string, string | number | boolean>>,
+  params: Readonly<Record<string, PowerShellParam>>,
 ): string {
   const lines = Object.entries(params).map(([name, value]) => `$${name} = ${literal(value)}`)
   return [...lines, script].join('\n')
