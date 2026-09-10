@@ -3,44 +3,44 @@ import { useEffect } from 'react'
 import { create } from 'zustand'
 import { savePreference, usePreferences, usePreferencesLoaded } from '@/features/preferences'
 
-export type Contexto = 'grade' | 'ajustes'
+export type TourContext = 'grid' | 'settings'
 
 interface TourStore {
-  aberto: boolean
-  passo: number
-  contexto: Contexto
-  telaAlvo: Screen | null
-  abrir: () => void
-  fechar: () => void
-  ir: (passo: number) => void
-  definirContexto: (contexto: Contexto) => void
-  pedirTela: (tela: Screen | null) => void
+  open: boolean
+  step: number
+  context: TourContext
+  targetScreen: Screen | null
+  openTour: () => void
+  closeTour: () => void
+  goTo: (step: number) => void
+  setContext: (context: TourContext) => void
+  askScreen: (screen: Screen | null) => void
 }
 
 export const useTourStore = create<TourStore>((set) => ({
-  aberto: false,
-  passo: 0,
-  contexto: 'grade',
-  telaAlvo: null,
-  abrir: () => set({ aberto: true, passo: 0, telaAlvo: 'home' }),
-  fechar: () => {
+  open: false,
+  step: 0,
+  context: 'grid',
+  targetScreen: null,
+  openTour: () => set({ open: true, step: 0, targetScreen: 'home' }),
+  closeTour: () => {
     void savePreference({ tourSeen: true })
-    set({ aberto: false, telaAlvo: null })
+    set({ open: false, targetScreen: null })
   },
-  ir: (passo) => set({ passo }),
-  definirContexto: (contexto) => set({ contexto }),
-  pedirTela: (telaAlvo) => set({ telaAlvo }),
+  goTo: (step) => set({ step }),
+  setContext: (context) => set({ context }),
+  askScreen: (targetScreen) => set({ targetScreen }),
 }))
 
-export function useAbrirNaPrimeiraVez(): void {
-  const carregado = usePreferencesLoaded()
-  const jaViu = usePreferences().tourSeen
+export function useOpenOnFirstRun(): void {
+  const loaded = usePreferencesLoaded()
+  const seen = usePreferences().tourSeen
 
   useEffect(() => {
-    if (!carregado || jaViu) return
-    const t = setTimeout(() => useTourStore.getState().abrir(), 600)
+    if (!loaded || seen) return
+    const t = setTimeout(() => useTourStore.getState().openTour(), 600)
     return () => clearTimeout(t)
-  }, [carregado, jaViu])
+  }, [loaded, seen])
 }
 
 export function useTour() {

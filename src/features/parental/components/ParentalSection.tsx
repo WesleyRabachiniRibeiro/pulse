@@ -70,7 +70,7 @@ export function ParentalSection({ onOpenBlocked }: Props) {
     return null
   }
 
-  async function abrirLista(pin: string): Promise<string | null> {
+  async function openList(pin: string): Promise<string | null> {
     const certo = await bridge.invoke('parental:check', { pin }).catch(() => false)
     if (!certo) return 'PIN incorreto.'
 
@@ -84,7 +84,7 @@ export function ParentalSection({ onOpenBlocked }: Props) {
 
     if (asking.purpose === 'create') return ligar(pin)
     if (asking.purpose === 'turnOff') return desligar(pin)
-    if (asking.purpose === 'list') return abrirLista(pin)
+    if (asking.purpose === 'list') return openList(pin)
     return trocar(pin, asking.current)
   }
 

@@ -190,7 +190,7 @@
 .filter[aria-pressed='true'] {
   background: var(--grad-button);
   border-color: transparent;
-  color: #fff;
+  color: var(--tx-on);
 }
 
 .options {
@@ -220,7 +220,7 @@
 }
 
 .option[aria-checked='true'] {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
   background: linear-gradient(
     120deg,
     color-mix(in srgb, var(--grad-a) 10%, transparent),
@@ -248,13 +248,13 @@
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  border: 1px solid #3b3360;
+  border: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   line-height: 1;
-  color: #fff;
+  color: var(--tx-on);
 }
 
 .option[aria-checked='true'] .box {
@@ -518,7 +518,7 @@
   padding: 13px 26px;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--tx-on);
   cursor: pointer;
   background: var(--grad-button);
   transition: filter 0.16s;

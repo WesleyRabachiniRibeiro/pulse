@@ -59,7 +59,7 @@
   height: 36px;
   align-self: center;
   border-radius: 10px;
-  border: 1px solid #3b3360;
+  border: 1px solid var(--border-soft);
   background: transparent;
   color: var(--tx-2);
   font-size: 16px;
@@ -73,7 +73,7 @@
 .morePrograms:hover {
   border-color: transparent;
   background: var(--grad-button);
-  color: #fff;
+  color: var(--tx-on);
 }
 
 .ribbon {
@@ -319,7 +319,7 @@
   padding: 11px 22px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #fff;
+  color: var(--tx-on);
   cursor: pointer;
   background: var(--grad-button);
   transition: filter 0.16s;

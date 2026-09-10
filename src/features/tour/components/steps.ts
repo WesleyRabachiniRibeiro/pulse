@@ -5,7 +5,7 @@ export interface Passo {
   titulo: string
   texto: string
   tela?: Screen
-  esperar?: 'ajustes' | 'grade'
+  esperar?: 'settings' | 'grid'
 }
 
 export const PASSOS: readonly Passo[] = [
@@ -14,7 +14,7 @@ export const PASSOS: readonly Passo[] = [
     alvo: '[data-tour="home"]',
     titulo: 'Esta é a tela inicial',
     texto:
-      'O Pulse instala vários programas de uma vez, em sequência, sem você clicar em cada instalador. Daqui saem quatro etapas, e este passo a passo percorre todas elas. Dá para sair a qualquer momento pelo "pular".',
+      'O Pulse instala vários programas de uma vez, em sequência, sem você clicar em cada instalador. Daqui saem quatro etapas, e este step a step percorre todas elas. Dá para sair a qualquer momento pelo "pular".',
   },
   {
     tela: 'check',
@@ -50,7 +50,7 @@ export const PASSOS: readonly Passo[] = [
     titulo: 'Agora clique neste botão',
     texto:
       'A Steam é o programa com mais opções do catálogo, então serve de exemplo. Abra os ajustes dela para eu te mostrar o que dá para customizar. Eu continuo lá dentro.',
-    esperar: 'ajustes',
+    esperar: 'settings',
   },
   {
     alvo: '[data-tour="aj-excecoes"]',
@@ -68,8 +68,8 @@ export const PASSOS: readonly Passo[] = [
     alvo: '[data-tour="aj-voltar"]',
     titulo: 'Volte para a seleção',
     texto:
-      'O que você marcou fica guardado no cartão do programa e aparece resumido embaixo do nome dele. Clique aqui para voltar que o passo a passo continua.',
-    esperar: 'grade',
+      'O que você marcou fica guardado no cartão do programa e aparece resumido embaixo do nome dele. Clique aqui para voltar que o step a step continua.',
+    esperar: 'grid',
   },
   {
     tela: 'select',
@@ -83,7 +83,7 @@ export const PASSOS: readonly Passo[] = [
     alvo: '[data-tour="config"]',
     titulo: 'Onde mora o padrão de todos',
     texto:
-      'Disco, idioma, para quem instalar, atalho na área de trabalho e abrir com o Windows: define uma vez aqui e vale para o catálogo inteiro. Os interruptores do próprio Windows também ficam nesta tela, e esses entram na hora, sem passar pela fila.',
+      'Disco, idioma, para quem instalar, atalho na área de trabalho e openTour com o Windows: define uma vez aqui e vale para o catálogo inteiro. Os interruptores do próprio Windows também ficam nesta tela, e esses entram na hora, sem passar pela fila.',
   },
   {
     tela: 'run',
@@ -116,6 +116,6 @@ export const PASSOS: readonly Passo[] = [
     alvo: '[data-tour="ajuda"]',
     titulo: 'Chegamos ao fim',
     texto:
-      'Este passo a passo abre sozinho na primeira vez. Depois, é por aqui, e ele percorre tudo de novo do começo. O disco escolhido fica guardado; a conta do Git não, ela é lida da sua máquina toda vez que você abre os ajustes.',
+      'Este step a step abre sozinho na primeira vez. Depois, é por aqui, e ele percorre tudo de novo do começo. O disco escolhido fica guardado; a conta do Git não, ela é lida da sua máquina toda vez que você abre os ajustes.',
   },
 ]

@@ -31,7 +31,7 @@ import { Installation, useRun, useWatchInstallation } from '@/features/installat
 import { Summary } from '@/features/summary'
 import { Splash } from '@/features/splash'
 import { UpdatePill, useWatchUpdate } from '@/features/updates'
-import { Tour, useAbrirNaPrimeiraVez, useTourStore } from '@/features/tour'
+import { Tour, useOpenOnFirstRun, useTourStore } from '@/features/tour'
 import {
   savePreference,
   useDefaults,
@@ -50,44 +50,44 @@ export function App() {
   useWatchCatalog()
   useWatchPreflight()
   useWatchUpdate()
-  const carregado = usePreferencesLoaded()
+  const loaded = usePreferencesLoaded()
   const prefs = usePreferences()
-  const verificado = usePreflightSettled()
-  const [aberturaTerminou, setAberturaTerminou] = useState(false)
+  const checked = usePreflightSettled()
+  const [splashDone, setSplashDone] = useState(false)
 
   useEffect(() => {
-    if (carregado) startPreflight(prefs.drive ?? undefined)
-  }, [carregado, prefs.drive])
+    if (loaded) startPreflight(prefs.drive ?? undefined)
+  }, [loaded, prefs.drive])
 
   return (
     <>
-      {carregado ? <Shell driveSalvo={prefs.drive ?? null} /> : <div className={s.page} />}
-      {!aberturaTerminou && (
-        <Splash liberado={carregado && verificado} onDone={() => setAberturaTerminou(true)} />
+      {loaded ? <Shell savedDrive={prefs.drive ?? null} /> : <div className={s.page} />}
+      {!splashDone && (
+        <Splash ready={loaded && checked} onDone={() => setSplashDone(true)} />
       )}
     </>
   )
 }
 
-function Shell({ driveSalvo }: { driveSalvo: string | null }) {
+function Shell({ savedDrive }: { savedDrive: string | null }) {
   const [screen, setScreen] = useState<Screen>('home')
   const [blocking, setBlocking] = useState(false)
-  const [drive, setDrive] = useState<string | null>(driveSalvo)
+  const [drive, setDrive] = useState<string | null>(savedDrive)
   const selected = useSelection((st) => st.selected)
   const settingsByApp = useSelection((st) => st.settings)
   const defaults = useDefaults()
-  const driveVerificado = usePreflightDrive()
+  const checkedDrive = usePreflightDrive()
   const updates = useUpdateCount()
 
   useWatchInstallation()
   const run = useRun()
 
-  const passouDaVerificacao = screen !== 'home' && screen !== 'check'
+  const pastCheck = screen !== 'home' && screen !== 'check'
 
-  useWatchInstalled(run?.finishedAt ?? null, passouDaVerificacao)
-  useWatchAutostart(run?.finishedAt ?? null, passouDaVerificacao)
+  useWatchInstalled(run?.finishedAt ?? null, pastCheck)
+  useWatchAutostart(run?.finishedAt ?? null, pastCheck)
   useWatchInventory(run?.finishedAt ?? null, screen !== 'check')
-  useAbrirNaPrimeiraVez()
+  useOpenOnFirstRun()
 
   const totalMb = totalSizeMb(selected)
   const size = selected.size === 0 ? 'nada escolhido ainda' : `${formatMb(totalMb)} para baixar`
@@ -102,25 +102,25 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
   ]
 
   useEffect(() => {
-    if (driveVerificado !== undefined) setDrive(driveVerificado)
-  }, [driveVerificado])
+    if (checkedDrive !== undefined) setDrive(checkedDrive)
+  }, [checkedDrive])
 
   useEffect(() => {
     if (!drive && screen === 'select') setScreen('check')
   }, [drive, screen])
 
   useEffect(() => {
-    if (drive && drive !== driveSalvo) void savePreference({ drive })
-  }, [drive, driveSalvo])
+    if (drive && drive !== savedDrive) void savePreference({ drive })
+  }, [drive, savedDrive])
 
-  const telaAlvo = useTourStore((t) => t.telaAlvo)
-  const disponiveis = available.join(',')
+  const targetScreen = useTourStore((t) => t.targetScreen)
+  const reachable = available.join(',')
 
   useEffect(() => {
-    if (telaAlvo === null) return
-    if (telaAlvo === 'home' || disponiveis.split(',').includes(telaAlvo)) setScreen(telaAlvo)
-    useTourStore.getState().pedirTela(null)
-  }, [telaAlvo, disponiveis])
+    if (targetScreen === null) return
+    if (targetScreen === 'home' || reachable.split(',').includes(targetScreen)) setScreen(targetScreen)
+    useTourStore.getState().askScreen(null)
+  }, [targetScreen, reachable])
 
   return (
     <div className={s.page}>
@@ -128,7 +128,7 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
         <TitleBar
           version={VERSION}
           onHome={() => setScreen('home')}
-          onHelp={() => useTourStore.getState().abrir()}
+          onHelp={() => useTourStore.getState().openTour()}
           slot={<UpdatePill />}
         />
 

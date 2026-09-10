@@ -60,8 +60,8 @@ export function registerInstallation(): void {
   register('installation:grant', (input) => grantPermission(input.id))
   register('installation:uninstall', async (input) => {
     const parental = await readParental().catch(() => null)
-    const trancado = parental ? parental.on && Boolean(parental.secret) : false
-    if (trancado && !isGranted(input.id)) {
+    const locked = parental ? parental.on && Boolean(parental.secret) : false
+    if (locked && !isGranted(input.id)) {
       return { ok: false, verified: false, refused: 'needs-pin' as const }
     }
     return uninstall(input.id)

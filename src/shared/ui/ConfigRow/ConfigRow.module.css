@@ -63,7 +63,7 @@
 
 .choice:hover:not(:disabled):not([aria-pressed='true']) {
   color: var(--tx-2);
-  border-color: #4a3382;
+  border-color: var(--border-hover);
 }
 
 .choice[aria-pressed='true'] {

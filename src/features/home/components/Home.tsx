@@ -15,7 +15,7 @@ export function Home({ onStart, onManage }: Props) {
   const lido = useInventoryLoaded()
 
   const linhaGerenciar = !lido
-    ? 'atualizar, abrir e remover o que já está aqui'
+    ? 'atualizar, openTour e remover o que já está aqui'
     : updates === 0
       ? 'tudo em dia por aqui'
       : `${updates} ${updates === 1 ? 'atualização esperando' : 'atualizações esperando'}`
@@ -51,7 +51,7 @@ export function Home({ onStart, onManage }: Props) {
         <button
           type="button"
           className={s.link}
-          onClick={() => useTourStore.getState().abrir()}
+          onClick={() => useTourStore.getState().openTour()}
         >
           Ver como funciona
         </button>

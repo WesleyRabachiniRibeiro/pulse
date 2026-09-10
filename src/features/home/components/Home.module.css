@@ -57,7 +57,7 @@
 
 .primary {
   border: 0;
-  color: #fff;
+  color: var(--tx-on);
   background: var(--grad-button);
   box-shadow: 0 14px 34px -18px #7e22ce;
   transition: filter 0.16s;
@@ -75,7 +75,7 @@
 }
 
 .secondary:hover {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
 }
 
 .tag {

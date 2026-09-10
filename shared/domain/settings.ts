@@ -38,8 +38,6 @@ export {
   type Steps,
 } from './steps'
 
-export { DEFAULT_GIT, gitSchema, type GitConfig } from './git'
-
 const LIFTED: Readonly<Record<string, string>> = {
   extensions: 'vscodeExtensions',
   editorTweaks: 'editorTweaks',

@@ -63,11 +63,11 @@ export function ProgramExceptions({
 }: Props) {
   const [open, setOpen] = useState(false)
 
-  const escapando = DEFAULT_KEYS.filter(
+  const straySet = DEFAULT_KEYS.filter(
     (key) => settings[key] !== undefined && settings[key] !== defaults[key],
   )
   const driveEscapando = chosenDrive !== null && chosenDrive !== generalDrive
-  const total = escapando.length + (driveEscapando ? 1 : 0)
+  const total = straySet.length + (driveEscapando ? 1 : 0)
 
   function pick(key: DefaultKey, picked: string): void {
     const next: Settings = { ...settings }
@@ -113,18 +113,18 @@ export function ProgramExceptions({
           />
 
           {DEFAULT_KEYS.map((key) => {
-            const fugindo = escapando.includes(key)
+            const straying = straySet.includes(key)
             const chosen = settings[key] ?? defaults[key]
             return (
               <ConfigRow
                 key={key}
                 name={NAME[key]}
                 tag={
-                  fugindo
+                  straying
                     ? 'EXCEÇÃO DESTE PROGRAMA'
                     : `PADRÃO: ${defaultLabel(key, defaults).toUpperCase()}`
                 }
-                exception={fugindo}
+                exception={straying}
                 choices={CHOICES[key]}
                 chosen={chosen === undefined ? KEEP : String(chosen)}
                 onPick={(picked) => pick(key, picked)}

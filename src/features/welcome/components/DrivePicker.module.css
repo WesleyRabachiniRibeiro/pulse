@@ -32,7 +32,7 @@
 }
 
 .drive:hover:not(:disabled) {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
 }
 
 .drive[aria-pressed='true'] {

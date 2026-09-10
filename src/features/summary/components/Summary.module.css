@@ -207,7 +207,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--tx-on);
   cursor: pointer;
   background: var(--grad-button);
   transition: filter 0.16s;
@@ -230,7 +230,7 @@
 }
 
 .secondary:hover {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
   color: var(--tx);
 }
 

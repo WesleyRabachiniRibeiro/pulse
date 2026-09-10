@@ -10,6 +10,8 @@
   --border-card: #282141;
   --border-field: #2e2748;
   --border-wire: #251f38;
+  --border-hover: #4a3382;
+  --border-soft: #3b3360;
 
   --tx: #edeaf8;
   --tx-2: #aba3c6;
@@ -17,6 +19,7 @@
   --tx-4: #8f87b0;
   --tx-5: #8078a3;
   --tx-6: #5a5280;
+  --tx-on: #fff;
 
   --grad-a: #a855f7;
   --grad-b: #3b82f6;

@@ -364,7 +364,7 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
   const [open, setOpen] = useState(false)
   const [asking, setAsking] = useState(false)
   const mine = useMine()
-  const trancado = useLockedNow()
+  const locked = useLockedNow()
   const program = node.programId ? getProgram(node.programId) : undefined
   const canOpen = useCanOpen(node.programId ?? '')
   const opening = useOpening(node.programId ?? '')
@@ -437,7 +437,7 @@ function InstalledRow({ node, picked, onPick }: RowProps) {
               className={shell.action}
               data-tone="danger"
               disabled={removing}
-              onClick={() => (trancado ? setAsking(true) : void uninstallProgram(program.id))}
+              onClick={() => (locked ? setAsking(true) : void uninstallProgram(program.id))}
             >
               {removing ? 'TIRANDO…' : 'DESINSTALAR'}
             </button>

@@ -28,10 +28,10 @@ export function ConfigRow({
   exceptions = [],
   onPick,
 }: Props) {
-  const fugindo = exceptions.length
+  const straying = exceptions.length
 
   return (
-    <div className={s.row} data-exception={exception === true || fugindo > 0}>
+    <div className={s.row} data-exception={exception === true || straying > 0}>
       <div className={s.rowTop}>
         <div className={s.rowText}>
           <span className={s.rowName}>{name}</span>
@@ -59,10 +59,10 @@ export function ConfigRow({
         </div>
       </div>
 
-      {fugindo > 0 && (
+      {straying > 0 && (
         <div className={s.exception}>
           <span className={s.exceptionTag}>
-            {fugindo} {fugindo === 1 ? 'EXCEÇÃO' : 'EXCEÇÕES'}
+            {straying} {straying === 1 ? 'EXCEÇÃO' : 'EXCEÇÕES'}
           </span>
           <span className={s.exceptionList}>{exceptions.join(', ')}</span>
         </div>

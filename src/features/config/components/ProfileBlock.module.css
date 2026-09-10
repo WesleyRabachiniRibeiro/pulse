@@ -96,7 +96,7 @@
 }
 
 .pick:hover:not([aria-pressed='true']) {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
 }
 
 .pick[aria-pressed='true'] {
@@ -160,14 +160,14 @@
 }
 
 .mode:hover:not([aria-pressed='true']) {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
   color: var(--tx);
 }
 
 .mode[aria-pressed='true'] {
   border-color: transparent;
   background: var(--grad-button);
-  color: #fff;
+  color: var(--tx-on);
   font-weight: 600;
 }
 
@@ -179,7 +179,7 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: var(--tx-on);
   cursor: pointer;
   background: var(--grad-button);
   transition: filter 0.16s;

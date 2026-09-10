@@ -107,7 +107,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--tx-on);
   cursor: pointer;
   background: var(--grad-button);
   box-shadow: 0 10px 26px -14px #7e22ce;

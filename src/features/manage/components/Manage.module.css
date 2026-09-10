@@ -269,7 +269,7 @@
 }
 
 .item[data-picked='true'] {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
   background: color-mix(in srgb, var(--grad-a) 6%, var(--bg-card));
 }
 

@@ -10,7 +10,7 @@
 .card[data-status='downloading'],
 .card[data-status='installing'],
 .card[data-status='configuring'] {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
 }
 
 .card[data-status='configuring'] .tag {

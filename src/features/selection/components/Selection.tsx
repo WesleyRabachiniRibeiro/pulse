@@ -93,7 +93,7 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
   useWatchDrives()
 
   useEffect(() => {
-    useTourStore.getState().definirContexto(inSettings ? 'ajustes' : 'grade')
+    useTourStore.getState().setContext(inSettings ? 'settings' : 'grid')
   }, [inSettings])
 
   const searching = search.trim().length > 0
@@ -346,7 +346,7 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
                 </p>
                 <p className={s.awayText}>
                   {phase === 'looking'
-                    ? 'O Pulse baixa o catálogo ao abrir. Leva um instante.'
+                    ? 'O Pulse baixa o catálogo ao openTour. Leva um instante.'
                     : 'Verifique sua conexão com a internet. A lista de programas vem de lá, e sem ela o Pulse não sabe o que oferecer.'}
                 </p>
                 {phase !== 'looking' && (
@@ -445,7 +445,7 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
       {freeing && (
         <PinDialog
           purpose="install"
-          extra={`${nameOf(freeing)} está na lista de bloqueados. Com o seu PIN ele libera até o Pulse fechar.`}
+          extra={`${nameOf(freeing)} está na lista de bloqueados. Com o seu PIN ele libera até o Pulse closeTour.`}
           onDone={freeOnce}
           onClose={() => setFreeing(null)}
         />

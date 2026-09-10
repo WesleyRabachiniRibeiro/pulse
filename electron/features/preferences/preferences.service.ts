@@ -27,16 +27,16 @@ export async function readPreferences(): Promise<Preferences> {
   return cache
 }
 
-export async function writePreferences(mudanca: Preferences): Promise<Preferences> {
+export async function writePreferences(change: Preferences): Promise<Preferences> {
   const atual = await readPreferences()
-  const proximo = preferencesSchema.parse({ ...atual, ...mudanca })
-  cache = proximo
+  const next = preferencesSchema.parse({ ...atual, ...change })
+  cache = next
 
   try {
-    const caminho = arquivo()
-    await mkdir(dirname(caminho), { recursive: true })
-    await writeFile(caminho, JSON.stringify(proximo, null, 2), 'utf8')
+    const path = arquivo()
+    await mkdir(dirname(path), { recursive: true })
+    await writeFile(path, JSON.stringify(next, null, 2), 'utf8')
   } catch {}
 
-  return proximo
+  return next
 }

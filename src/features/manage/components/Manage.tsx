@@ -44,9 +44,9 @@ export function Manage({ onGoToInstallation }: Props) {
   useWatchStartup(true)
   useWatchOpenable(loaded)
 
-  const atualizaveis = inventory.upgrades.filter((u) => u.programId !== undefined)
+  const updatable = inventory.upgrades.filter((u) => u.programId !== undefined)
 
-  async function enfileirar(ids: readonly string[]): Promise<void> {
+  async function enqueue(ids: readonly string[]): Promise<void> {
     const drive = prefs.drive ?? 'C:'
     const requests = ids.map((id) => ({ id, drive }))
     if (requests.length === 0) return
@@ -88,13 +88,13 @@ export function Manage({ onGoToInstallation }: Props) {
 
         <span className={s.spacer} />
 
-        {tab === 'updates' && atualizaveis.length > 0 && (
+        {tab === 'updates' && updatable.length > 0 && (
           <button
             type="button"
             className={s.headline}
-            onClick={() => void enfileirar(atualizaveis.map((u) => u.programId as string))}
+            onClick={() => void enqueue(updatable.map((u) => u.programId as string))}
           >
-            ATUALIZAR OS {atualizaveis.length} DO CATÁLOGO
+            ATUALIZAR OS {updatable.length} DO CATÁLOGO
           </button>
         )}
 
@@ -112,10 +112,10 @@ export function Manage({ onGoToInstallation }: Props) {
 
       <div className={s.list}>
         {tab === 'installed' && (
-          <Installed loaded={loaded} onQueue={(ids) => void enfileirar(ids)} />
+          <Installed loaded={loaded} onQueue={(ids) => void enqueue(ids)} />
         )}
         {tab === 'updates' && (
-          <Updates loaded={loaded} onUpdate={(id) => void enfileirar([id])} />
+          <Updates loaded={loaded} onUpdate={(id) => void enqueue([id])} />
         )}
         {tab === 'startup' && <Startup entries={startup} loaded={startupLoaded} />}
         {tab === 'history' && <History />}

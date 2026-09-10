@@ -153,7 +153,7 @@ button.disclosure:hover {
 }
 
 .batch[data-on='true'] {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
   background: color-mix(in srgb, var(--grad-a) 8%, var(--bg-card));
 }
 
@@ -177,9 +177,9 @@ button.disclosure:hover {
   width: 18px;
   height: 18px;
   border-radius: 5px;
-  border: 1px solid #3b3360;
+  border: 1px solid var(--border-soft);
   background: transparent;
-  color: #fff;
+  color: var(--tx-on);
   font-size: 10px;
   line-height: 1;
   display: flex;
@@ -216,7 +216,7 @@ button.disclosure:hover {
 
 .icon:hover:not(:disabled) {
   color: var(--tx);
-  border-color: #4a3382;
+  border-color: var(--border-hover);
 }
 
 .icon:disabled {

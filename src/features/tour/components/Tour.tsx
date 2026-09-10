@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { useTour } from '../store/useTour'
-import { PASSOS } from './passos'
+import { PASSOS } from './steps'
 import s from './Tour.module.css'
 
 interface Caixa {
@@ -46,19 +46,19 @@ function posicionar(caixa: Caixa | null): { top: number; left: number } {
 }
 
 export function Tour() {
-  const { aberto, passo, contexto, fechar, ir, pedirTela } = useTour()
+  const { open, step, context, closeTour, goTo, askScreen } = useTour()
   const [caixa, setCaixa] = useState<Caixa | null>(null)
 
-  const atual = PASSOS[passo] ?? PASSOS[0]!
-  const ultimo = passo === PASSOS.length - 1
+  const atual = PASSOS[step] ?? PASSOS[0]!
+  const ultimo = step === PASSOS.length - 1
 
   useEffect(() => {
-    if (!aberto || !atual.tela) return
-    pedirTela(atual.tela)
-  }, [aberto, atual, pedirTela])
+    if (!open || !atual.tela) return
+    askScreen(atual.tela)
+  }, [open, atual, askScreen])
 
   useLayoutEffect(() => {
-    if (!aberto) return
+    if (!open) return
     let cancelado = false
     const relogios: number[] = []
 
@@ -85,26 +85,26 @@ export function Tour() {
       for (const r of relogios) clearTimeout(r)
       window.removeEventListener('resize', atualizar)
     }
-  }, [aberto, atual])
+  }, [open, atual])
 
   useEffect(() => {
-    if (!aberto || !atual.esperar || atual.esperar !== contexto) return
-    const t = setTimeout(() => ir(passo + 1), 260)
+    if (!open || !atual.esperar || atual.esperar !== context) return
+    const t = setTimeout(() => goTo(step + 1), 260)
     return () => clearTimeout(t)
-  }, [aberto, atual, contexto, passo, ir])
+  }, [open, atual, context, step, goTo])
 
   useEffect(() => {
-    if (!aberto) return
+    if (!open) return
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') fechar()
-      if (e.key === 'ArrowRight') ir(Math.min(PASSOS.length - 1, passo + 1))
-      if (e.key === 'ArrowLeft') ir(Math.max(0, passo - 1))
+      if (e.key === 'Escape') closeTour()
+      if (e.key === 'ArrowRight') goTo(Math.min(PASSOS.length - 1, step + 1))
+      if (e.key === 'ArrowLeft') goTo(Math.max(0, step - 1))
     }
     window.addEventListener('keydown', tecla)
     return () => window.removeEventListener('keydown', tecla)
-  }, [aberto, passo, fechar, ir])
+  }, [open, step, closeTour, goTo])
 
-  if (!aberto) return null
+  if (!open) return null
 
   const cartao = posicionar(caixa)
 
@@ -121,7 +121,7 @@ export function Tour() {
 
       <div className={s.cartao} style={{ top: cartao.top, left: cartao.left }}>
         <div className={s.contador}>
-          {passo + 1} DE {PASSOS.length}
+          {step + 1} DE {PASSOS.length}
         </div>
         <h2 className={s.titulo}>{atual.titulo}</h2>
         <p className={s.texto}>{atual.texto}</p>
@@ -132,20 +132,20 @@ export function Tour() {
               key={p.titulo}
               type="button"
               className={s.ponto}
-              data-atual={i === passo}
-              aria-label={`Ir para o passo ${i + 1}`}
-              onClick={() => ir(i)}
+              data-atual={i === step}
+              aria-label={`Ir para o step ${i + 1}`}
+              onClick={() => goTo(i)}
             />
           ))}
         </div>
 
         <div className={s.acoes}>
-          <button type="button" className={s.pular} onClick={fechar}>
-            {ultimo ? 'fechar' : 'pular'}
+          <button type="button" className={s.pular} onClick={closeTour}>
+            {ultimo ? 'closeTour' : 'pular'}
           </button>
 
-          {passo > 0 && (
-            <button type="button" className={s.voltar} onClick={() => ir(passo - 1)}>
+          {step > 0 && (
+            <button type="button" className={s.voltar} onClick={() => goTo(step - 1)}>
               Voltar
             </button>
           )}
@@ -154,7 +154,7 @@ export function Tour() {
             <button
               type="button"
               className={s.seguir}
-              onClick={() => (ultimo ? fechar() : ir(passo + 1))}
+              onClick={() => (ultimo ? closeTour() : goTo(step + 1))}
             >
               {ultimo ? 'Entendi' : 'Próximo'}
             </button>

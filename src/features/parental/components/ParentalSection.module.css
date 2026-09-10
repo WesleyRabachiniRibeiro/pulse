@@ -122,7 +122,7 @@
 }
 
 .action {
-  border: 1px solid #4a3382;
+  border: 1px solid var(--border-hover);
   background: transparent;
   color: var(--grad-txt-a);
 }
@@ -150,7 +150,7 @@
 }
 
 .quiet:hover {
-  border-color: #4a3382;
+  border-color: var(--border-hover);
   color: var(--tx);
 }
 
@@ -159,7 +159,7 @@
   align-items: center;
   gap: 7px;
   border: 0;
-  color: #fff;
+  color: var(--tx-on);
   background: var(--grad-button);
 }
 
