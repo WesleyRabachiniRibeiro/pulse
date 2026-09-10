@@ -3,9 +3,8 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { getProgram, type Program } from '@shared/domain/catalog'
-import { RIOT_BY_ID, TIBIA_BY_ID, type Settings } from '@shared/domain/settings'
+import type { Settings } from '@shared/domain/settings'
 import { forgetCatalog, isInstalled, quietUninstallCommands } from '../catalog'
-import { isSignedIn } from '../steam'
 import { makeDefault, openOnce } from '../browsers'
 import { listDrives } from '../preflight'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
@@ -21,28 +20,13 @@ import {
   refusedDrive,
   scopeLabel,
 } from '@shared/domain/winget'
-import { gitConfigPairs, gitIsEmpty } from '@shared/domain/git'
-import { installArgsFor, knownPackages, runtimeToolsFor } from '@shared/domain/runtime'
-import {
-  forgetPath,
-  locateGit,
-  locateNpm,
-  locatePython,
-  locateVsCode,
-  runCommandLine,
-  runTool,
-} from '../toolchain'
-import { stdoutOr, withParams } from '@main/core/powershell'
-import setAutostartScript from './infrastructure/powershell/SetProgramAutostart.ps1?raw'
+import { forgetPath, runCommandLine } from '../toolchain'
+import { runSteps } from './steps'
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import { rememberRun } from './history.service'
 import { isGranted, readParental } from '../parental'
 import { blockedAmong } from '@shared/domain/parental'
-import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
-import { applyEditorTweaks, type EditorResult } from './editor'
-import { requestSteamGame, runCommand, waitForSteamSignIn } from './steam.gate'
-import { ensureSshKey, type SshOutcome, type SshResult } from './ssh'
 import {
   canEnqueue,
   clock,
@@ -180,32 +164,15 @@ async function runWinget(
   })
 }
 
-
-const SCRIPT_LIMIT_MS = 25_000
 const PERMISSION_WAIT_MS = 15 * 60_000
-
-export type AutostartResult = 'on' | 'off' | 'no-entry'
-
-async function setAutostart(program: Program, on: boolean): Promise<AutostartResult> {
-  const hints = program.hints.map((hint) => hint.toLowerCase())
-  const script = withParams(setAutostartScript, { Hints: hints, TurnOn: on })
-  const output = await stdoutOr('', script, { timeoutMs: SCRIPT_LIMIT_MS })
-
-  if (output.includes('no-entry')) return 'no-entry'
-  if (output.includes('on')) return 'on'
-  if (output.includes('off')) return 'off'
-  return 'no-entry'
-}
 
 async function applyExtras(target: Item, program: Program): Promise<void> {
   const settings = target.settings
   if (!settings) return
 
-  const steps = settings.steps ?? {}
-  const extensions = steps.vscodeExtensions ?? []
   const result: NonNullable<Item['result']> = {
     extensions: 0,
-    extensionsRequested: extensions.length,
+    extensionsRequested: (settings.steps?.vscodeExtensions ?? []).length,
     git: false,
     gamesAccepted: [],
     gamesRefused: [],
@@ -220,288 +187,45 @@ async function applyExtras(target: Item, program: Program): Promise<void> {
   target.detail = 'Aplicando os seus ajustes'
   emitState()
 
-  if (extensions.length > 0) {
-    const code = await locateVsCode()
-
-    if (!code) {
-      note(
-        `${program.name}: não encontrei o comando do VS Code, as extensões ficaram de fora`,
-        'error',
-      )
-    } else {
-      let done = 0
-      for (const extension of extensions) {
-        target.detail = `Instalando extensões (${done + 1}/${extensions.length})`
-        emitState()
-        const ok = await runTool(code, ['--install-extension', extension, '--force'])
-        if (ok) {
-          done++
-          result.extensions = done
-        } else {
-          note(`${program.name}: não deu para instalar a extensão ${extension}`, 'error')
-        }
-      }
-      note(`${program.name}: ${done} de ${extensions.length} extensões instaladas`, 'ok')
-    }
-  }
-
-  const wanted = knownPackages(program.id, steps.runtimePackages ?? [])
-  const tools = runtimeToolsFor(program.id)
-  if (wanted.length > 0 && tools) {
-    target.detail = `Instalando ${wanted.length} ${wanted.length === 1 ? 'ferramenta' : 'ferramentas'}`
-    emitState()
-
-    const exe = tools.runner === 'npm' ? await locateNpm() : await locatePython()
-
-    if (!exe) {
-      result.packagesFailed = wanted
-      note(
-        `${program.name}: não achei o ${tools.runner === 'npm' ? 'npm' : 'python'}, as ferramentas ficaram para depois`,
-        'error',
-      )
-    } else {
-      const ok = await runTool(exe, installArgsFor(tools.runner, wanted))
-      if (ok) {
-        result.packagesInstalled = wanted
-        note(`${program.name}: ${wanted.join(', ')} instalados`, 'ok')
-      } else {
-        result.packagesFailed = wanted
-        note(`${program.name}: não deu para instalar ${wanted.join(', ')}`, 'error')
-      }
-    }
-    emitState()
-  }
-
-  const editorTweaks = steps.editorTweaks ?? []
-  if (editorTweaks.length > 0) {
-    target.detail = 'Gravando os ajustes do editor'
-    emitState()
-
-    const written = await applyEditorTweaks(program.id, editorTweaks).catch(
-      (): EditorResult => 'failed',
-    )
-    result.editor = written
-    emitState()
-
-    const said: Record<EditorResult, string> = {
-      written: `${program.name}: ${editorTweaks.length} ajustes gravados no settings.json`,
-      nothing: `${program.name}: nenhum ajuste do editor para gravar`,
-      unreadable: `${program.name}: o settings.json tem comentário ou está fora do formato, deixei como estava`,
-      failed: `${program.name}: não deu para gravar o settings.json`,
-    }
-    note(said[written], written === 'written' ? 'ok' : 'error')
-  }
-
-  const git = steps.gitConfig
-  if (git && !gitIsEmpty(git)) {
-    target.detail = 'Configurando o Git'
-    emitState()
-
-    const gitExe = await locateGit()
-    if (!gitExe) {
-      note(`${program.name}: não encontrei o git, a configuração ficou para depois`, 'error')
-    } else {
-      for (const [key, value] of gitConfigPairs(git)) {
-        const ok = await runTool(gitExe, ['config', '--global', key, value])
-        if (!ok) {
-          note(`${program.name}: falhou ao gravar ${key}`, 'error')
-          continue
-        }
-        if (key === 'credential.helper') result.gitLogin = true
-        else result.git = true
-      }
-
-      if (git.saveLogin) {
-        note(
-          result.gitLogin
-            ? `${program.name}: o Windows vai guardar o login do GitHub`
-            : `${program.name}: falhou ao ligar o gerenciador de credenciais`,
-          result.gitLogin ? 'ok' : 'error',
-        )
-      }
-
-      emitState()
-      note(`${program.name}: Git configurado`, 'ok')
-    }
-  }
-
-  if (git?.sshKey) {
-    target.detail = 'Cuidando da chave SSH'
-    emitState()
-
-    const outcome = await ensureSshKey(git.email).catch(
-      (): SshOutcome => ({ result: 'failed', publicKey: null }),
-    )
-    result.sshKey = outcome.result
-    emitState()
-
-    if (outcome.publicKey) {
-      clipboard.writeText(outcome.publicKey)
-      result.sshCopied = true
-    }
-
-    const said: Record<SshResult, string> = {
-      created: `${program.name}: chave SSH criada, a parte pública já está na área de transferência`,
-      existed: `${program.name}: você já tinha uma chave SSH, não criei outra`,
-      'no-tool': `${program.name}: não achei o ssh-keygen para criar a chave`,
-      failed: `${program.name}: não deu para criar a chave SSH`,
-    }
-    note(said[outcome.result], outcome.result === 'created' ? 'ok' : 'info')
-  }
-
-  if (settings.desktopShortcut !== undefined) {
-    target.detail = settings.desktopShortcut
-      ? 'Criando o atalho na área de trabalho'
-      : 'Tirando o atalho da área de trabalho'
-    emitState()
-
-    const shortcut = await applyDesktopShortcut(program, settings.desktopShortcut).catch(
-      (): ShortcutResult => 'failed',
-    )
-    result.shortcut = shortcut
-    emitState()
-
-    const said: Record<ShortcutResult, string> = {
-      created: `${program.name}: atalho criado na área de trabalho`,
-      removed: `${program.name}: atalho tirado da área de trabalho`,
-      kept: `${program.name}: a área de trabalho já estava como você queria`,
-      'not-found': `${program.name}: não achei atalho dele no menu Iniciar para copiar`,
-      failed: `${program.name}: não deu para mexer no atalho`,
-    }
-    note(said[shortcut], shortcut === 'failed' || shortcut === 'not-found' ? 'error' : 'ok')
-  }
-
-  if (settings.autostart !== undefined) {
-    target.detail = settings.autostart
-      ? 'Deixando abrir com o Windows'
-      : 'Tirando da inicialização do Windows'
-    emitState()
-
-    const effect = await setAutostart(program, settings.autostart)
-    result.autostart = effect
-    emitState()
-    note(
-      effect === 'no-entry'
-        ? `${program.name}: não se cadastra para abrir sozinho, nada a mudar`
-        : effect === 'on'
-          ? `${program.name}: passa a abrir com o Windows`
-          : `${program.name}: não abre mais sozinho`,
-      effect === 'no-entry' ? 'info' : 'ok',
-    )
-  }
-
-  const games = steps.steamGames ?? []
-  if (games.length > 0) {
-    let signedIn = await isSignedIn()
-
-    if (!signedIn) {
-      target.status = 'waiting'
-      target.detail = 'Entre na sua conta Steam para baixar os jogos'
-      emitState()
-      note('Steam: esperando você entrar na conta', 'step')
-      signedIn = await waitForSteamSignIn()
-    }
-
-    if (!signedIn) {
-      for (const game of games) result.gamesPending.push(game.name)
-      note('Steam: ninguém entrou na conta, os jogos ficaram para depois', 'error')
-    } else {
-      for (const [index, game] of games.entries()) {
-        const position = games.length > 1 ? ` (${index + 1}/${games.length})` : ''
-        target.status = 'waiting'
-        target.detail = `Confirme "${game.name}" na janela da Steam${position}`
-        emitState()
-        note(`Steam: esperando você decidir sobre ${game.name}`, 'step')
-
-        const answer = await requestSteamGame(game.appid)
-
-        if (answer === 'confirmed') {
-          result.gamesAccepted.push(game.name)
-          note(`Steam: ${game.name} confirmado, download na fila da Steam`, 'ok')
-        } else if (answer === 'refused') {
-          result.gamesRefused.push(game.name)
-          note(`Steam: ${game.name} recusado por você`, 'info')
-        } else {
-          result.gamesPending.push(game.name)
-          note(`Steam: ${game.name} ficou sem resposta e foi deixado para depois`, 'error')
-        }
-      }
-    }
-
-    target.status = 'configuring'
-    target.detail = 'Terminando'
-    emitState()
-    note(`${program.name}: ${result.gamesAccepted.length} de ${games.length} jogos aceitos`, 'ok')
-  }
-
-  const pages = steps.tibiaPages ?? []
-  if (pages.length > 0) {
-    target.status = 'configuring'
-    emitState()
-
-    for (const [index, id] of pages.entries()) {
-      const client = TIBIA_BY_ID.get(id)
-      if (!client?.url) continue
-
-      target.detail = `Abrindo a página do ${client.name} (${index + 1}/${pages.length})`
-      emitState()
-
-      if (await runCommand('cmd', ['/c', 'start', '', client.url])) {
-        result.pagesOpened.push(client.name)
-        note(`${client.name}: página oficial aberta no navegador`, 'ok')
-      } else {
-        note(`${client.name}: não deu para abrir a página`, 'error')
-      }
-
-      await wait(1200)
-    }
-  }
-
-  const riot = steps.riotProducts ?? []
-  if (riot.length > 0) {
-    const system = (process.env['SystemDrive'] ?? 'C:').toUpperCase()
-
-    for (const [index, packageId] of riot.entries()) {
-      const name = RIOT_BY_ID.get(packageId)?.name ?? packageId
-      const position = riot.length > 1 ? ` (${index + 1}/${riot.length})` : ''
-
+  await runSteps({
+    program,
+    drive: target.drive,
+    settings,
+    say: (detail, percent) => {
       target.status = 'configuring'
-      target.percent = 0
-      target.detail = `Instalando ${name}${position}`
+      target.detail = detail
+      if (percent !== undefined) target.percent = percent
       emitState()
-      note(`${program.name}: instalando ${name}`, 'step')
-
-      const destination =
-        target.drive.toUpperCase() === system
-          ? undefined
-          : `${target.drive}\\Pulse\\${packageId}`
-
-      const output = await runWinget(
+    },
+    waitFor: (detail) => {
+      target.status = 'waiting'
+      target.detail = detail
+      emitState()
+    },
+    note,
+    progress: (percent) => {
+      target.percent = percent
+      emitState()
+    },
+    merge: (partial) => {
+      Object.assign(result, partial)
+      emitState()
+    },
+    runWinget: (packageId, destination) =>
+      runWinget(
         target.id,
         packageArgs(packageId, destination),
         (line) => {
           const current = findItem(target.id)
-          const p = readProgress(line)
-          if (current && p.percent !== undefined) {
-            current.percent = p.percent
+          const read = readProgress(line)
+          if (current && read.percent !== undefined) {
+            current.percent = read.percent
             emitState(false)
           }
         },
         target.drive,
-      )
-
-      if (output.code === 0 || alreadyInstalled(output.code, output.text)) {
-        result.riotInstalled.push(name)
-        note(`${name}: instalado`, 'ok')
-      } else {
-        result.riotFailed.push(name)
-        note(`${name}: falhou com ${hex(output.code)}`, 'error')
-      }
-    }
-
-    target.percent = 100
-    emitState()
-  }
+      ),
+  })
 }
 
 function findItem(id: string): Item | undefined {
