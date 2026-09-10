@@ -24,7 +24,7 @@ import {
 import { isElevated, runAsInteractiveUser, runnerFailure } from './asUser'
 import { adminFailure, REFUSED_BY_USER, runAsAdmin } from './asAdmin'
 import { rememberRun } from './history.service'
-import { isGranted, readParental } from '../preferences'
+import { isGranted, readParental } from '../parental'
 import { blockedAmong } from '@shared/domain/parental'
 import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
 import { applyEditorTweaks, type EditorResult } from './editor'

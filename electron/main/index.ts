@@ -2,22 +2,24 @@ import { app, BrowserWindow, nativeImage, shell } from 'electron'
 import { APP_ICON } from './icon'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { register } from '../ipc/register'
 import { registerPreflight } from '../features/preflight'
 import { registerInstallation } from '../features/installation'
 import { registerCatalog } from '../features/catalog'
 import { registerSystem } from '../features/system'
 import { registerSteam } from '../features/steam'
 import { registerPreferences } from '../features/preferences'
+import { registerParental } from '../features/parental'
+import { registerProfile } from '../features/profile'
+import { registerGit } from '../features/git'
+import { registerWindows } from '../features/windows'
+import { holdWindow, registerWindow } from '../features/window'
 import { registerUpdates } from '../features/updates'
 import { nameForWindows } from '../features/alerts'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
-let window: BrowserWindow | null = null
-
 function createWindow(): void {
-  window = new BrowserWindow({
+  const window = new BrowserWindow({
     width: 1280,
     height: 820,
     minWidth: 1040,
@@ -35,7 +37,9 @@ function createWindow(): void {
     },
   })
 
-  window.once('ready-to-show', () => window?.show())
+  holdWindow(window)
+
+  window.once('ready-to-show', () => window.show())
 
   window.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
@@ -50,26 +54,6 @@ function createWindow(): void {
   }
 }
 
-function registerWindow(): void {
-  register('window:minimize', () => {
-    window?.minimize()
-  })
-
-  register('window:toggleMaximize', () => {
-    if (!window) return false
-    if (window.isMaximized()) {
-      window.unmaximize()
-      return false
-    }
-    window.maximize()
-    return true
-  })
-
-  register('window:close', () => {
-    window?.close()
-  })
-}
-
 void app.whenReady().then(() => {
   nameForWindows()
   registerWindow()
@@ -77,8 +61,12 @@ void app.whenReady().then(() => {
   registerInstallation()
   registerCatalog()
   registerSystem()
+  registerWindows()
   registerSteam()
   registerPreferences()
+  registerParental()
+  registerProfile()
+  registerGit()
   registerUpdates()
   createWindow()
 

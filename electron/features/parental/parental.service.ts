@@ -5,7 +5,7 @@ import {
   withBlocked,
   type Parental,
 } from '@shared/domain/parental'
-import { readPreferences, writePreferences } from './preferences.service'
+import { readPreferences, writePreferences } from '../preferences'
 
 const KEY_BYTES = 32
 

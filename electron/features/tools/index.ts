@@ -9,3 +9,4 @@ export {
   runCommandLine,
   runTool,
 } from './tools.service'
+export { listVsCodeExtensions } from './vscode.service'

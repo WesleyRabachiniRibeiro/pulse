@@ -1,2 +1,2 @@
 export { registerPreferences } from './preferences.handlers'
-export { isGranted, readParental } from './parental.service'
+export { readPreferences, writePreferences } from './preferences.service'

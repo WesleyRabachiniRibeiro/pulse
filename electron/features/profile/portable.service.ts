@@ -18,8 +18,8 @@ import {
   type ImportMode,
 } from '@shared/domain/portable'
 import { readProfile, writeProfile } from './profile.service'
-import { listVsCodeExtensions } from './vscode.service'
-import { readPreferences } from './preferences.service'
+import { listVsCodeExtensions } from '../tools'
+import { readPreferences } from '../preferences'
 
 const FETCH_TIMEOUT_MS = 10_000
 
