@@ -1,16 +1,17 @@
+import type { ReactNode } from 'react'
 import { LuCircleHelp } from 'react-icons/lu'
 import { bridge } from '@/shared/lib/bridge'
-import { useTourStore } from '@/features/tour'
-import { UpdatePill } from '@/features/updates'
 import logo from '@/shared/assets/logo.png'
 import s from './TitleBar.module.css'
 
 interface Props {
   version: string
   onHome: () => void
+  onHelp: () => void
+  slot?: ReactNode
 }
 
-export function TitleBar({ version, onHome }: Props) {
+export function TitleBar({ version, onHome, onHelp, slot }: Props) {
   return (
     <div className={s.bar}>
       <button type="button" className={s.identity} onClick={onHome} title="Voltar ao início">
@@ -20,12 +21,12 @@ export function TitleBar({ version, onHome }: Props) {
       </button>
 
       <div className={s.controls}>
-        <UpdatePill />
+        {slot}
 
         <button
           className={`${s.control} ${s.ajuda}`}
           data-tour="ajuda"
-          onClick={() => useTourStore.getState().abrir()}
+          onClick={onHelp}
           aria-label="Como o Pulse funciona"
           title="Como o Pulse funciona"
         >

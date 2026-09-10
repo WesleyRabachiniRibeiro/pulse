@@ -26,7 +26,7 @@ import {
 import { Installation, useRun, useWatchInstallation } from '@/features/installation'
 import { Summary } from '@/features/summary'
 import { Splash } from '@/features/splash'
-import { useWatchUpdate } from '@/features/updates'
+import { UpdatePill, useWatchUpdate } from '@/features/updates'
 import { Tour, useAbrirNaPrimeiraVez, useTourStore } from '@/features/tour'
 import {
   savePreference,
@@ -121,7 +121,12 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
   return (
     <div className={s.page}>
       <div className={s.window}>
-        <TitleBar version={VERSION} onHome={() => setScreen('home')} />
+        <TitleBar
+          version={VERSION}
+          onHome={() => setScreen('home')}
+          onHelp={() => useTourStore.getState().abrir()}
+          slot={<UpdatePill />}
+        />
 
         <div className={s.inner}>
           <StepRail

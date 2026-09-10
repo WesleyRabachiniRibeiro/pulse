@@ -72,7 +72,7 @@ export default tseslint.config(
     rules: {
       'boundaries/no-unknown-files': 'off',
       'boundaries/element-types': [
-        'warn',
+        'error',
         {
           default: 'disallow',
           rules: [
