@@ -1,310 +1,35 @@
 import { z } from 'zod'
-import {
-  catalogStateSchema,
-  packageVersionSchema,
-  runtimeCatalogSchema,
-} from '../domain/catalog'
-import {
-  driveSchema,
-  preflightInputSchema,
-  preflightPartialSchema,
-  preflightSchema,
-} from '../domain/preflight'
-import {
-  idInputSchema,
-  requestsInputSchema,
-  runSchema,
-  startInputSchema,
-} from '../domain/installation'
-import { steamGameSchema, steamLibrarySchema, steamSearchInputSchema } from '../domain/steam'
-import { preferencesSchema } from '../domain/preferences'
-import { profileSchema } from '../domain/profile'
-import { EXPORT_FORMATS, IMPORT_MODES } from '../domain/portable'
-import { inventorySchema } from '../domain/inventory'
-import { historySchema } from '../domain/history'
-import {
-  startupEntrySchema,
-  startupInputSchema,
-  tweakInputSchema,
-  tweakStateSchema,
-} from '../domain/windows'
-import { gitSchema } from '../domain/settings'
-import { updateStateSchema } from '../domain/update'
+import { preflightContracts } from '../features/preflight/contracts'
+import { preflightPartialSchema } from '../domain/preflight'
+import { updateContracts, updateEvents } from '../features/update/contracts'
+import { catalogContracts, catalogEvents } from '../features/catalog/contracts'
+import { parentalContracts } from '../features/parental/contracts'
+import { preferencesContracts } from '../features/preferences/contracts'
+import { profileContracts } from '../features/profile/contracts'
+import { gitContracts } from '../features/git/contracts'
+import { installationContracts, installationEvents } from '../features/installation/contracts'
+import { steamContracts } from '../features/steam/contracts'
+import { windowsContracts } from '../features/windows/contracts'
+import { systemContracts } from '../features/system/contracts'
+import { windowContracts } from '../features/window/contracts'
 
-export const freshInputSchema = z.object({
-  fresh: z.boolean().optional(),
-})
-export type FreshInput = z.infer<typeof freshInputSchema>
-
-export const copyInputSchema = z.object({
-  text: z.string(),
-})
-export type CopyInput = z.infer<typeof copyInputSchema>
-
-export const importResultSchema = z.object({
-  status: z.enum(['imported', 'canceled', 'failed', 'invalid']),
-  count: z.number().optional(),
-  adopted: z.number().optional(),
-  missing: z.array(z.string()).optional(),
-})
-
-export const parentalViewSchema = z.object({
-  on: z.boolean(),
-  hasPin: z.boolean(),
-  blocked: z.array(z.string()),
-})
-
-export const pinResultSchema = z.object({
-  ok: z.boolean(),
-  view: parentalViewSchema.optional(),
-})
+export { copyInputSchema, freshInputSchema, type CopyInput, type FreshInput } from '../features/shared'
+export { parentalViewSchema, pinResultSchema } from '../features/parental/contracts'
+export { importResultSchema } from '../features/profile/contracts'
 
 export const ipcContracts = {
-  'preflight:drives': {
-    input: freshInputSchema,
-    output: z.array(driveSchema),
-  },
-  'preflight:run': {
-    input: preflightInputSchema,
-    output: preflightSchema,
-  },
-  'update:state': {
-    input: z.void(),
-    output: updateStateSchema,
-  },
-  'update:install': {
-    input: z.void(),
-    output: z.void(),
-  },
-  'catalog:list': {
-    input: z.void(),
-    output: runtimeCatalogSchema,
-  },
-  'catalog:state': {
-    input: z.void(),
-    output: catalogStateSchema,
-  },
-  'catalog:retry': {
-    input: z.void(),
-    output: catalogStateSchema,
-  },
-  'catalog:installed': {
-    input: freshInputSchema,
-    output: z.array(z.string()),
-  },
-  'parental:read': {
-    input: z.void(),
-    output: parentalViewSchema,
-  },
-  'parental:turnOn': {
-    input: z.object({ pin: z.string() }),
-    output: pinResultSchema,
-  },
-  'parental:turnOff': {
-    input: z.object({ pin: z.string() }),
-    output: pinResultSchema,
-  },
-  'parental:change': {
-    input: z.object({ current: z.string(), next: z.string() }),
-    output: pinResultSchema,
-  },
-  'parental:check': {
-    input: z.object({ pin: z.string() }),
-    output: z.boolean(),
-  },
-  'parental:allowOnce': {
-    input: z.object({ pin: z.string(), id: z.string() }),
-    output: z.boolean(),
-  },
-  'parental:setBlocked': {
-    input: z.object({ ids: z.array(z.string()) }),
-    output: parentalViewSchema,
-  },
-  'prefs:read': {
-    input: z.void(),
-    output: preferencesSchema,
-  },
-  'prefs:write': {
-    input: preferencesSchema,
-    output: preferencesSchema,
-  },
-  'profile:export': {
-    input: z.object({
-      format: z.enum(EXPORT_FORMATS),
-      ids: z.array(z.string()).optional(),
-    }),
-    output: z.object({
-      status: z.enum(['saved', 'canceled', 'failed']),
-      path: z.string().optional(),
-    }),
-  },
-  'profile:import': {
-    input: z.object({ mode: z.enum(IMPORT_MODES) }),
-    output: importResultSchema,
-  },
-  'profile:importLink': {
-    input: z.object({ url: z.string(), mode: z.enum(IMPORT_MODES) }),
-    output: importResultSchema,
-  },
-  'profile:folders': {
-    input: z.void(),
-    output: z.array(z.object({ path: z.string(), label: z.string() })),
-  },
-  'profile:pickFolder': {
-    input: z.void(),
-    output: z.string().nullable(),
-  },
-  'profile:read': {
-    input: z.void(),
-    output: profileSchema,
-  },
-  'profile:write': {
-    input: profileSchema,
-    output: profileSchema,
-  },
-  'git:config': {
-    input: z.void(),
-    output: gitSchema,
-  },
-  'catalog:inventory': {
-    input: freshInputSchema,
-    output: inventorySchema,
-  },
-  'catalog:add': {
-    input: z.object({
-      name: z.string().min(1),
-      version: z.string().optional(),
-      icon: z.string().optional(),
-    }),
-    output: z.object({
-      status: z.enum(['added', 'exists', 'not-found', 'failed']),
-      id: z.string().optional(),
-    }),
-  },
-  'catalog:mine': {
-    input: z.void(),
-    output: z.array(z.string()),
-  },
-  'catalog:remove': {
-    input: z.object({ id: z.string().min(1) }),
-    output: z.boolean(),
-  },
-  'catalog:startup': {
-    input: z.void(),
-    output: z.array(startupEntrySchema),
-  },
-  'catalog:setStartup': {
-    input: startupInputSchema,
-    output: z.array(startupEntrySchema),
-  },
-  'catalog:autostart': {
-    input: z.void(),
-    output: z.array(z.object({ id: z.string(), state: z.enum(['on', 'off']) })),
-  },
-  'catalog:versions': {
-    input: idInputSchema,
-    output: z.array(packageVersionSchema),
-  },
-  'installation:start': {
-    input: startInputSchema,
-    output: runSchema,
-  },
-  'installation:append': {
-    input: requestsInputSchema,
-    output: runSchema.nullable(),
-  },
-  'installation:state': {
-    input: z.void(),
-    output: runSchema.nullable(),
-  },
-  'installation:cancel': {
-    input: z.void(),
-    output: z.void(),
-  },
-  'installation:cancelItem': {
-    input: idInputSchema,
-    output: z.void(),
-  },
-  'installation:retry': {
-    input: idInputSchema,
-    output: z.void(),
-  },
-  'installation:grant': {
-    input: idInputSchema,
-    output: z.void(),
-  },
-  'installation:open': {
-    input: idInputSchema,
-    output: z.enum(['opened', 'not-found', 'failed']),
-  },
-  'installation:openable': {
-    input: z.void(),
-    output: z.array(z.string()),
-  },
-  'installation:mayInstall': {
-    input: idInputSchema,
-    output: z.boolean(),
-  },
-  'installation:uninstall': {
-    input: idInputSchema,
-    output: z.object({
-      ok: z.boolean(),
-      verified: z.boolean(),
-      error: z.string().optional(),
-    }),
-  },
-  'steam:library': {
-    input: z.void(),
-    output: steamLibrarySchema,
-  },
-  'steam:search': {
-    input: steamSearchInputSchema,
-    output: z.array(steamGameSchema),
-  },
-  'windows:tweaks': {
-    input: z.void(),
-    output: z.array(tweakStateSchema),
-  },
-  'windows:setTweak': {
-    input: tweakInputSchema,
-    output: z.array(tweakStateSchema),
-  },
-  'history:read': {
-    input: z.void(),
-    output: historySchema,
-  },
-  'system:icon': {
-    input: z.object({ path: z.string() }),
-    output: z.string().nullable(),
-  },
-  'system:copy': {
-    input: copyInputSchema,
-    output: z.void(),
-  },
-  'system:openFamily': {
-    input: z.void(),
-    output: z.void(),
-  },
-  'system:restart': {
-    input: z.void(),
-    output: z.void(),
-  },
-  'system:cancelRestart': {
-    input: z.void(),
-    output: z.void(),
-  },
-  'window:minimize': {
-    input: z.void(),
-    output: z.void(),
-  },
-  'window:toggleMaximize': {
-    input: z.void(),
-    output: z.boolean(),
-  },
-  'window:close': {
-    input: z.void(),
-    output: z.void(),
-  },
+  ...preflightContracts,
+  ...updateContracts,
+  ...catalogContracts,
+  ...parentalContracts,
+  ...preferencesContracts,
+  ...profileContracts,
+  ...gitContracts,
+  ...installationContracts,
+  ...steamContracts,
+  ...windowsContracts,
+  ...systemContracts,
+  ...windowContracts,
 } as const
 
 export type IpcContracts = typeof ipcContracts
@@ -316,10 +41,10 @@ export type IpcOutput<C extends IpcChannel> = z.infer<IpcContracts[C]['output']>
 export const ipcChannels = Object.keys(ipcContracts) as IpcChannel[]
 
 export const ipcEvents = {
-  'installation:event': runSchema,
+  ...installationEvents,
   'preflight:event': preflightPartialSchema,
-  'update:event': updateStateSchema,
-  'catalog:event': runtimeCatalogSchema,
+  ...updateEvents,
+  ...catalogEvents,
 } as const
 
 export type IpcEvents = typeof ipcEvents
