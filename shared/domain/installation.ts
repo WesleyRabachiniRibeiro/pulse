@@ -1,3 +1,5 @@
+import { foldText } from './text'
+export { foldText } from './text'
 import { z } from 'zod'
 import { settingsAreEmpty, settingsKey, settingsSchema } from './settings'
 import { getProgram } from './catalog'
@@ -376,12 +378,6 @@ const BYTES_RE = /(\d+(?:[.,]\d+)?)\s*(B|KB|MB|GB)?\s*\/\s*(\d+(?:[.,]\d+)?)\s*(
 
 function toBytes(value: string, unit: string | undefined, fallback: string): number {
   return Number(value.replace(',', '.')) * (UNITS[(unit ?? fallback).toLowerCase()] ?? 1)
-}
-
-const DIACRITICS = /[̀-ͯ]/g
-
-export function foldText(text: string): string {
-  return text.normalize('NFD').replace(DIACRITICS, '').toLowerCase()
 }
 
 export interface Progress {

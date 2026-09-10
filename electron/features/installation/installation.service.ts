@@ -5,11 +5,22 @@ import { dirname, join } from 'node:path'
 import { getProgram, type Program } from '@shared/domain/catalog'
 import { RIOT_BY_ID, TIBIA_BY_ID, type Settings } from '@shared/domain/settings'
 import { forgetCatalog, isInstalled, quietUninstallCommands } from '../catalog'
-import { hasManifest, isSignedIn } from '../steam'
+import { isSignedIn } from '../steam'
 import { makeDefault, openOnce } from '../browsers'
 import { listDrives } from '../preflight'
 import { formatGb, MINIMUM_SYSTEM_GB } from '@shared/domain/preflight'
-import { installArgs, noApplicableInstaller, scopeLabel } from '@shared/domain/winget'
+import {
+  alreadyInstalled,
+  errorMessage,
+  hex,
+  installArgs,
+  installerBusy,
+  needsAdmin,
+  needsReboot,
+  noApplicableInstaller,
+  refusedDrive,
+  scopeLabel,
+} from '@shared/domain/winget'
 import { gitConfigPairs, gitIsEmpty } from '@shared/domain/git'
 import { installArgsFor, knownPackages, runtimeToolsFor } from '@shared/domain/runtime'
 import {
@@ -28,6 +39,7 @@ import { isGranted, readParental } from '../parental'
 import { blockedAmong } from '@shared/domain/parental'
 import { applyDesktopShortcut, type ShortcutResult } from './shortcuts'
 import { applyEditorTweaks, type EditorResult } from './editor'
+import { requestSteamGame, runCommand, waitForSteamSignIn } from './steam.gate'
 import { ensureSshKey, type SshOutcome, type SshResult } from './ssh'
 import {
   canEnqueue,
@@ -81,89 +93,6 @@ function note(text: string, level: LogLevel = 'info'): void {
   const line = { time: clock((Date.now() - startTime) / 1000), text, level }
   run.log = [...run.log, line].slice(-LOG_LIMIT)
   emitState()
-}
-
-function alreadyInstalled(code: number, output: string): boolean {
-  if (hex(code) === '0x8A15002B') return true
-
-  const t = foldText(output)
-  return (
-    t.includes('nenhuma atualizacao') ||
-    t.includes('nenhuma versao de pacote mais recente') ||
-    t.includes('no available upgrade') ||
-    t.includes('no applicable upgrade') ||
-    t.includes('no newer package version')
-  )
-}
-
-function hex(code: number): string {
-  return `0x${(code >>> 0).toString(16).toUpperCase()}`
-}
-
-function is(code: number, ...codes: readonly number[]): boolean {
-  return codes.includes(code >>> 0)
-}
-
-function needsAdmin(code: number, output: string): boolean {
-  if (is(code, 5, 740, 0x80070005, 0x800702e4)) return true
-  const t = foldText(output)
-  return t.includes('acesso negado') || t.includes('access is denied') || t.includes('0x80070005')
-}
-
-function refusedElevation(code: number): boolean {
-  return is(code, 1223, 0x800704c7)
-}
-
-function needsReboot(code: number, output: string): boolean {
-  if (is(code, 3010, 1641, 0x80070bc2, 0x80070669)) return true
-  const t = foldText(output)
-  return (
-    t.includes('reinicializacao necessaria') ||
-    t.includes('reinicie o computador') ||
-    t.includes('reinicializacao do sistema') ||
-    t.includes('restart required') ||
-    t.includes('reboot required') ||
-    t.includes('restart your computer')
-  )
-}
-
-function installerBusy(code: number, output: string): boolean {
-  if (is(code, 1618, 0x80070652)) return true
-  const t = foldText(output)
-  return (
-    t.includes('outra instalacao') ||
-    t.includes('another installation') ||
-    t.includes('1618') ||
-    t.includes('0x80070652')
-  )
-}
-
-function refusedDrive(output: string): boolean {
-  const t = foldText(output)
-  return t.includes('location') || t.includes('local de instalacao')
-}
-
-function refusesElevation(output: string): boolean {
-  const t = foldText(output)
-  return t.includes('contexto de administrador') || t.includes('administrator context')
-}
-
-function errorMessage(code: number, output: string, name: string): string {
-  if (refusesElevation(output)) {
-    return `O instalador do ${name} não roda com o Pulse aberto como administrador. Feche o app e abra de novo sem "Executar como administrador".`
-  }
-  if (refusedElevation(code)) {
-    return `A permissão do Windows para instalar o ${name} foi recusada. Tente de novo e responda Sim na janela do Windows.`
-  }
-  if (needsAdmin(code, output)) {
-    return `O instalador do ${name} precisou de permissão de administrador e não recebeu. Tente de novo e clique em "Conceder permissão" quando o Pulse pedir.`
-  }
-  const last = output
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .at(-1)
-  return `O winget encerrou com ${hex(code)}.${last ? ` Última mensagem: ${last}` : ''}`
 }
 
 interface Output {
@@ -249,124 +178,9 @@ async function runWinget(
   })
 }
 
-function runCommand(command: string, args: readonly string[]): Promise<boolean> {
-  return new Promise((resolve) => {
-    const child = spawn(command, [...args], { windowsHide: true })
-    child.on('error', () => resolve(false))
-    child.on('close', (code) => resolve(code === 0))
-  })
-}
-
-export type SteamAnswer = 'confirmed' | 'refused' | 'timeout'
-
-const WAIT_LIMIT_MS = 15 * 60_000
-
-async function waitForSteamSignIn(): Promise<boolean> {
-  await runCommand('cmd', ['/c', 'start', '', 'steam://open/main'])
-
-  const limit = Date.now() + WAIT_LIMIT_MS
-  while (Date.now() < limit) {
-    await wait(3000)
-    if (await isSignedIn()) return true
-  }
-  return false
-}
-const READS_UNTIL_GIVING_UP = 3
-
-async function requestSteamGame(appid: string): Promise<SteamAnswer> {
-  if (await hasManifest(appid)) return 'confirmed'
-
-  await runCommand('cmd', ['/c', 'start', '', `steam://install/${appid}`])
-
-  const limit = Date.now() + WAIT_LIMIT_MS
-  let withoutDialog = 0
-  let grace = 6
-
-  while (Date.now() < limit) {
-    await wait(2000)
-
-    if (await hasManifest(appid)) return 'confirmed'
-
-    if (await steamDialogOpen()) {
-      withoutDialog = 0
-      grace = 0
-      continue
-    }
-
-    if (grace > 0) {
-      grace--
-      continue
-    }
-
-    withoutDialog++
-    if (withoutDialog >= READS_UNTIL_GIVING_UP) {
-      return (await hasManifest(appid)) ? 'confirmed' : 'refused'
-    }
-  }
-
-  return (await hasManifest(appid)) ? 'confirmed' : 'timeout'
-}
 
 const SCRIPT_LIMIT_MS = 25_000
-
-function steamDialogOpen(): Promise<boolean> {
-  const script = `
-$ErrorActionPreference = 'SilentlyContinue'
-Add-Type @"
-using System;
-using System.Text;
-using System.Runtime.InteropServices;
-public class SteamEye {
-  public delegate bool Callback(IntPtr h, IntPtr p);
-  [DllImport("user32.dll")] public static extern bool EnumWindows(Callback cb, IntPtr p);
-  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowTextW(IntPtr h, StringBuilder s, int n);
-  [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
-  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
-}
-"@
-
-$pids = @(Get-Process | Where-Object { $_.ProcessName -like 'steam*' } | ForEach-Object { $_.Id })
-if (-not $pids) { Write-Output 'closed'; exit }
-
-$found = $false
-$cb = [SteamEye+Callback]{
-  param($h, $p)
-  if (-not [SteamEye]::IsWindowVisible($h)) { return $true }
-  $owner = 0
-  [void][SteamEye]::GetWindowThreadProcessId($h, [ref]$owner)
-  if ($pids -notcontains $owner) { return $true }
-  $sb = New-Object Text.StringBuilder 512
-  [void][SteamEye]::GetWindowTextW($h, $sb, 512)
-  $t = $sb.ToString()
-  if ($t -like 'Instalar*' -or $t -like 'Install*') { $script:found = $true; return $false }
-  return $true
-}
-[void][SteamEye]::EnumWindows($cb, [IntPtr]::Zero)
-
-if ($found) { Write-Output 'open' } else { Write-Output 'closed' }
-`
-
-  const encoded = Buffer.from(script, 'utf16le').toString('base64')
-  return new Promise((resolve) => {
-    const child = spawn(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-      { windowsHide: true },
-    )
-    let output = ''
-    child.stdout?.on('data', (b: Buffer) => (output += b.toString('utf8')))
-    child.stderr?.resume()
-
-    const giveUp = setTimeout(() => child.kill(), SCRIPT_LIMIT_MS)
-    const finish = (value: boolean): void => {
-      clearTimeout(giveUp)
-      resolve(value)
-    }
-
-    child.on('error', () => finish(false))
-    child.on('close', () => finish(output.includes('open')))
-  })
-}
+const PERMISSION_WAIT_MS = 15 * 60_000
 
 export type AutostartResult = 'on' | 'off' | 'no-entry'
 
@@ -831,7 +645,7 @@ function waitForPermission(id: string): Promise<boolean> {
       clearTimeout(timer)
       resolve(granted)
     }
-    const timer = setTimeout(() => settle(false), WAIT_LIMIT_MS)
+    const timer = setTimeout(() => settle(false), PERMISSION_WAIT_MS)
     permissionWaiters.set(id, settle)
   })
 }

@@ -81,3 +81,16 @@ export function noApplicableInstaller(output: string): boolean {
     .toLowerCase()
   return NO_INSTALLER.some((phrase) => text.includes(phrase))
 }
+
+export {
+  alreadyInstalled,
+  errorMessage,
+  hex,
+  installerBusy,
+  is,
+  needsAdmin,
+  needsReboot,
+  refusedDrive,
+  refusedElevation,
+  refusesElevation,
+} from './winget.errors'
