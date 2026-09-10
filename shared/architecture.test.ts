@@ -36,6 +36,7 @@ function resolveImport(from: string, source: string): string | null {
   let target: string | null = null
 
   if (source.startsWith('@shared/')) target = join(ROOT, 'shared', source.slice('@shared/'.length))
+  else if (source.startsWith('@main/')) target = join(ROOT, 'electron', source.slice('@main/'.length))
   else if (source.startsWith('@/')) target = join(ROOT, 'src', source.slice('@/'.length))
   else if (source.startsWith('.')) target = resolve(dirname(from), source)
 

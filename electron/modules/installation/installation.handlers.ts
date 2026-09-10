@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron'
-import { register } from '../../ipc/register'
+import { register } from '@main/core/ipc/register'
 import { getProgram, getPrograms } from '@shared/domain/catalog'
 import { alertFrom } from '../alerts'
 import { isGranted, readParental } from '../parental'

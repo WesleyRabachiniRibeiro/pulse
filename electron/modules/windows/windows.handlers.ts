@@ -1,4 +1,4 @@
-import { register } from '../../ipc/register'
+import { register } from '@main/core/ipc/register'
 import { readTweaks, writeTweak } from './windows.service'
 
 export function registerWindows(): void {

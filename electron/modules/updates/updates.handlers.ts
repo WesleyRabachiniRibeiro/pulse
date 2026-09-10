@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron'
-import { register } from '../../ipc/register'
+import { register } from '@main/core/ipc/register'
 import { currentUpdate, installNow, startUpdates, subscribe } from './updates.service'
 
 export function registerUpdates(): void {

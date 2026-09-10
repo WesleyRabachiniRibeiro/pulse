@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron'
-import { register } from '../../ipc/register'
+import { register } from '@main/core/ipc/register'
 import { listAutostart, listInstalled, listVersions, warmCatalog } from './catalog.service'
 import { readInventory } from './inventory.service'
 import { adoptProgram } from './adopt.service'

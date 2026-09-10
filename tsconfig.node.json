@@ -17,7 +17,8 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["shared/*"]
+      "@shared/*": ["shared/*"],
+      "@main/*": ["electron/*"]
     }
   },
   "include": ["electron/**/*.ts", "shared/**/*.ts", "electron.vite.config.ts"]

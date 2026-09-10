@@ -4,6 +4,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 
 const shared = resolve(__dirname, 'shared')
+const main = resolve(__dirname, 'electron')
 
 const { version } = JSON.parse(
   readFileSync(resolve(__dirname, 'package.json'), 'utf8'),
@@ -12,14 +13,14 @@ const { version } = JSON.parse(
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
-    resolve: { alias: { '@shared': shared } },
+    resolve: { alias: { '@shared': shared, '@main': main } },
     build: {
-      lib: { entry: resolve(__dirname, 'electron/main/index.ts') },
+      lib: { entry: resolve(__dirname, 'electron/bootstrap/index.ts') },
     },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
-    resolve: { alias: { '@shared': shared } },
+    resolve: { alias: { '@shared': shared, '@main': main } },
     build: {
       lib: { entry: resolve(__dirname, 'electron/preload/index.ts') },
     },

@@ -1,4 +1,4 @@
-import { register } from '../../ipc/register'
+import { register } from '@main/core/ipc/register'
 import { readLibrary, searchSteam } from './steam.service'
 
 export function registerSteam(): void {

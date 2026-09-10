@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron'
-import { register } from '../../ipc/register'
+import { register } from '@main/core/ipc/register'
 import { drivesForScreen, runPreflight, subscribePartial, warmDrives } from './preflight.service'
 
 export function registerPreflight(): void {

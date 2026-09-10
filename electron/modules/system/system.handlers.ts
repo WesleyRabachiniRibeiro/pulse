@@ -1,5 +1,5 @@
 import { clipboard, shell } from 'electron'
-import { register } from '../../ipc/register'
+import { register } from '@main/core/ipc/register'
 import { cancelRestart, restart } from './system.service'
 import { readFileIcon } from './icon.service'
 
