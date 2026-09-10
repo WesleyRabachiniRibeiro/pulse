@@ -8,7 +8,12 @@ import { Home } from '@/features/home'
 import { Config } from '@/features/config'
 import { BlockedList, useLoadParental } from '@/features/parental'
 import { Manage } from '@/features/manage'
-import { useUpdateCount, useWatchCatalog, useWatchInventory } from '@/features/catalog'
+import {
+  useUpdateCount,
+  useWatchCatalog,
+  useWatchInstalled,
+  useWatchInventory,
+} from '@/features/catalog'
 import {
   Welcome,
   startPreflight,
@@ -21,7 +26,6 @@ import {
   useLoadSelection,
   useSelection,
   useWatchAutostart,
-  useWatchInstalled,
 } from '@/features/selection'
 import { Installation, useRun, useWatchInstallation } from '@/features/installation'
 import { Summary } from '@/features/summary'

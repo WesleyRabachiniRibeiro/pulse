@@ -23,7 +23,7 @@ import { appendToQueue, startInstallation, useRun } from '@/features/installatio
 import { TINTS } from '@/shared/ui/AppIcon/tints'
 import { bridge } from '@/shared/lib/bridge'
 import { useDrives, useWatchDrives } from '../store/useDrives'
-import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
+import { useInstalled, useInstalledFailed, useInstalledLoaded } from '@/features/catalog'
 import { useSelection } from '../store/useSelection'
 import { useTourStore } from '@/features/tour'
 import { useDefaults } from '@/features/preferences'

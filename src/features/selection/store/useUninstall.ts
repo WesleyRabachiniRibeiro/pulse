@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { bridge } from '@/shared/lib/bridge'
-import { onUninstalled } from './useInstalled'
+import { onUninstalled } from '@/features/catalog'
 
 const FALLBACK = 'Não foi possível desinstalar.'
 

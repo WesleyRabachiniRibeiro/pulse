@@ -3,7 +3,7 @@ import { DEFAULT_KEYS, defaultLabel, type Defaults, type DefaultKey } from '@sha
 import { formatGb, type Drive } from '@shared/domain/preflight'
 import { LOCALES } from '@shared/domain/winget'
 import type { Settings } from '@shared/domain/settings'
-import { ConfigRow, type Choice } from '@/features/config'
+import { ConfigRow, type Choice } from '@/shared/ui/ConfigRow/ConfigRow'
 import s from './ProgramExceptions.module.css'
 
 const KEEP = 'padrao'

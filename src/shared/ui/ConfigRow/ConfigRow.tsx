@@ -1,4 +1,4 @@
-import s from './Config.module.css'
+import s from './ConfigRow.module.css'
 
 export interface Choice {
   id: string

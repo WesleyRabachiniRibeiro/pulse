@@ -15,7 +15,7 @@ import {
   useWatchDrives,
   useWatchTweaks,
 } from '@/features/selection'
-import { ConfigRow, type Choice } from './ConfigRow'
+import { ConfigRow, type Choice } from '@/shared/ui/ConfigRow/ConfigRow'
 import { ParentalSection } from '@/features/parental'
 import { ProfileBlock } from './ProfileBlock'
 import s from './Config.module.css'

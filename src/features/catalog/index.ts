@@ -7,6 +7,14 @@ export {
   useWatchCatalog,
 } from './store/useCatalog'
 export {
+  onUninstalled,
+  reloadInstalled,
+  useInstalled,
+  useInstalledFailed,
+  useInstalledLoaded,
+  useWatchInstalled,
+} from './store/useInstalled'
+export {
   reloadInventory,
   useInventory,
   useInventoryBusy,
