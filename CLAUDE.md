@@ -9,6 +9,37 @@ App Electron que prepara um PC novo de uma vez só: a pessoa escolhe os programa
 - Sem comentários no código.
 - Os contratos de IPC em `shared/ipc/contracts.ts` são a fonte da verdade, validados com zod nas duas pontas.
 
+## Arquitetura
+
+Três raízes: `electron/` é o processo principal, `src/` é o renderer, `shared/` é o que os dois usam de verdade.
+
+```
+electron/
+├── core/            não conhece domínio: ipc/ e powershell/
+├── modules/<nome>/  um contexto por pasta
+│   ├── infrastructure/  fala com o Windows, inclusive os .ps1
+│   └── steps/           no installation, um arquivo por ajuste
+├── bootstrap/       sobe o app e registra os módulos
+└── preload/         a ponte, só canais declarados
+
+src/
+├── features/<nome>/ components/, store/, hooks/, lib/
+└── shared/          ui/, styles/, lib/
+```
+
+Aliases: `@main` para `electron/`, `@shared` para `shared/`, `@` para `src/`.
+
+Regras que o `shared/architecture.test.ts` cobra, além de não haver ciclo de import:
+
+- Só arquivo dentro de `infrastructure/` importa `@main/core/powershell`. Serviço pede o dado, não sabe de onde veio.
+- O renderer não importa nada de `electron/`. A conversa é pelo preload.
+
+O `eslint-plugin-boundaries` cuida do resto: módulo não entra em módulo vizinho a não ser pelo `index.ts`.
+
+Componente é pasta: `Component/` com `Component.tsx`, o CSS que só ele usa e `index.ts`. CSS usado por mais de um componente sobe para o nível da feature com nome de compartilhado, como `tabs.module.css`.
+
+Para ensinar um ajuste novo de programa: descreva o dado em `shared/domain/steps/`, escreva o runner em `electron/modules/installation/steps/` e ponha o id no `ORDER` do índice de lá.
+
 ## Terminal
 
 Use o Bash para tudo que ele der conta: ler, buscar, editar arquivos, git, npm e node.

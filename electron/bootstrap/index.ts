@@ -18,6 +18,16 @@ import { nameForWindows } from '@main/modules/alerts'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
+const BROWSER_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
+
+function opensInBrowser(url: string): boolean {
+  try {
+    return BROWSER_PROTOCOLS.has(new URL(url).protocol)
+  } catch {
+    return false
+  }
+}
+
 function createWindow(): void {
   const window = new BrowserWindow({
     width: 1280,
@@ -42,8 +52,14 @@ function createWindow(): void {
   window.once('ready-to-show', () => window.show())
 
   window.webContents.setWindowOpenHandler(({ url }) => {
-    void shell.openExternal(url)
+    if (opensInBrowser(url)) void shell.openExternal(url)
     return { action: 'deny' }
+  })
+
+  window.webContents.on('will-navigate', (event, url) => {
+    if (url === window.webContents.getURL()) return
+    event.preventDefault()
+    if (opensInBrowser(url)) void shell.openExternal(url)
   })
 
   const devUrl = process.env['ELECTRON_RENDERER_URL']
