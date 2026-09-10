@@ -180,3 +180,15 @@
 .card[data-blocked='true'] .meta {
   color: var(--warning);
 }
+
+.tag {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  border-radius: 6px;
+  padding: 4px 7px;
+  white-space: nowrap;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}

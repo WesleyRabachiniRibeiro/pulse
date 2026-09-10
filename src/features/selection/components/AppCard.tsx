@@ -66,9 +66,7 @@ export function AppCard({
           <span className={s.body}>
             <span className={s.name}>{program.name}</span>
             <span className={s.meta}>
-              {blocked
-                ? 'bloqueado pelo controle dos pais'
-                : installed
+              {installed
                 ? 'já está no seu PC'
                 : program.source === 'pages'
                   ? 'você escolhe quais baixar'
@@ -76,6 +74,12 @@ export function AppCard({
             </span>
           </span>
         </button>
+
+        {blocked && (
+          <span className={s.tag} title="Bloqueado pelo controle dos pais">
+            BLOQUEADO
+          </span>
+        )}
 
         <button
           type="button"

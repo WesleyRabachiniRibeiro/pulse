@@ -144,9 +144,7 @@ export function BlockedList({ onDone }: Props) {
 
                   <span className={s.cardTexts}>
                     <span className={s.cardName}>{one.name}</span>
-                    <span className={s.cardMeta}>
-                      {on ? 'ela vê trancado e pede o seu PIN' : formatMb(one.mb)}
-                    </span>
+                    <span className={s.cardMeta}>{formatMb(one.mb)}</span>
                   </span>
                 </button>
               )

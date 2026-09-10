@@ -62,7 +62,12 @@ export function PinDialog({ purpose, extra, onDone, onClose }: Props) {
 
         <div className={s.casas} onClick={() => field.current?.focus()}>
           {Array.from({ length: PIN_LENGTH }, (_, i) => (
-            <span key={i} className={s.casa} data-filled={i < digits.length}>
+            <span
+              key={i}
+              className={s.casa}
+              data-filled={i < digits.length}
+              data-now={!busy && i === digits.length}
+            >
               {i < digits.length ? '•' : ''}
             </span>
           ))}

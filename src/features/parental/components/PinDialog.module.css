@@ -101,3 +101,27 @@
   line-height: 1.5;
   color: var(--tx-6);
 }
+
+.casa[data-now='true'] {
+  border-color: var(--grad-txt-a);
+}
+
+.casa[data-now='true']::after {
+  content: '';
+  width: 2px;
+  height: 24px;
+  border-radius: 1px;
+  background: var(--grad-txt-a);
+  animation: pulse-caret 1.05s steps(1, end) infinite;
+}
+
+@keyframes pulse-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
