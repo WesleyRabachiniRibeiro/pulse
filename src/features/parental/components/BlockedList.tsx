@@ -27,8 +27,6 @@ export function BlockedList({ onDone }: Props) {
   const [category, setCategory] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<ReadonlySet<string>>(new Set(view.blocked))
 
-  // Bloquear serve para impedir download. O que já está no PC não se baixa de
-  // novo, então ele nem entra nesta lista.
   const found = useMemo(
     () => filterCatalog(query).filter((one) => !installed.has(one.id)),
     [query, programs, installed],

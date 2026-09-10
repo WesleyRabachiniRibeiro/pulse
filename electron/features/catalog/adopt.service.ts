@@ -31,11 +31,6 @@ async function askWinget(name: string): Promise<string> {
   return stdout
 }
 
-/**
- * Adota um programa que está no PC e não está no catálogo. Sem identificador
- * do winget não adianta adotar: o item apareceria na lista e não teria como
- * ser instalado em PC nenhum.
- */
 export async function adoptProgram(input: AdoptInput): Promise<AdoptResult> {
   const name = input.name.trim()
   if (!name) return { status: 'failed' }

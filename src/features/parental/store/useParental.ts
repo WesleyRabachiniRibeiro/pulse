@@ -41,7 +41,6 @@ export function applyParental(view: ParentalView): void {
   useStore.getState().set(view)
 }
 
-/** Ligado, o Pulse assume que quem está na frente é a criança. */
 export function useLockedNow(): boolean {
   return useStore((s) => s.view.on && s.view.hasPin)
 }

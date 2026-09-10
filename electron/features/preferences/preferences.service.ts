@@ -36,9 +36,7 @@ export async function writePreferences(mudanca: Preferences): Promise<Preference
     const caminho = arquivo()
     await mkdir(dirname(caminho), { recursive: true })
     await writeFile(caminho, JSON.stringify(proximo, null, 2), 'utf8')
-  } catch {
-    /* empty */
-  }
+  } catch {}
 
   return proximo
 }

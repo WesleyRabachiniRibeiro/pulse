@@ -24,7 +24,5 @@ export async function saveExtras(programs: readonly Program[]): Promise<void> {
     const path = file()
     await mkdir(dirname(path), { recursive: true })
     await writeFile(path, `${JSON.stringify(programs, null, 2)}\n`, 'utf8')
-  } catch {
-    /* empty */
-  }
+  } catch {}
 }

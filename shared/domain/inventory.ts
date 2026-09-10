@@ -153,11 +153,6 @@ function fromTokens(output: string, known: ReadonlySet<string>): Upgrade[] {
   return found
 }
 
-/**
- * O identificador na resposta de `winget list --name`. A tabela muda de
- * idioma e de largura, mas o identificador tem forma própria e só ele parece
- * com isso na linha.
- */
 export function readWingetId(output: string): string | null {
   const lines = output.split(/\r?\n/)
   const rule = lines.findIndex((line) => /^-{5,}$/.test(line.trim()))
@@ -254,7 +249,6 @@ export function upgradeFor(inventory: Inventory, wingetId: string): Upgrade | un
   return inventory.upgrades.find((u) => u.wingetId.toLowerCase() === wingetId.toLowerCase())
 }
 
-/** Categoria de partida da sugestão, que a pessoa troca ao colar no catálogo. */
 export const SUGGESTED_CATEGORY = 'utilities'
 
 function withoutAccents(text: string): string {
@@ -278,11 +272,6 @@ export function suggestedId(name: string, taken: readonly string[] = []): string
   return `${base}${next}`
 }
 
-/**
- * Monta a entrada de catálogo de um programa que está no PC e não está no
- * catálogo. Tamanho, versão e categoria ninguém consegue adivinhar, então
- * saem em branco para a pessoa preencher.
- */
 export function suggestedEntry(app: InstalledApp, taken: readonly string[] = []): Program {
   const name = app.name.trim() || 'Sem nome'
 

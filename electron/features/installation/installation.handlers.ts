@@ -25,7 +25,6 @@ async function openById(id: string): Promise<LaunchResult> {
   return program ? openProgram(program) : 'not-found'
 }
 
-/** Tudo bloqueado quer dizer fila nenhuma, e a tela precisa saber por quê. */
 async function pass(requests: readonly Request[]): Promise<Request[]> {
   const free = await allowed(requests)
   if (free.length === 0 && requests.length > 0) {

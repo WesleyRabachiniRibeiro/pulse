@@ -22,11 +22,6 @@ export const historySchema = z.array(runRecordSchema)
 export const HISTORY_LIMIT = 50
 export const ERROR_LIMIT = 300
 
-/**
- * Guarda o que a fila decidiu, não como ela chegou lá. Sem log, sem detalhe de
- * andamento e com o erro cortado, porque o arquivo cresce a cada fila e ninguém
- * volta para ler texto de instalador de meses atrás.
- */
 export function recordOf(run: Run): RunRecord | null {
   if (!run.finishedAt) return null
 
@@ -76,7 +71,6 @@ export interface RunTally {
   count: number
 }
 
-/** Só os estados que apareceram, na ordem em que interessam ler. */
 export function tallyOf(record: RunRecord): RunTally[] {
   return RUN_STATES.map((state) => ({
     state,

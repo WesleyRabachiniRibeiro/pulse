@@ -53,9 +53,7 @@ export async function setTweak(id: string, on: boolean): Promise<void> {
   try {
     const states = await bridge.invoke('windows:setTweak', { id, on })
     useTweaksStore.getState().set(states)
-  } catch {
-    /* empty */
-  } finally {
+  } catch {} finally {
     useTweaksStore.getState().markBusy(id, false)
   }
 }

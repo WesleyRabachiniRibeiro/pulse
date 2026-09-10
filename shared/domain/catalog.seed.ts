@@ -6,11 +6,6 @@ import {
   type Program,
 } from './catalog'
 
-/**
- * A lista que o `npm run catalog` transforma em catalog.json. O app não a
- * carrega: ele lê o arquivo publicado. Isto aqui é a fonte de onde o arquivo
- * nasce, e o que os testes usam para ter um catálogo de verdade.
- */
 export const BUILTIN_CATEGORIES: readonly Category[] = [
   { id: 'browsers', name: 'NAVEGADORES' },
   { id: 'games', name: 'GAMES' },

@@ -7,7 +7,6 @@ const LIMIT = 400
 
 const cache = new Map<string, string | null>()
 
-/** Formatos que o Electron abre direto, sem passar pela shell do Windows. */
 const IMAGES = new Set(['.ico', '.png', '.jpg', '.jpeg', '.bmp'])
 
 function breathe(): Promise<void> {
@@ -35,11 +34,6 @@ async function resolve(path: string): Promise<string | null> {
   }
 }
 
-/**
- * Um por vez, com uma folga entre eles. A lista pede dezenas de ícones no
- * mesmo instante, e ler ícone de disco é trabalho síncrono: em rajada, a
- * janela para de responder.
- */
 let queue: Promise<unknown> = Promise.resolve()
 
 export async function readFileIcon(path: string): Promise<string | null> {

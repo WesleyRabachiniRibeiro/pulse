@@ -57,10 +57,6 @@ export function portableOf(
   }
 }
 
-/**
- * As extensões do arquivo entram como ajuste do VS Code, que é o caminho que o
- * Pulse já usa para instalar extensão. Somando, as duas listas se juntam.
- */
 export function withVsCode(profile: Profile, portable: Portable, mode: ImportMode): Profile {
   const coming = portable.vscode ?? []
   if (coming.length === 0) return profile
@@ -77,16 +73,10 @@ export function withVsCode(profile: Profile, portable: Portable, mode: ImportMod
   }
 }
 
-/** O que veio no arquivo e o catálogo de casa ainda não conhece. */
 export function unknownOf(portable: Portable, known: (id: string) => boolean): Program[] {
   return (portable.extras ?? []).filter((program) => !known(program.id))
 }
 
-/**
- * Somar mantém o que já estava marcado e acrescenta o do arquivo; substituir
- * troca a lista inteira. Nos dois casos o ajuste do arquivo vence, porque foi
- * ele que a pessoa acabou de trazer.
- */
 export function profileOf(portable: Portable, mode: ImportMode, current: Profile): Profile {
   const selected =
     mode === 'merge' ? [...new Set([...current.selected, ...portable.programs])] : portable.programs
@@ -117,7 +107,6 @@ function wingetIdsOf(ids: readonly string[]): string[] {
   return found
 }
 
-/** O formato que o próprio `winget import` come. */
 export function wingetImportOf(ids: readonly string[]): string {
   const packages = wingetIdsOf(ids).map((PackageIdentifier) => ({ PackageIdentifier }))
 

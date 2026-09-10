@@ -31,10 +31,6 @@ if ($v -eq 0) { 'nao' } else { 'sim' }
 
 let uac: boolean | null = null
 
-/**
- * Sem UAC o Windows não divide o token, então todo processo da conta roda
- * elevado, inclusive o explorer. Nesse caso não existe para onde rebaixar.
- */
 export async function uacEnabled(): Promise<boolean> {
   if (uac === null) uac = !(await powershellOut(UAC_SCRIPT)).includes('nao')
   return uac
@@ -117,19 +113,10 @@ public static class PulseUserRunner
 }
 `
 
-/** Texto literal para o PowerShell: aspas simples, dobrando as internas. */
 function literal(value: string): string {
   return `'${value.replace(/'/g, "''")}'`
 }
 
-/**
- * Roda um comando com o token do usuário interativo, sem a elevação do Pulse.
- *
- * O winget se recusa a desinstalar pacote de escopo de usuário quando o
- * processo está elevado, e o Pulse está. A saída é pegar emprestado o token do
- * explorer.exe, que roda como a pessoa logada em integridade média, e criar o
- * processo com ele.
- */
 export async function runAsInteractiveUser(
   commandLine: string,
   timeoutMs = 10 * 60_000,
@@ -138,9 +125,6 @@ export async function runAsInteractiveUser(
 
   const outputFile = join(tmpdir(), `pulse-${randomUUID()}.txt`)
 
-  // O cmd cuida do redirecionamento, porque não há como ler a saída de um
-  // processo criado por CreateProcessWithTokenW. O /s faz o cmd tirar só as
-  // aspas das pontas e deixar as de dentro em paz.
   const inner = `cmd.exe /s /c "${commandLine} > "${outputFile}" 2>&1"`
 
   const script = `
@@ -151,8 +135,6 @@ ${RUNNER}
 [PulseUserRunner]::Run(${literal(inner)}, ${literal(tmpdir())}, ${timeoutMs})
 `
 
-  // O Add-Type às vezes imprime avisos antes do retorno, então vale a última
-  // linha que seja só um número.
   const raw = await powershellOut(script, timeoutMs + 30_000)
   const numbers = raw
     .split(/\r?\n/)
@@ -169,7 +151,6 @@ ${RUNNER}
 const CREATE_PROCESS_BASE = -2000
 const CREATE_PROCESS_FLOOR = CREATE_PROCESS_BASE - 0xffff
 
-/** Traduz as falhas do próprio mecanismo, que não vêm do comando pedido. */
 export function runnerFailure(code: number): string | null {
   if (code === -1007) {
     return 'o comando passou do tempo e não terminou'

@@ -38,9 +38,7 @@ export async function savePreference(mudanca: Preferences): Promise<void> {
   try {
     const salvo = await bridge.invoke('prefs:write', mudanca)
     usePreferencesStore.getState().set(salvo)
-  } catch {
-    /* empty */
-  }
+  } catch {}
 }
 
 export function usePreferences(): Preferences {

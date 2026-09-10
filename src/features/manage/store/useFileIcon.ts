@@ -14,11 +14,6 @@ const useIconStore = create<IconStore>((set) => ({
 
 const asked = new Set<string>()
 
-/**
- * O ícone que o programa registrou no Windows, pedido uma vez por caminho. O
- * processo principal guarda o resultado, então voltar à tela não lê disco de
- * novo.
- */
 export function useFileIcon(path: string | undefined): string | null {
   const url = useIconStore((state) => (path ? (state.icons[path] ?? null) : null))
 

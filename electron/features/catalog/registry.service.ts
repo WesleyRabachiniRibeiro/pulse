@@ -32,10 +32,6 @@ function trimmed(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
-/**
- * Lê o que o Windows chama de programas instalados, com os campos que dizem
- * quem é acessório de quem. É a mesma fonte de "Aplicativos instalados".
- */
 export async function readRegistryEntries(): Promise<RegistryEntry[]> {
   const encoded = Buffer.from(ENTRIES_SCRIPT, 'utf16le').toString('base64')
 

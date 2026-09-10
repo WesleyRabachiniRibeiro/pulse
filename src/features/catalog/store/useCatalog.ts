@@ -47,7 +47,6 @@ async function ask(): Promise<void> {
   if (state) useCatalogStore.getState().settle(state)
 }
 
-/** Tentar de novo a busca do catálogo, a pedido de quem viu a tela vazia. */
 export async function retryCatalog(): Promise<void> {
   useCatalogStore.getState().looking()
 

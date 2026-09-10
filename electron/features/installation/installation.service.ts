@@ -1085,11 +1085,6 @@ function emptyResult(): NonNullable<Item['result']> {
 async function finishBrowsers(): Promise<void> {
   if (!run) return
 
-  // A importação vem antes de pedir o padrão de propósito. Pedir o padrão
-  // lança o navegador, e o Firefox só abre o assistente de importação quando
-  // não há instância rodando: com uma aberta, ele repassa o comando para ela e
-  // ignora o -migration. Invertido, o Pulse acusava o usuário de ter deixado
-  // uma janela aberta que ele mesmo tinha acabado de abrir.
   const addresses: string[] = []
 
   for (const item of run.items) {
@@ -1212,10 +1207,6 @@ export function currentState(): Run | null {
   return run ? structuredClone(run) : null
 }
 
-/**
- * Programa bloqueado não entra na fila, venha ele de onde vier: da seleção, de
- * um combo, de um perfil importado ou do botão de atualizar.
- */
 export async function allowed(requests: readonly Request[]): Promise<Request[]> {
   const parental = await readParental().catch(() => null)
   if (!parental) return [...requests]
@@ -1400,8 +1391,6 @@ async function runUninstall(id: string): Promise<UninstallResult> {
     '--disable-interactivity',
   ]
 
-  // Elevado, o winget recusa desinstalar pacote de escopo de usuário. Como o
-  // Pulse roda como administrador, a remoção sai pela sessão da pessoa.
   const output = (await isElevated())
     ? await runAsInteractiveUser(['winget', ...args].join(' '))
     : await runWinget(`uninstall:${id}`, args, () => {})

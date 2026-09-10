@@ -19,7 +19,6 @@ export function pinIsValid(digits: string): boolean {
   return new RegExp(`^\\d{${PIN_LENGTH}}$`).test(digits)
 }
 
-/** Ligado, o Pulse assume que quem está na frente é a criança. */
 export function locked(parental: Parental): boolean {
   return parental.on && hasPin(parental)
 }

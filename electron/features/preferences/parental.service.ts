@@ -9,11 +9,6 @@ import { readPreferences, writePreferences } from './preferences.service'
 
 const KEY_BYTES = 32
 
-/**
- * Guarda o PIN como resumo com sal, para ele não ficar legível no arquivo.
- * São quatro dígitos: contra quem tem o arquivo e paciência, isso não segura
- * nada. Serve para o PIN não estar escrito à vista de quem abrir a pasta.
- */
 function seal(digits: string): string {
   const salt = randomBytes(16).toString('hex')
   const key = scryptSync(digits, salt, KEY_BYTES).toString('hex')
@@ -36,7 +31,6 @@ export async function readParental(): Promise<Parental> {
   return prefs.parental ?? EMPTY_PARENTAL
 }
 
-/** O que a tela pode ver: nunca o segredo. */
 export interface ParentalView {
   on: boolean
   hasPin: boolean
@@ -68,7 +62,6 @@ export interface PinResult {
   view?: ParentalView
 }
 
-/** Liga pela primeira vez, criando o PIN. */
 export async function turnOn(digits: string): Promise<PinResult> {
   if (!pinIsValid(digits)) return { ok: false }
 
@@ -100,10 +93,6 @@ export async function setBlocked(ids: readonly string[]): Promise<ParentalView> 
   return save(withBlocked(parental, ids))
 }
 
-/**
- * Liberação de uma vez só. O responsável digita o PIN e aquele programa passa
- * a valer até o app fechar. Não vira exceção guardada: reabrir volta a trancar.
- */
 const granted = new Set<string>()
 
 export async function allowOnce(digits: string, id: string): Promise<boolean> {

@@ -55,9 +55,7 @@ async function saveCached(catalog: Catalog): Promise<void> {
     const path = file()
     await mkdir(dirname(path), { recursive: true })
     await writeFile(path, JSON.stringify(catalog, null, 2), 'utf8')
-  } catch {
-    /* empty */
-  }
+  } catch {}
 }
 
 async function fetchRemote(): Promise<Catalog | null> {
@@ -144,7 +142,6 @@ export async function refreshCatalog(): Promise<boolean> {
   return true
 }
 
-/** Tentar de novo a pedido de quem está olhando a tela vazia. */
 export async function retryCatalog(): Promise<CatalogState> {
   await refreshCatalog()
   return catalogState()
@@ -161,11 +158,6 @@ export async function refreshVersionsFromWinget(): Promise<boolean> {
   return true
 }
 
-/**
- * Programa que a pessoa achou no PC e mandou entrar no catálogo dela. Fica num
- * arquivo só dela, ao lado do catálogo baixado, e sobrevive à atualização do
- * catálogo publicado.
- */
 export async function addToCatalog(program: Program): Promise<'added' | 'exists'> {
   await loadCatalog()
 
@@ -186,7 +178,6 @@ export function myPrograms(): Program[] {
   return extras.map((program) => ({ ...program }))
 }
 
-/** Tira do catálogo o que a pessoa adotou. O programa segue instalado no PC. */
 export async function removeFromCatalog(id: string): Promise<boolean> {
   await loadCatalog()
 

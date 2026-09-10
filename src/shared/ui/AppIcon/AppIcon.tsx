@@ -9,7 +9,6 @@ const MASKS = import.meta.glob('../../assets/icons/*.svg', {
   import: 'default',
 }) as Record<string, string>
 
-/** Logotipo que só existe colorido, e que viraria um borrão como máscara. */
 const LOGOS = import.meta.glob('../../assets/logos/*.svg', {
   eager: true,
   query: '?url',
@@ -45,7 +44,6 @@ export function AppIcon({ id, name, size = 34 }: Props) {
   const tint = TINTS[id] ?? 'var(--tx-3)'
   const style = { '--tint': tint, '--side': `${size}px` } as CSSProperties
 
-  // Programa adotado do PC traz a imagem que ele mesmo registrou no Windows.
   const picture = LOGO_BY_ID[id] ?? (MASK_BY_ID[id] ? undefined : getProgram(id)?.icon)
 
   if (picture) {

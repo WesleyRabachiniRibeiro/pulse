@@ -40,9 +40,7 @@ export async function writeProfile(profile: Profile): Promise<Profile> {
     const path = file()
     await mkdir(dirname(path), { recursive: true })
     await writeFile(path, JSON.stringify(next, null, 2), 'utf8')
-  } catch {
-    /* empty */
-  }
+  } catch {}
 
   return next
 }

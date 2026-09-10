@@ -7,11 +7,6 @@ const exec = promisify(execFile)
 const CALL_TIMEOUT_MS = 20_000
 const LIMIT = 200
 
-/**
- * As extensões que este PC já tem. Vão no perfil exportado para que o outro PC
- * receba o editor com as mesmas, pelo mesmo caminho que já instala extensão
- * escolhida à mão.
- */
 export async function listVsCodeExtensions(): Promise<string[]> {
   const code = await locateVsCode().catch(() => null)
   if (!code) return []

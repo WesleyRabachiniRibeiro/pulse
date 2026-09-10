@@ -47,9 +47,7 @@ async function saveCached(next: CachedVersions): Promise<void> {
     const path = file()
     await mkdir(dirname(path), { recursive: true })
     await writeFile(path, JSON.stringify(next, null, 2), 'utf8')
-  } catch {
-    /* empty */
-  }
+  } catch {}
 }
 
 function stale(cached: CachedVersions | null): boolean {

@@ -46,10 +46,6 @@ export const installedNodeSchema: z.ZodType<InstalledNode> = nodeBase.extend({
   children: z.lazy(() => z.array(installedNodeSchema)),
 })
 
-/**
- * Desinstaladores que o Windows empresta para todo mundo. Agrupar por eles
- * juntaria metade da máquina numa pilha só.
- */
 const SHARED_UNINSTALLERS = new Set([
   'msiexec.exe',
   'rundll32.exe',
@@ -63,10 +59,6 @@ const SHARED_UNINSTALLERS = new Set([
 
 const KB_IN_NAME = /\(KB\d{6,}\)/i
 
-/**
- * Por que um item não aparece na lista. O sinal de sistema é do próprio
- * Windows: é o mesmo que faz o item sumir de "Aplicativos instalados".
- */
 export function hiddenReason(entry: RegistryEntry): HiddenReason | null {
   if (entry.system === true) return 'system'
   if (KB_IN_NAME.test(entry.name)) return 'update'
@@ -74,7 +66,6 @@ export function hiddenReason(entry: RegistryEntry): HiddenReason | null {
   return null
 }
 
-/** Tira o executável da linha de desinstalação, com ou sem aspas. */
 export function uninstallerPath(command: string): string | null {
   const text = command.trim()
   if (!text) return null
@@ -97,11 +88,6 @@ function fileName(path: string): string {
   return normalizePath(path).split('\\').at(-1) ?? ''
 }
 
-/**
- * A pasta de onde o desinstalador roda. É ela que diz quem leva quem junto:
- * os jogos da Steam saem todos pelo steam.exe, e os produtos da Riot pelo
- * RiotClientServices.exe.
- */
 export function uninstallerFolder(entry: RegistryEntry): string | null {
   const path = entry.uninstall ? uninstallerPath(entry.uninstall) : null
   if (!path) return null
@@ -118,10 +104,6 @@ function simpleName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
-/**
- * O nome sem versão, ano e arquitetura, que é o que sobra igual entre um
- * "Visual C++ 2012 Redistributable (x64)" e um "v14 Redistributable (x86)".
- */
 export function stemOf(name: string): string {
   return name
     .replace(/\([^)]*\)/g, ' ')
@@ -132,10 +114,6 @@ export function stemOf(name: string): string {
     .trim()
 }
 
-/**
- * O caminho do ícone que o próprio programa registrou. Vem com o índice do
- * recurso colado no fim quando o ícone mora dentro de um executável.
- */
 export function iconPath(value: string | undefined): string | null {
   const text = (value ?? '').trim().replace(/^"|"$/g, '')
   if (!text) return null
@@ -185,10 +163,6 @@ function byName(a: { name: string }, b: { name: string }): number {
   return a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
 }
 
-/**
- * Acha quem manda no grupo: o item cujo nome é o da pasta de onde todo mundo
- * desinstala. Sem dono não há grupo, porque só o dono leva os outros junto.
- */
 function ownerOf(folder: string, members: readonly RegistryEntry[]): RegistryEntry | null {
   const base = folder.split('\\').at(-1) ?? ''
   if (!base) return null
@@ -306,10 +280,6 @@ function plain(text: string): string {
     .toLowerCase()
 }
 
-/**
- * A busca alcança o que está dentro do grupo: procurar por um jogo acha a
- * Steam, que é onde ele mora.
- */
 export function filterInstalled(
   nodes: readonly InstalledNode[],
   query: string,
@@ -327,7 +297,6 @@ export function filterInstalled(
   })
 }
 
-/** Só o que o Pulse sabe desinstalar é que pode ser marcado. */
 export function selectable(nodes: readonly InstalledNode[]): InstalledNode[] {
   return nodes.filter((node) => node.programId !== undefined)
 }

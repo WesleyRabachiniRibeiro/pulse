@@ -104,7 +104,6 @@ async function read(): Promise<Inventory> {
   return inventory
 }
 
-/** O que do catálogo já está nesta máquina, lido na hora. */
 export async function installedIdsNow(): Promise<string[]> {
   const inventory = await readInventory(true)
   return inventory.apps.flatMap((app) => (app.programId ? [app.programId] : []))

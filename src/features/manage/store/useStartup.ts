@@ -51,9 +51,7 @@ export async function setStartup(name: string, on: boolean): Promise<void> {
   try {
     const entries = await bridge.invoke('catalog:setStartup', { name, on })
     useStartupStore.getState().set(entries)
-  } catch {
-    /* empty */
-  } finally {
+  } catch {} finally {
     useStartupStore.getState().markBusy(name, false)
   }
 }

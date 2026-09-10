@@ -53,9 +53,7 @@ async function folderOrHome(): Promise<string> {
     try {
       await access(chosen)
       return chosen
-    } catch {
-      /* empty */
-    }
+    } catch {}
   }
 
   return join(homedir(), 'Documents')
@@ -97,11 +95,6 @@ export async function exportProfile(
   }
 }
 
-/**
- * Traz o arquivo para dentro. Programa que veio na bagagem e o catálogo daqui
- * não conhece entra antes da limpeza, senão ele seria descartado justamente
- * por ser desconhecido.
- */
 async function adopt(raw: unknown, mode: ImportMode): Promise<ImportResult> {
   const portable = readPortable(raw)
   if (!portable) return { status: 'invalid' }
@@ -167,10 +160,6 @@ export interface SyncedFolder {
   label: string
 }
 
-/**
- * Pasta que já sincroniza sozinha. Nada de conta nem de segredo no binário: o
- * Pulse só grava o arquivo dentro de uma pasta que o próprio serviço cuida.
- */
 export async function listFolders(): Promise<SyncedFolder[]> {
   const home = homedir()
 
@@ -189,9 +178,7 @@ export async function listFolders(): Promise<SyncedFolder[]> {
     try {
       await access(one.path)
       found.push(one)
-    } catch {
-      /* empty */
-    }
+    } catch {}
   }
 
   return found

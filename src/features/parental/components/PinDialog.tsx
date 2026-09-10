@@ -9,10 +9,6 @@ interface Props {
   onClose: () => void
 }
 
-/**
- * Quatro casas e o teclado de verdade. Sem teclado na tela: isto é um app de
- * computador, e quem está aqui tem teclado.
- */
 export function PinDialog({ purpose, extra, onDone, onClose }: Props) {
   const [digits, setDigits] = useState('')
   const [error, setError] = useState<string | null>(null)
