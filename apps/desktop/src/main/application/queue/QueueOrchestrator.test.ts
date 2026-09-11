@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { Run } from '@pulse/domain'
 import { QueueOrchestrator } from './QueueOrchestrator'
 import { InMemoryQueueRepository } from '../../infra/queue/InMemoryQueueRepository'
-import type { ProcessRunner, SpawnResult } from '../../ports/process-runner'
+import type { ProcessRunner } from '../../ports/process-runner'
+import type { InstallOutcome, PackageInstaller } from '../../ports/package-installer'
 import type { PackageRepository } from '../../ports/package-repository'
 import type { DiskSpaceProbe } from '../../ports/disk-space-probe'
 import type { SteamGameRequester } from '../../ports/steam-game-requester'
@@ -25,6 +26,16 @@ function fakeProcessRunner(overrides: Partial<ProcessRunner> = {}): ProcessRunne
     locateVsCode: async () => null,
     locateGit: async () => null,
     forgetPathCache: () => {},
+    ...overrides,
+  }
+}
+
+function fakePackageInstaller(overrides: Partial<PackageInstaller> = {}): PackageInstaller {
+  return {
+    install: async (): Promise<InstallOutcome> => ({ kind: 'ok', needsReboot: false }),
+    installElevated: async (): Promise<InstallOutcome> => ({ kind: 'ok', needsReboot: false }),
+    uninstall: async () => ({ kind: 'ok' }),
+    cancel: () => {},
     ...overrides,
   }
 }
@@ -64,9 +75,13 @@ function fakeClipboard(): ClipboardWriter {
   return { writeText: () => {} }
 }
 
-function makeOrchestrator(processRunner: ProcessRunner = fakeProcessRunner()): QueueOrchestrator {
+function makeOrchestrator(
+  packageInstaller: PackageInstaller = fakePackageInstaller(),
+  processRunner: ProcessRunner = fakeProcessRunner(),
+): QueueOrchestrator {
   return new QueueOrchestrator(
     processRunner,
+    packageInstaller,
     fakePackageRepository(),
     fakeDiskSpaceProbe(),
     fakeSteamGameRequester(),
@@ -102,10 +117,14 @@ describe('QueueOrchestrator', () => {
     expect(run.items[0]?.status).toBe('done')
   })
 
-  it('marks a failed winget run with a message derived from the exit code', async () => {
+  it('surfaces the failure message the installer reported', async () => {
     const orchestrator = makeOrchestrator(
-      fakeProcessRunner({
-        runWinget: async (): Promise<SpawnResult> => ({ code: 1, text: 'algo deu errado' }),
+      fakePackageInstaller({
+        install: async (): Promise<InstallOutcome> => ({
+          kind: 'failed',
+          code: '0x1',
+          message: 'O winget encerrou com 0x1.',
+        }),
       }),
     )
     orchestrator.start([{ id: 'chrome', drive: 'C:' }], 'C:')
@@ -115,10 +134,31 @@ describe('QueueOrchestrator', () => {
     expect(run.items[0]?.error).toContain('0x1')
   })
 
+  it('retries on another disk when the installer refuses the chosen one', async () => {
+    const seen: (string | undefined)[] = []
+    const orchestrator = makeOrchestrator(
+      fakePackageInstaller({
+        install: async (spec): Promise<InstallOutcome> => {
+          seen.push(spec.destination)
+          return seen.length === 1
+            ? { kind: 'drive-refused', code: '0x2', message: 'recusou o disco' }
+            : { kind: 'ok', needsReboot: false }
+        },
+      }),
+    )
+    orchestrator.start([{ id: 'chrome', drive: 'D:' }], 'D:')
+
+    const run = await waitForStatus(orchestrator, 'chrome', ['done', 'failed'])
+    expect(run.items[0]?.status).toBe('done')
+    expect(run.items[0]?.driveIgnored).toBe(true)
+    expect(seen[0]).toBeDefined()
+    expect(seen[1]).toBeUndefined()
+  })
+
   it('cancels a queued item before it starts', () => {
-    // PARALLEL_LIMIT is 3, so with a never-resolving runWinget the 4th item
+    // PARALLEL_LIMIT is 3, so with a never-resolving install the 4th item
     // stays genuinely queued instead of being dispatched synchronously.
-    const orchestrator = makeOrchestrator(fakeProcessRunner({ runWinget: () => new Promise(() => {}) }))
+    const orchestrator = makeOrchestrator(fakePackageInstaller({ install: () => new Promise(() => {}) }))
     orchestrator.start(
       [
         { id: 'chrome', drive: 'C:' },
@@ -135,7 +175,7 @@ describe('QueueOrchestrator', () => {
   })
 
   it('rejects retrying an item that has not finished', () => {
-    const orchestrator = makeOrchestrator(fakeProcessRunner({ runWinget: () => new Promise(() => {}) }))
+    const orchestrator = makeOrchestrator(fakePackageInstaller({ install: () => new Promise(() => {}) }))
     orchestrator.start([{ id: 'chrome', drive: 'C:' }], 'C:')
 
     orchestrator.retry('chrome')

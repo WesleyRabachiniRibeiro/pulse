@@ -1,5 +1,6 @@
 import { NodePowerShellRunner } from './infra/powershell/NodePowerShellRunner'
 import { WindowsProcessRunner } from './infra/process/WindowsProcessRunner'
+import { WingetPackageInstaller } from './infra/winget/WingetPackageInstaller'
 import { WindowsAutostartRegistry } from './infra/autostart/WindowsAutostartRegistry'
 import { ElectronClipboardWriter } from './infra/electron/ElectronClipboardWriter'
 import { InMemoryQueueRepository } from './infra/queue/InMemoryQueueRepository'
@@ -53,6 +54,7 @@ export function composeMain(): MainComponents {
 
   const queueOrchestrator = new QueueOrchestrator(
     processRunner,
+    new WingetPackageInstaller(processRunner),
     packageRepository,
     diskSpaceProbe,
     steamAdapter,

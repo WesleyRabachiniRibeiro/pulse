@@ -7,7 +7,6 @@ import {
 import {
   clock,
   formatGb,
-  normalizeText,
   LOG_LIMIT,
   PARALLEL_LIMIT,
   runSchema,
@@ -19,7 +18,7 @@ import {
   type Settings,
 } from '@pulse/domain'
 import { canEnqueue, isFinished } from '@pulse/utils'
-import type { ProcessRunner, SpawnResult } from '../../ports/process-runner'
+import type { ProcessRunner } from '../../ports/process-runner'
 import type { PackageRepository } from '../../ports/package-repository'
 import type { DiskSpaceProbe } from '../../ports/disk-space-probe'
 import type { SteamGameRequester } from '../../ports/steam-game-requester'
@@ -27,18 +26,12 @@ import type { BrowserDefaultSetter } from '../../ports/browser-default-setter'
 import type { AutostartRegistry, AutostartResult } from '../../ports/autostart-registry'
 import type { QueueRepository } from '../../ports/queue-repository'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
-import { readWingetProgress } from '../../infra/winget/WingetOutputParser'
-import {
-  alreadyInstalled,
-  hex,
-  installerBusy,
-  needsAdmin,
-  needsReboot,
-  refusedDrive,
-  wingetErrorMessage,
-} from '../../infra/winget/WingetErrorClassifier'
-import { adminFailure, REFUSED_BY_USER } from '../../infra/process/adminOutcome'
-import { runnerFailure } from '../../infra/process/interactiveUserOutcome'
+import type {
+  InstallProgress,
+  InstallSpec,
+  PackageInstaller,
+  UninstallOutcome,
+} from '../../ports/package-installer'
 
 type Listener = (run: Run) => void
 type SteamAnswer = 'confirmed' | 'refused' | 'timeout'
@@ -90,6 +83,7 @@ export class QueueOrchestrator {
 
   constructor(
     private readonly processRunner: ProcessRunner,
+    private readonly packageInstaller: PackageInstaller,
     private readonly packageRepository: PackageRepository,
     private readonly diskSpaceProbe: DiskSpaceProbe,
     private readonly steamGameRequester: SteamGameRequester,
@@ -330,41 +324,21 @@ export class QueueOrchestrator {
     return parts.join(' ')
   }
 
-  private packageArgs(packageId: string, destination?: string): string[] {
-    const base = [
-      'install',
-      '--id',
-      packageId,
-      '--exact',
-      '--accept-package-agreements',
-      '--accept-source-agreements',
-      '--disable-interactivity',
-      '--silent',
-    ]
-    return destination ? [...base, '--location', destination] : base
-  }
+  private installSpec(target: Item, program: Program, packageId?: string): InstallSpec {
+    const destination = target.driveIgnored
+      ? undefined
+      : this.destinationFor(program, target.drive)
+    const override = this.workloadOverride(target.settings, destination)
 
-  private wingetArgs(
-    program: Program,
-    destination?: string,
-    packageId?: string,
-    override?: string,
-  ): string[] {
-    const common = [
-      'install',
-      '--id',
-      packageId ?? program.winget ?? '',
-      '--exact',
-      '--accept-package-agreements',
-      '--accept-source-agreements',
-      '--disable-interactivity',
-    ]
-
-    if (program.source === 'msstore') return [...common, '--source', 'msstore']
-    if (override) return [...common, '--override', override]
-
-    const base = [...common, '--silent']
-    return destination ? [...base, '--location', destination] : base
+    return {
+      itemId: target.id,
+      packageId: packageId ?? program.winget ?? '',
+      name: program.name,
+      drive: target.drive,
+      fromStore: program.source === 'msstore',
+      ...(destination ? { destination } : {}),
+      ...(override ? { override } : {}),
+    }
   }
 
   private destinationFor(program: Program, drive: string): string | undefined {
@@ -614,26 +588,30 @@ export class QueueOrchestrator {
         const destination =
           target.drive.toUpperCase() === system ? undefined : `${target.drive}\\Pulse\\${packageId}`
 
-        const output = await this.processRunner.runWinget(
-          target.id,
-          this.packageArgs(packageId, destination),
-          (line) => {
+        const outcome = await this.packageInstaller.install(
+          {
+            itemId: target.id,
+            packageId,
+            name,
+            drive: target.drive,
+            fromStore: false,
+            ...(destination ? { destination } : {}),
+          },
+          (progress) => {
             const current = this.findItem(target.id)
-            const p = readWingetProgress(line)
-            if (current && p.percent !== undefined) {
-              current.percent = p.percent
+            if (current && progress.percent !== undefined) {
+              current.percent = progress.percent
               this.emitState(false)
             }
           },
-          target.drive,
         )
 
-        if (output.code === 0 || alreadyInstalled(output.code, output.text)) {
+        if (outcome.kind === 'ok' || outcome.kind === 'already-installed') {
           result.riotInstalled.push(name)
           this.note(`${name}: instalado`, 'ok')
         } else {
           result.riotFailed.push(name)
-          this.note(`${name}: falhou com ${hex(output.code)}`, 'error')
+          this.note(`${name}: falhou com ${outcome.code}`, 'error')
         }
       }
 
@@ -684,90 +662,87 @@ export class QueueOrchestrator {
     this.emitState()
     this.note(`winget install ${packageId ?? program.winget ?? ''} · disco ${target.drive}`, 'step')
 
-    const follow = (line: string): void => {
+    const follow = (progress: InstallProgress): void => {
       const current = this.findItem(target.id)
       if (!current) return
-      const p = readWingetProgress(line)
 
-      if (p.phase && p.phase !== current.status) {
-        current.status = p.phase
-        current.percent = p.phase === 'installing' ? 0 : (p.percent ?? 0)
+      if (progress.phase && progress.phase !== current.status) {
+        current.status = progress.phase
+        current.percent = progress.phase === 'installing' ? 0 : (progress.percent ?? 0)
         current.detail =
-          p.phase === 'installing' ? 'Instalando no disco' : 'Baixando do servidor oficial'
+          progress.phase === 'installing' ? 'Instalando no disco' : 'Baixando do servidor oficial'
         this.emitState()
         return
       }
-      if (p.percent !== undefined) {
-        current.percent = p.percent
+      if (progress.percent !== undefined) {
+        current.percent = progress.percent
         this.emitState(false)
       }
     }
 
     const gaveUp = (): boolean => this.canceled || this.canceledItems.has(target.id)
+    const specFor = (): InstallSpec => this.installSpec(target, program, packageId)
 
-    const destination = this.destinationFor(program, target.drive)
-    const wingetArgs = (): string[] => {
-      const where = target.driveIgnored ? undefined : destination
-      return this.wingetArgs(program, where, packageId, this.workloadOverride(target.settings, where))
-    }
+    let outcome = await this.packageInstaller.install(specFor(), follow)
+    let busyRetries = 0
+    let permissionAsks = 0
 
-    let output = await this.processRunner.runWinget(target.id, wingetArgs(), follow, target.drive)
+    while (!gaveUp()) {
+      if (outcome.kind === 'drive-refused' && !target.driveIgnored) {
+        target.driveIgnored = true
+        this.note(`${program.name}: o instalador ignora a escolha de disco`, 'info')
+        target.status = 'downloading'
+        target.percent = 0
+        this.emitState()
+        outcome = await this.packageInstaller.install(specFor(), follow)
+        continue
+      }
 
-    if (output.code !== 0 && destination && refusedDrive(output.text) && !gaveUp()) {
-      target.driveIgnored = true
-      this.note(`${program.name}: o instalador ignora a escolha de disco`, 'info')
-      target.status = 'downloading'
-      target.percent = 0
-      this.emitState()
-      output = await this.processRunner.runWinget(target.id, wingetArgs(), follow, target.drive)
-    }
+      if (outcome.kind === 'installer-busy' && busyRetries < MSI_ATTEMPTS - 1) {
+        busyRetries++
+        target.detail = 'Esperando outro instalador terminar'
+        this.emitState()
+        this.note(`${program.name}: Windows Installer ocupado, tentando de novo`, 'info')
+        await wait(MSI_WAIT_MS)
+        if (gaveUp()) break
 
-    for (let attempt = 1; attempt < MSI_ATTEMPTS; attempt++) {
-      if (output.code === 0 || gaveUp() || !installerBusy(output.code, output.text)) break
+        target.status = 'downloading'
+        target.percent = 0
+        target.detail = 'Começando o download'
+        this.emitState()
+        outcome = await this.packageInstaller.install(specFor(), follow)
+        continue
+      }
 
-      target.detail = 'Esperando outro instalador terminar'
-      this.emitState()
-      this.note(`${program.name}: Windows Installer ocupado, tentando de novo`, 'info')
-      await wait(MSI_WAIT_MS)
-      if (gaveUp()) break
+      const wantsPermission = outcome.kind === 'needs-admin' || outcome.kind === 'refused-by-user'
+      if (wantsPermission && permissionAsks < PERMISSION_ATTEMPTS) {
+        permissionAsks++
+        target.status = 'waiting'
+        target.needsPermission = true
+        target.percent = 0
+        target.detail =
+          outcome.kind === 'refused-by-user'
+            ? 'Permissão recusada. Conceda para continuar'
+            : 'Precisa da sua permissão de administrador'
+        this.emitState()
+        this.note(`${program.name}: esperando você conceder permissão de administrador`, 'step')
 
-      target.status = 'downloading'
-      target.percent = 0
-      target.detail = 'Começando o download'
-      this.emitState()
-      output = await this.processRunner.runWinget(target.id, wingetArgs(), follow, target.drive)
-    }
+        const granted = await this.waitForPermission(target.id)
+        delete target.needsPermission
 
-    let asked = 0
-    while (
-      !gaveUp() &&
-      output.code !== 0 &&
-      asked < PERMISSION_ATTEMPTS &&
-      (needsAdmin(output.code, output.text) || output.code === REFUSED_BY_USER)
-    ) {
-      asked++
-      target.status = 'waiting'
-      target.needsPermission = true
-      target.percent = 0
-      target.detail =
-        output.code === REFUSED_BY_USER
-          ? 'Permissão recusada. Conceda para continuar'
-          : 'Precisa da sua permissão de administrador'
-      this.emitState()
-      this.note(`${program.name}: esperando você conceder permissão de administrador`, 'step')
+        if (!granted || gaveUp()) break
 
-      const granted = await this.waitForPermission(target.id)
-      delete target.needsPermission
+        target.status = 'installing'
+        target.percent = 0
+        target.detail = 'Instalando com permissão de administrador'
+        this.emitState()
+        this.note(`${program.name}: instalando com permissão de administrador`, 'step')
 
-      if (!granted || gaveUp()) break
+        outcome = await this.packageInstaller.installElevated(specFor())
+        continue
+      }
 
-      target.status = 'installing'
-      target.percent = 0
-      target.detail = 'Instalando com permissão de administrador'
-      this.emitState()
-      this.note(`${program.name}: instalando com permissão de administrador`, 'step')
-
-      output = await this.processRunner.runElevated('winget', wingetArgs())
+      break
     }
 
     if (gaveUp()) {
@@ -782,9 +757,9 @@ export class QueueOrchestrator {
       return
     }
 
-    const wasThere = alreadyInstalled(output.code, output.text)
-    if (output.code === 0 || wasThere) {
-      const reboot = !wasThere && needsReboot(output.code, output.text)
+    if (outcome.kind === 'ok' || outcome.kind === 'already-installed') {
+      const wasThere = outcome.kind === 'already-installed'
+      const reboot = outcome.kind === 'ok' && outcome.needsReboot
 
       this.processRunner.forgetPathCache()
 
@@ -811,11 +786,10 @@ export class QueueOrchestrator {
     target.percent = 100
     target.detail = 'Não instalado'
     const noSpace = await this.fullDiskWarning(target.drive)
-    target.error =
-      noSpace ?? adminFailure(output.code, program.name) ?? wingetErrorMessage(output.code, output.text, program.name)
+    target.error = noSpace ?? outcome.message
     target.finishedAt = new Date().toISOString()
     this.emitState()
-    this.note(`${program.name}: falhou com ${hex(output.code)}`, 'error')
+    this.note(`${program.name}: falhou com ${outcome.code}`, 'error')
   }
 
   private chooseDefaultBrowser(items: readonly Item[]): Item | null {
@@ -978,33 +952,18 @@ export class QueueOrchestrator {
       }
     }
 
-    const args = [
-      'uninstall',
-      '--id',
-      program.winget,
-      '--exact',
-      '--silent',
-      '--accept-source-agreements',
-      '--disable-interactivity',
-    ]
+    const outcome = await this.packageInstaller.uninstall(id, program.winget, program.name)
 
-    // Elevado, o winget recusa desinstalar pacote de escopo de usuário. Como o
-    // Pulse roda como administrador, a remoção sai pela sessão da pessoa.
-    const output: SpawnResult = (await this.processRunner.isElevated())
-      ? await this.processRunner.runAsInteractiveUser('winget', args)
-      : await this.processRunner.runWinget(`uninstall:${id}`, args, () => {})
-
-    const failure = runnerFailure(output.code)
-    if (failure) {
-      this.note(`${program.name}: falhou ao desinstalar, ${failure}`, 'error')
+    if (outcome.kind === 'blocked') {
+      this.note(`${program.name}: falhou ao desinstalar, ${outcome.reason}`, 'error')
       return {
         ok: false,
         verified: false,
-        error: `O Pulse não conseguiu remover o ${program.name} pela sua sessão do Windows, porque ${failure}. Desinstale por "Aplicativos instalados" do Windows.`,
+        error: `O Pulse não conseguiu remover o ${program.name} pela sua sessão do Windows, porque ${outcome.reason}. Desinstale por "Aplicativos instalados" do Windows.`,
       }
     }
 
-    if (output.code === 0) {
+    if (outcome.kind === 'ok') {
       this.packageRepository.forgetCache()
       if (await this.disappeared(id)) {
         this.note(`${program.name}: desinstalado`, 'ok')
@@ -1022,7 +981,7 @@ export class QueueOrchestrator {
     this.packageRepository.forgetCache()
     if (await this.disappeared(id, LATE_CHECK_MS)) {
       this.note(
-        `${program.name}: desinstalado, embora o winget tenha encerrado com ${hex(output.code)}`,
+        `${program.name}: desinstalado, embora o winget tenha encerrado com ${failureCode(outcome)}`,
         'ok',
       )
       return { ok: true, verified: true }
@@ -1052,8 +1011,7 @@ export class QueueOrchestrator {
       }
     }
 
-    const text = normalizeText(output.text)
-    if (text.includes('nenhum pacote instalado') || text.includes('no installed package')) {
+    if (outcome.kind === 'not-managed') {
       return {
         ok: false,
         verified: false,
@@ -1061,8 +1019,11 @@ export class QueueOrchestrator {
       }
     }
 
-    const error = wingetErrorMessage(output.code, output.text, program.name)
-    this.note(`${program.name}: falhou ao desinstalar (${hex(output.code)})`, 'error')
-    return { ok: false, verified: false, error }
+    this.note(`${program.name}: falhou ao desinstalar (${outcome.code})`, 'error')
+    return { ok: false, verified: false, error: outcome.message }
   }
+}
+
+function failureCode(outcome: UninstallOutcome): string {
+  return outcome.kind === 'failed' ? outcome.code : ''
 }
