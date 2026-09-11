@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
+import { formatBytes } from '@pulse/domain'
 import type { SteamGame, SteamLibrary } from '@pulse/domain'
-import { formatBytes } from '@pulse/utils'
 import { bridge } from '@/shared/lib/bridge'
 import s from './AppSettings.module.css'
 

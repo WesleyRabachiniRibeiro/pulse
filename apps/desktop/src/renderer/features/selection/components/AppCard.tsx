@@ -1,5 +1,5 @@
+import { formatMb } from '@pulse/domain'
 import type { Program } from '@pulse/domain'
-import { formatMb } from '@pulse/utils'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import s from './AppCard.module.css'
 

@@ -1,5 +1,5 @@
+import { formatGb } from '@pulse/domain'
 import type { Drive } from '@pulse/domain'
-import { formatGb } from '@pulse/utils'
 import s from './DrivePicker.module.css'
 
 interface Props {

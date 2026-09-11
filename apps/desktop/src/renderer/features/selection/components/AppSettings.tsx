@@ -3,6 +3,8 @@ import { LuSearch } from 'react-icons/lu'
 import {
   categoriesOf,
   DEFAULT_GIT,
+  formatGb,
+  formatMb,
   optionsFor,
   settingsAreEmpty,
   type GitConfig,
@@ -11,7 +13,6 @@ import {
 import type { Program } from '@pulse/domain'
 import type { Drive } from '@pulse/domain'
 import type { SteamGame } from '@pulse/domain'
-import { formatMb, formatGb } from '@pulse/utils'
 import { bridge } from '@/shared/lib/bridge'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import {

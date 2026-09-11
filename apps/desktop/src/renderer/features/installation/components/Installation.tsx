@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { PROGRAM_BY_ID } from '@pulse/domain'
-import { PARALLEL_LIMIT, type Run } from '@pulse/domain'
+import { clock, PARALLEL_LIMIT, type Run } from '@pulse/domain'
 import {
   anyoneNeedingPermission,
   anyoneWaiting,
-  clock,
   isActive,
   isFinished,
   isWaiting,

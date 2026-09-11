@@ -1,4 +1,4 @@
-import { normalizeText } from '@pulse/utils'
+import { normalizeText } from '@pulse/domain'
 
 const UNITS: Record<string, number> = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 }
 

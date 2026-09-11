@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { PROGRAM_BY_ID, SECONDS_UNTIL_RESTART, type Run } from '@pulse/domain'
-import { anyNeedsRestart, driveLabel, elapsedSeconds, formatMb, groupSummary, tally } from '@pulse/utils'
+import { formatMb, PROGRAM_BY_ID, SECONDS_UNTIL_RESTART, type Run } from '@pulse/domain'
+import { anyNeedsRestart, driveLabel, elapsedSeconds, groupSummary, tally } from '@pulse/utils'
 import { bridge } from '@/shared/lib/bridge'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { ClampedText } from '@/shared/ui/ClampedText/ClampedText'

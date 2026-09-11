@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { equalsIgnoreCase, formatGb } from '@pulse/utils'
+import { equalsIgnoreCase } from './text'
+import { formatGb } from './formatting'
 
 export const checkStatusSchema = z.enum(['ok', 'warning', 'blocker'])
 export type CheckStatus = z.infer<typeof checkStatusSchema>

@@ -1,4 +1,4 @@
-import { normalizeText } from '@pulse/utils'
+import { normalizeText } from '@pulse/domain'
 
 export function hex(code: number): string {
   return `0x${(code >>> 0).toString(16).toUpperCase()}`

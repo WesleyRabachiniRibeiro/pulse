@@ -1,6 +1,6 @@
 import { PROGRAM_BY_ID } from '@pulse/catalog-data'
+import { equalsIgnoreCase } from '@pulse/domain'
 import type { Item, ItemStage, ItemStatus, Request, Run, Settings } from '@pulse/domain'
-import { equalsIgnoreCase } from './text'
 import { secondsBetween, secondsSince } from './time'
 
 export function driveLabel(drive: string, general: string): string {

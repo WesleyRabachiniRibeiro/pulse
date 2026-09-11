@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { CATALOG, CATEGORIES, PROGRAM_BY_ID } from '@pulse/catalog-data'
 import type { Bundle, Category, Program } from '@pulse/catalog-data'
-import { normalizeText } from '@pulse/utils'
+import { normalizeText } from './text'
 
 export type { CategoryId, Category, SettingsKind, Program, Bundle } from '@pulse/catalog-data'
 export { CATEGORIES, CATALOG, PROGRAM_BY_ID, BUNDLES } from '@pulse/catalog-data'

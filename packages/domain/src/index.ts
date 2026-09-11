@@ -1,3 +1,5 @@
+export * from './text'
+export * from './formatting'
 export * from './browsers'
 export * from './catalog'
 export * from './settings'

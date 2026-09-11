@@ -7,12 +7,13 @@ import {
   CATALOG,
   estimatedMinutes,
   filterCatalog,
+  formatMb,
   groupByCategory,
   PROGRAM_BY_ID,
   totalSizeMb,
 } from '@pulse/domain'
 import { type Request } from '@pulse/domain'
-import { formatMb, requestsToAppend } from '@pulse/utils'
+import { requestsToAppend } from '@pulse/utils'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { useAutostart } from '../store/useAutostart'
 import { useDrives, useWatchDrives } from '../store/useDrives'

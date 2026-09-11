@@ -5,6 +5,9 @@ import {
   type Program,
 } from '@pulse/catalog-data'
 import {
+  clock,
+  formatGb,
+  normalizeText,
   LOG_LIMIT,
   PARALLEL_LIMIT,
   runSchema,
@@ -15,7 +18,7 @@ import {
   type Run,
   type Settings,
 } from '@pulse/domain'
-import { canEnqueue, clock, formatGb, isFinished, normalizeText } from '@pulse/utils'
+import { canEnqueue, isFinished } from '@pulse/utils'
 import type { ProcessRunner, SpawnResult } from '../../ports/process-runner'
 import type { PackageRepository } from '../../ports/package-repository'
 import type { DiskSpaceProbe } from '../../ports/disk-space-probe'
