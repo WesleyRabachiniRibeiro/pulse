@@ -3,14 +3,14 @@ import { mountScene } from '../scene'
 import s from './Splash.module.css'
 
 interface Props {
-  liberado: boolean
+  ready: boolean
   onDone: () => void
 }
 
-export function Splash({ liberado, onDone }: Props) {
+export function Splash({ ready, onDone }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [animacaoOk, setAnimacaoOk] = useState(false)
-  const [saindo, setSaindo] = useState(false)
+  const [animationDone, setAnimationDone] = useState(false)
+  const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -18,44 +18,44 @@ export function Splash({ liberado, onDone }: Props) {
 
     let dispose: (() => void) | undefined
     try {
-      dispose = mountScene(canvas, () => setAnimacaoOk(true))
+      dispose = mountScene(canvas, () => setAnimationDone(true))
     } catch {
-      setAnimacaoOk(true)
+      setAnimationDone(true)
     }
 
-    const pular = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setAnimacaoOk(true)
+    const skip = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setAnimationDone(true)
     }
-    window.addEventListener('keydown', pular)
+    window.addEventListener('keydown', skip)
 
     return () => {
-      window.removeEventListener('keydown', pular)
+      window.removeEventListener('keydown', skip)
       dispose?.()
     }
   }, [])
 
   useEffect(() => {
-    if (saindo || !animacaoOk || !liberado) return
-    setSaindo(true)
+    if (leaving || !animationDone || !ready) return
+    setLeaving(true)
     const t = setTimeout(onDone, 420)
     return () => clearTimeout(t)
-  }, [animacaoOk, liberado, saindo, onDone])
+  }, [animationDone, ready, leaving, onDone])
 
-  const esperandoChecks = animacaoOk && !liberado
+  const waitingForChecks = animationDone && !ready
 
   return (
-    <div className={s.screen} data-leaving={saindo}>
+    <div className={s.screen} data-leaving={leaving}>
       <div className={s.stage}>
         <canvas ref={canvasRef} className={s.canvas} />
       </div>
 
       <div className={s.wordmark}>PULSE</div>
       <div className={s.tagline}>
-        {esperandoChecks ? 'conferindo o seu computador…' : 'preparando o seu computador'}
+        {waitingForChecks ? 'conferindo o seu computador…' : 'preparando o seu computador'}
       </div>
 
-      {!animacaoOk && (
-        <button type="button" className={s.skip} onClick={() => setAnimacaoOk(true)}>
+      {!animationDone && (
+        <button type="button" className={s.skip} onClick={() => setAnimationDone(true)}>
           pular
         </button>
       )}

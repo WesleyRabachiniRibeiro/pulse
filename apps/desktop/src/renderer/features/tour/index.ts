@@ -1,2 +1,2 @@
 export { Tour } from './components/Tour'
-export { useAbrirNaPrimeiraVez, useTourStore } from './store/useTour'
+export { useOpenOnFirstVisit, useTourStore } from './store/useTour'

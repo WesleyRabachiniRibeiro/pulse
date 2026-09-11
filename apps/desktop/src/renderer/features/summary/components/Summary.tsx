@@ -4,7 +4,7 @@ import { anyNeedsRestart, driveLabel, elapsedSeconds, formatMb, groupSummary, ta
 import { bridge } from '@/shared/lib/bridge'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { ClampedText } from '@/shared/ui/ClampedText/ClampedText'
-import { useRun } from '@/features/instalacao'
+import { useRun } from '@/features/installation'
 import s from './Summary.module.css'
 
 interface Props {

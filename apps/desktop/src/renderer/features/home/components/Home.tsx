@@ -53,7 +53,7 @@ export function Home({ onStart }: Props) {
             <button
               type="button"
               className={s.secondary}
-              onClick={() => useTourStore.getState().abrir()}
+              onClick={() => useTourStore.getState().openTour()}
             >
               Ver como funciona
             </button>

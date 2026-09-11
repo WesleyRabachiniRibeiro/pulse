@@ -25,7 +25,7 @@ export function TitleBar({ version, onHome }: Props) {
         <button
           className={`${s.control} ${s.ajuda}`}
           data-tour="ajuda"
-          onClick={() => useTourStore.getState().abrir()}
+          onClick={() => useTourStore.getState().openTour()}
           aria-label="Como o Pulse funciona"
           title="Como o Pulse funciona"
         >

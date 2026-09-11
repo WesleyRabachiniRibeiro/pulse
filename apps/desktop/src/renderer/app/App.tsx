@@ -10,13 +10,13 @@ import {
   usePreflightDrive,
   usePreflightSettled,
   useWatchPreflight,
-} from '@/features/verificacao'
-import { Selection, useSelection, useWatchAutostart, useWatchInstalled } from '@/features/selecao'
-import { Installation, useRun, useWatchInstallation } from '@/features/instalacao'
-import { Summary } from '@/features/resumo'
+} from '@/features/preflight'
+import { Selection, useSelection, useWatchAutostart, useWatchInstalled } from '@/features/selection'
+import { Installation, useRun, useWatchInstallation } from '@/features/installation'
+import { Summary } from '@/features/summary'
 import { Splash } from '@/features/splash'
 import { useWatchUpdate } from '@/features/updates'
-import { Tour, useAbrirNaPrimeiraVez, useTourStore } from '@/features/tour'
+import { Tour, useOpenOnFirstVisit, useTourStore } from '@/features/tour'
 import {
   savePreference,
   useLoadPreferences,
@@ -31,39 +31,39 @@ export function App() {
   useLoadPreferences()
   useWatchPreflight()
   useWatchUpdate()
-  const carregado = usePreferencesLoaded()
+  const loaded = usePreferencesLoaded()
   const prefs = usePreferences()
-  const verificado = usePreflightSettled()
-  const [aberturaTerminou, setAberturaTerminou] = useState(false)
+  const settled = usePreflightSettled()
+  const [splashDone, setSplashDone] = useState(false)
 
   useEffect(() => {
-    if (carregado) startPreflight(prefs.drive ?? undefined)
-  }, [carregado, prefs.drive])
+    if (loaded) startPreflight(prefs.drive ?? undefined)
+  }, [loaded, prefs.drive])
 
   return (
     <>
-      {carregado ? <Shell driveSalvo={prefs.drive ?? null} /> : <div className={s.page} />}
-      {!aberturaTerminou && (
-        <Splash liberado={carregado && verificado} onDone={() => setAberturaTerminou(true)} />
+      {loaded ? <Shell savedDrive={prefs.drive ?? null} /> : <div className={s.page} />}
+      {!splashDone && (
+        <Splash ready={loaded && settled} onDone={() => setSplashDone(true)} />
       )}
     </>
   )
 }
 
-function Shell({ driveSalvo }: { driveSalvo: string | null }) {
+function Shell({ savedDrive }: { savedDrive: string | null }) {
   const [step, setStep] = useState(0)
-  const [drive, setDrive] = useState<string | null>(driveSalvo)
+  const [drive, setDrive] = useState<string | null>(savedDrive)
   const selected = useSelection((st) => st.selected)
-  const driveVerificado = usePreflightDrive()
+  const verifiedDrive = usePreflightDrive()
 
   useWatchInstallation()
   const run = useRun()
 
-  const passouDaVerificacao = step >= 2
+  const pastPreflight = step >= 2
 
-  useWatchInstalled(run?.finishedAt ?? null, passouDaVerificacao)
-  useWatchAutostart(run?.finishedAt ?? null, passouDaVerificacao)
-  useAbrirNaPrimeiraVez()
+  useWatchInstalled(run?.finishedAt ?? null, pastPreflight)
+  useWatchAutostart(run?.finishedAt ?? null, pastPreflight)
+  useOpenOnFirstVisit()
 
   const totalMb = totalSizeMb(selected)
   const size = selected.size === 0 ? 'nada escolhido ainda' : `${formatMb(totalMb)} para baixar`
@@ -71,25 +71,25 @@ function Shell({ driveSalvo }: { driveSalvo: string | null }) {
   const available = [1, ...(drive ? [2] : []), ...(run ? [3] : []), ...(run?.finishedAt ? [4] : [])]
 
   useEffect(() => {
-    if (driveVerificado !== undefined) setDrive(driveVerificado)
-  }, [driveVerificado])
+    if (verifiedDrive !== undefined) setDrive(verifiedDrive)
+  }, [verifiedDrive])
 
   useEffect(() => {
     if (!drive && step === 2) setStep(1)
   }, [drive, step])
 
   useEffect(() => {
-    if (drive && drive !== driveSalvo) void savePreference({ drive })
-  }, [drive, driveSalvo])
+    if (drive && drive !== savedDrive) void savePreference({ drive })
+  }, [drive, savedDrive])
 
-  const telaAlvo = useTourStore((t) => t.telaAlvo)
-  const disponiveis = available.join(',')
+  const targetScreen = useTourStore((t) => t.targetScreen)
+  const availableList = available.join(',')
 
   useEffect(() => {
-    if (telaAlvo === null) return
-    if (telaAlvo === 0 || disponiveis.split(',').includes(String(telaAlvo))) setStep(telaAlvo)
-    useTourStore.getState().pedirTela(null)
-  }, [telaAlvo, disponiveis])
+    if (targetScreen === null) return
+    if (targetScreen === 0 || availableList.split(',').includes(String(targetScreen))) setStep(targetScreen)
+    useTourStore.getState().requestScreen(null)
+  }, [targetScreen, availableList])
 
   return (
     <div className={s.page}>

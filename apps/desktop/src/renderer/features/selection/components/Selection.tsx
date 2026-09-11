@@ -13,7 +13,7 @@ import {
 } from '@pulse/domain'
 import { type Request } from '@pulse/domain'
 import { formatMb, requestsToAppend } from '@pulse/utils'
-import { appendToQueue, startInstallation, useRun } from '@/features/instalacao'
+import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { useAutostart } from '../store/useAutostart'
 import { useDrives, useWatchDrives } from '../store/useDrives'
 import { useInstalled, useInstalledFailed, useInstalledLoaded } from '../store/useInstalled'
@@ -51,8 +51,8 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const autostart = useAutostart()
 
   useWatchDrives()
-    useEffect(() => {
-    useTourStore.getState().definirContexto(inSettings ? 'ajustes' : 'grade')
+  useEffect(() => {
+    useTourStore.getState().setContext(inSettings ? 'settings' : 'grid')
   }, [inSettings])
 
   const groups = useMemo(() => groupByCategory(filterCatalog(search)), [search])
