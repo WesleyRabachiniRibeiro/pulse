@@ -1,9 +1,4 @@
-import {
-  PROGRAM_BY_ID,
-  RIOT_BY_ID,
-  TIBIA_BY_ID,
-  type Program,
-} from '@pulse/catalog-data'
+import { PROGRAM_BY_ID, type Program } from '@pulse/catalog-data'
 import {
   clock,
   formatGb,
@@ -23,7 +18,7 @@ import type { PackageRepository } from '../../ports/package-repository'
 import type { DiskSpaceProbe } from '../../ports/disk-space-probe'
 import type { SteamGameRequester } from '../../ports/steam-game-requester'
 import type { BrowserDefaultSetter } from '../../ports/browser-default-setter'
-import type { AutostartRegistry, AutostartResult } from '../../ports/autostart-registry'
+import type { AutostartRegistry } from '../../ports/autostart-registry'
 import type { QueueRepository } from '../../ports/queue-repository'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
 import type {
@@ -32,9 +27,9 @@ import type {
   PackageInstaller,
   UninstallOutcome,
 } from '../../ports/package-installer'
+import { runSteps, type StepContext } from './steps'
 
 type Listener = (run: Run) => void
-type SteamAnswer = 'confirmed' | 'refused' | 'timeout'
 
 export interface UninstallResult {
   ok: boolean
@@ -43,7 +38,6 @@ export interface UninstallResult {
 }
 
 const WAIT_LIMIT_MS = 15 * 60_000
-const READS_UNTIL_GIVING_UP = 3
 const MSI_WAIT_MS = 6000
 const MSI_ATTEMPTS = 3
 const PERMISSION_ATTEMPTS = 3
@@ -348,277 +342,47 @@ export class QueueOrchestrator {
     return `${drive}\\Pulse\\${program.winget ?? program.id}`
   }
 
-  private async requestSteamGame(appid: string): Promise<SteamAnswer> {
-    if (await this.steamGameRequester.hasManifest(appid)) return 'confirmed'
-
-    await this.processRunner.openUri(`steam://install/${appid}`)
-
-    const limit = Date.now() + WAIT_LIMIT_MS
-    let withoutDialog = 0
-    let grace = 6
-
-    while (Date.now() < limit) {
-      await wait(2000)
-
-      if (await this.steamGameRequester.hasManifest(appid)) return 'confirmed'
-
-      if (await this.steamGameRequester.isInstallDialogOpen()) {
-        withoutDialog = 0
-        grace = 0
-        continue
-      }
-
-      if (grace > 0) {
-        grace--
-        continue
-      }
-
-      withoutDialog++
-      if (withoutDialog >= READS_UNTIL_GIVING_UP) {
-        return (await this.steamGameRequester.hasManifest(appid)) ? 'confirmed' : 'refused'
-      }
-    }
-
-    return (await this.steamGameRequester.hasManifest(appid)) ? 'confirmed' : 'timeout'
-  }
-
-  private async waitForSteamSignIn(): Promise<boolean> {
-    await this.processRunner.openUri('steam://open/main')
-
-    const limit = Date.now() + WAIT_LIMIT_MS
-    while (Date.now() < limit) {
-      await wait(3000)
-      if (await this.steamGameRequester.isSignedIn()) return true
-    }
-    return false
-  }
-
   private async applyExtras(target: Item, program: Program): Promise<void> {
     const settings = target.settings
     if (!settings) return
 
-    const extensions = settings.extensions ?? []
-    const result: NonNullable<Item['result']> = {
-      extensions: 0,
-      extensionsRequested: extensions.length,
-      git: false,
-      gamesAccepted: [],
-      gamesRefused: [],
-      gamesPending: [],
-      pagesOpened: [],
-      riotInstalled: [],
-      riotFailed: [],
-      gitLogin: false,
-    }
-    target.result = result
+    target.result = emptyResult()
     target.status = 'configuring'
     target.detail = 'Aplicando os seus ajustes'
     this.emitState()
 
-    if (extensions.length > 0) {
-      const code = await this.processRunner.locateVsCode()
-
-      if (!code) {
-        this.note(
-          `${program.name}: não encontrei o comando do VS Code, as extensões ficaram de fora`,
-          'error',
-        )
-      } else {
-        let done = 0
-        for (const extension of extensions) {
-          target.detail = `Instalando extensões (${done + 1}/${extensions.length})`
-          this.emitState()
-          const ok = await this.processRunner.run(code, ['--install-extension', extension, '--force'])
-          if (ok) {
-            done++
-            result.extensions = done
-          } else {
-            this.note(`${program.name}: não deu para instalar a extensão ${extension}`, 'error')
-          }
-        }
-        this.note(`${program.name}: ${done} de ${extensions.length} extensões instaladas`, 'ok')
-      }
-    }
-
-    const git = settings.git
-    if (git && (git.name || git.email || git.branch || git.saveLogin)) {
-      target.detail = 'Configurando o Git'
-      this.emitState()
-
-      const gitExe = await this.processRunner.locateGit()
-      if (!gitExe) {
-        this.note(`${program.name}: não encontrei o git, a configuração ficou para depois`, 'error')
-      } else {
-        const pairs: [string, string][] = [
-          ['user.name', git.name],
-          ['user.email', git.email],
-          ['init.defaultBranch', git.branch],
-        ]
-        for (const [key, value] of pairs) {
-          if (!value.trim()) continue
-          const ok = await this.processRunner.run(gitExe, ['config', '--global', key, value])
-          if (ok) result.git = true
-          else this.note(`${program.name}: falhou ao gravar ${key}`, 'error')
-        }
-
-        if (git.saveLogin) {
-          const ok = await this.processRunner.run(gitExe, [
-            'config',
-            '--global',
-            'credential.helper',
-            'manager',
-          ])
-          result.gitLogin = ok
-          this.note(
-            ok
-              ? `${program.name}: o Windows vai guardar o login do GitHub`
-              : `${program.name}: falhou ao ligar o gerenciador de credenciais`,
-            ok ? 'ok' : 'error',
-          )
-        }
-
-        this.emitState()
-        this.note(`${program.name}: Git configurado`, 'ok')
-      }
-    }
-
-    if (settings.autostart !== undefined) {
-      target.detail = settings.autostart
-        ? 'Deixando abrir com o Windows'
-        : 'Tirando da inicialização do Windows'
-      this.emitState()
-
-      const effect: AutostartResult = await this.autostartRegistry.setAutostart(
-        program,
-        settings.autostart,
-      )
-      result.autostart = effect
-      this.emitState()
-      this.note(
-        effect === 'no-entry'
-          ? `${program.name}: não se cadastra para abrir sozinho, nada a mudar`
-          : effect === 'on'
-            ? `${program.name}: passa a abrir com o Windows`
-            : `${program.name}: não abre mais sozinho`,
-        effect === 'no-entry' ? 'info' : 'ok',
-      )
-    }
-
-    const games = settings.games ?? []
-    if (games.length > 0) {
-      let signedIn = await this.steamGameRequester.isSignedIn()
-
-      if (!signedIn) {
-        target.status = 'waiting'
-        target.detail = 'Entre na sua conta Steam para baixar os jogos'
-        this.emitState()
-        this.note('Steam: esperando você entrar na conta', 'step')
-        signedIn = await this.waitForSteamSignIn()
-      }
-
-      if (!signedIn) {
-        for (const game of games) result.gamesPending.push(game.name)
-        this.note('Steam: ninguém entrou na conta, os jogos ficaram para depois', 'error')
-      } else {
-        for (const [index, game] of games.entries()) {
-          const position = games.length > 1 ? ` (${index + 1}/${games.length})` : ''
-          target.status = 'waiting'
-          target.detail = `Confirme "${game.name}" na janela da Steam${position}`
-          this.emitState()
-          this.note(`Steam: esperando você decidir sobre ${game.name}`, 'step')
-
-          const answer = await this.requestSteamGame(game.appid)
-
-          if (answer === 'confirmed') {
-            result.gamesAccepted.push(game.name)
-            this.note(`Steam: ${game.name} confirmado, download na fila da Steam`, 'ok')
-          } else if (answer === 'refused') {
-            result.gamesRefused.push(game.name)
-            this.note(`Steam: ${game.name} recusado por você`, 'info')
-          } else {
-            result.gamesPending.push(game.name)
-            this.note(`Steam: ${game.name} ficou sem resposta e foi deixado para depois`, 'error')
-          }
-        }
-      }
-
-      target.status = 'configuring'
-      target.detail = 'Terminando'
-      this.emitState()
-      this.note(`${program.name}: ${result.gamesAccepted.length} de ${games.length} jogos aceitos`, 'ok')
-    }
-
-    const pages = settings.tibia ?? []
-    if (pages.length > 0) {
-      target.status = 'configuring'
-      this.emitState()
-
-      for (const [index, id] of pages.entries()) {
-        const client = TIBIA_BY_ID.get(id)
-        if (!client?.url) continue
-
-        target.detail = `Abrindo a página do ${client.name} (${index + 1}/${pages.length})`
-        this.emitState()
-
-        if (await this.processRunner.openUri(client.url)) {
-          result.pagesOpened.push(client.name)
-          this.note(`${client.name}: página oficial aberta no navegador`, 'ok')
-        } else {
-          this.note(`${client.name}: não deu para abrir a página`, 'error')
-        }
-
-        await wait(1200)
-      }
-    }
-
-    const riot = settings.riot ?? []
-    if (riot.length > 0) {
-      const system = (process.env['SystemDrive'] ?? 'C:').toUpperCase()
-
-      for (const [index, packageId] of riot.entries()) {
-        const name = RIOT_BY_ID.get(packageId)?.name ?? packageId
-        const position = riot.length > 1 ? ` (${index + 1}/${riot.length})` : ''
-
+    const ctx: StepContext = {
+      itemId: target.id,
+      program,
+      drive: target.drive,
+      ports: {
+        processRunner: this.processRunner,
+        packageInstaller: this.packageInstaller,
+        autostartRegistry: this.autostartRegistry,
+        steamGameRequester: this.steamGameRequester,
+      },
+      say: (detail) => {
         target.status = 'configuring'
-        target.percent = 0
-        target.detail = `Instalando ${name}${position}`
+        target.detail = detail
         this.emitState()
-        this.note(`${program.name}: instalando ${name}`, 'step')
-
-        const destination =
-          target.drive.toUpperCase() === system ? undefined : `${target.drive}\\Pulse\\${packageId}`
-
-        const outcome = await this.packageInstaller.install(
-          {
-            itemId: target.id,
-            packageId,
-            name,
-            drive: target.drive,
-            fromStore: false,
-            ...(destination ? { destination } : {}),
-          },
-          (progress) => {
-            const current = this.findItem(target.id)
-            if (current && progress.percent !== undefined) {
-              current.percent = progress.percent
-              this.emitState(false)
-            }
-          },
-        )
-
-        if (outcome.kind === 'ok' || outcome.kind === 'already-installed') {
-          result.riotInstalled.push(name)
-          this.note(`${name}: instalado`, 'ok')
-        } else {
-          result.riotFailed.push(name)
-          this.note(`${name}: falhou com ${outcome.code}`, 'error')
-        }
-      }
-
-      target.percent = 100
-      this.emitState()
+      },
+      waitFor: (detail) => {
+        target.status = 'waiting'
+        target.detail = detail
+        this.emitState()
+      },
+      progress: (percent) => {
+        target.percent = percent
+        this.emitState(false)
+      },
+      note: (text, level) => this.note(text, level),
+      canceled: () => this.canceled || this.canceledItems.has(target.id),
     }
+
+    Object.assign(target.result, await runSteps(settings, ctx))
+    this.emitState()
   }
+
 
   private async install(target: Item): Promise<void> {
     const program = PROGRAM_BY_ID.get(target.id)
