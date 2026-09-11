@@ -120,7 +120,7 @@ Só traduzem canal IPC → caso de uso → resposta/evento. Nenhuma regra de neg
 
 ## Renderer (as 4 telas)
 
-Cada tela é um módulo vertical (`features/verificacao`, `features/selecao`, `features/instalacao`, `features/resumo`), navegado pela trilha lateral na ordem fixa do domínio. Dentro de cada feature: componentes de UI + um store fino (Zustand/Redux) que só espelha o que vem de `queue:update`/`checks:update` — **o renderer não recalcula estado de negócio, só exibe**. Cálculo de "quanto falta baixar", "quanto espaço sobra", "quanto tempo falta" vêm prontos do domínio via IPC, não são recalculados na tela.
+Cada tela é um módulo vertical (`features/preflight`, `features/selection`, `features/installation`, `features/summary`), navegado pela trilha lateral na ordem fixa do domínio. Dentro de cada feature: componentes de UI + um store fino (Zustand/Redux) que só espelha o que vem de `queue:update`/`checks:update` — **o renderer não recalcula estado de negócio, só exibe**. Cálculo de "quanto falta baixar", "quanto espaço sobra", "quanto tempo falta" vêm prontos do domínio via IPC, não são recalculados na tela.
 
 ## Estrutura de pastas (monorepo, workspaces)
 
@@ -138,10 +138,10 @@ pulse/
 │       │   ├── preload/                # contextBridge, sem lógica
 │       │   └── renderer/
 │       │       └── features/
-│       │           ├── verificacao/
-│       │           ├── selecao/
-│       │           ├── instalacao/
-│       │           └── resumo/
+│       │           ├── preflight/
+│       │           ├── selection/
+│       │           ├── installation/
+│       │           └── summary/
 │       └── electron-builder.yml
 ├── packages/
 │   ├── domain/          # entidades, VOs, regras puras, máquina de estados da fila
