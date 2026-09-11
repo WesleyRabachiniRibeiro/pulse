@@ -2,6 +2,7 @@
   "name": "pulse-workspace",
   "private": true,
   "license": "SEE LICENSE IN LICENSE.md",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=20"
   },
