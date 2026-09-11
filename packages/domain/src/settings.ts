@@ -8,16 +8,9 @@ import {
   type SettingsOption,
 } from '@pulse/catalog-data'
 import { steamGameSchema } from './steam'
+import { gitSchema } from './git'
 
 export type { SettingsOption } from '@pulse/catalog-data'
-
-export const gitSchema = z.object({
-  name: z.string(),
-  email: z.string(),
-  branch: z.string(),
-  saveLogin: z.boolean().optional(),
-})
-export type GitConfig = z.infer<typeof gitSchema>
 
 export const settingsSchema = z.object({
   packageId: z.string().optional(),
@@ -32,8 +25,6 @@ export const settingsSchema = z.object({
   openAfter: z.boolean().optional(),
 })
 export type Settings = z.infer<typeof settingsSchema>
-
-export const DEFAULT_GIT: GitConfig = { name: '', email: '', branch: 'main' }
 
 export function optionsFor(kind: SettingsKind): readonly SettingsOption[] {
   if (kind === 'vscode') return VSCODE_EXTENSIONS
