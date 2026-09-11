@@ -29,10 +29,15 @@ export default defineConfig({
       lib: { entry: resolve(__dirname, 'src/main/index.ts') },
     },
   },
+  // O preload roda dentro do sandbox do Chromium, que só executa CommonJS: um
+  // .mjs morre com "Cannot use import statement outside a module" e o
+  // contextBridge nunca expõe a ponte. Daí o formato cjs. Pelo mesmo motivo o
+  // zod precisa entrar no bundle — no sandbox não há require de node_modules.
   preload: {
-    plugins: [externalizeDepsPlugin({ exclude: WORKSPACE_PACKAGES })],
+    plugins: [externalizeDepsPlugin({ exclude: [...WORKSPACE_PACKAGES, 'zod'] })],
     build: {
-      lib: { entry: resolve(__dirname, 'src/preload/index.ts') },
+      lib: { entry: resolve(__dirname, 'src/preload/index.ts'), formats: ['cjs'] },
+      rollupOptions: { output: { entryFileNames: 'index.cjs' } },
     },
   },
   renderer: {

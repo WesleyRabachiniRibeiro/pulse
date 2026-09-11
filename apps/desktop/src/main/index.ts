@@ -20,7 +20,7 @@ function createWindow(): void {
     icon: nativeImage.createFromDataURL(APP_ICON),
     backgroundColor: '#0C0A16',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
