@@ -1,12 +1,15 @@
 import { app, BrowserWindow, nativeImage, Notification } from 'electron'
+import { join } from 'node:path'
 import { PROGRAM_BY_ID, type Item, type Run } from '@pulse/domain'
 import { anyoneWaiting, tally } from '@pulse/utils'
 import type { NotificationPresenter } from '../../ports/notification-presenter'
 
-const BADGE_FAILED =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAfklEQVR42r2TwQnAIAxFXcOJnMdJ3MKNeuggQntof/kSDw16KNEGPohJXkiMDoCzyK0EeABB5L8AGJwB4C6lSiz3QL3k/do2nCnhiLGKZ97RpyEakBnYErUEkkcAkl+VtegT8z1AYL+j5CaZSVgCMLdgHuKUZzQv0pRV/vc3PibDGLLxBhV4AAAAAElFTkSuQmCC'
-const BADGE_WAITING =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAfklEQVR42mP4//8/AyWYgZYGSP7//98diiVJMQCkeNl/EPj1HoIhYBk2g7Bpvvnvzb7/f84E/f+9XwWMQWyQGEgO3RB0A5aBFMI0omOoIctwGQAyGcVmdAySgwJJbAa4g/yLSzMMQ8PEnSYGUOwFigORKtFIcUKiSlKmb24EAN5yGYJdCRo9AAAAAElFTkSuQmCC'
+function iconPath(fileName: string): string {
+  const dir = app.isPackaged
+    ? join(process.resourcesPath, 'icons')
+    : join(app.getAppPath(), 'resources', 'icons')
+  return join(dir, fileName)
+}
 
 type Alert = 'failed' | 'waiting' | null
 
@@ -90,9 +93,9 @@ export class ElectronNotificationPresenter implements NotificationPresenter {
       return
     }
 
-    const url = badge === 'failed' ? BADGE_FAILED : BADGE_WAITING
+    const path = iconPath(badge === 'failed' ? 'badge-failed.png' : 'badge-waiting.png')
     const label = badge === 'failed' ? 'Algo falhou' : 'Precisa de você'
-    window.setOverlayIcon(nativeImage.createFromDataURL(url), label)
+    window.setOverlayIcon(nativeImage.createFromPath(path), label)
   }
 
   private followFocus(window: BrowserWindow): void {

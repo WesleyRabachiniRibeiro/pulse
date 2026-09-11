@@ -1,8 +1,16 @@
+import { app } from 'electron'
 import { spawn } from 'node:child_process'
+import { join } from 'node:path'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
-import { scriptPath } from './script-path'
 
 const DEFAULT_TIMEOUT_MS = 25_000
+
+function scriptPath(scriptName: string): string {
+  const dir = app.isPackaged
+    ? join(process.resourcesPath, 'powershell', 'scripts')
+    : join(app.getAppPath(), 'resources', 'powershell', 'scripts')
+  return join(dir, scriptName)
+}
 
 function argsFor(scriptName: string, params: Record<string, unknown> | undefined): string[] {
   const base = [

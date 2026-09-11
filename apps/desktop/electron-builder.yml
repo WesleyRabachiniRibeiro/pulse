@@ -13,6 +13,8 @@ files:
 extraResources:
   - from: resources/powershell/scripts
     to: powershell/scripts
+  - from: resources/icons
+    to: icons
 
 publish:
   provider: github

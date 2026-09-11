@@ -13,7 +13,7 @@ import { WingetPackageRepository } from './infra/catalog/WingetPackageRepository
 import { WindowsAutostartReader } from './infra/catalog/WindowsAutostartReader'
 import { SteamAdapter } from './infra/steam/SteamAdapter'
 import { BrowserDefaultSetterAdapter } from './infra/browsers/BrowserDefaultSetterAdapter'
-import { JsonPreferencesStore } from './infra/fs/JsonPreferencesStore'
+import { JsonPreferencesStore } from './infra/preferences/JsonPreferencesStore'
 import { ElectronUpdateChecker } from './infra/updates/ElectronUpdateChecker'
 import { ElectronNotificationPresenter, nameAppForWindows } from './infra/electron/ElectronNotificationPresenter'
 
