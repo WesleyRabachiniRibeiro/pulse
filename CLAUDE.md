@@ -15,12 +15,27 @@ Arquitetura de referência: `.claude/skills/pulse-architecture/SKILL.md`. Qualqu
 
 ## Monorepo
 
-pnpm workspaces: `apps/desktop` (o app Electron) + `packages/domain`, `packages/ipc-contract`, `packages/catalog-data`.
+pnpm workspaces: `apps/desktop` (o app Electron) + quatro pacotes, que só podem se importar nesta ordem, sem volta:
+
+```
+catalog-data → domain → utils → ipc-contract, apps/desktop
+```
+
+- `catalog-data` — os programas do catálogo e as opções de configuração. Dados, sem dependência nenhuma.
+- `domain` — regras puras, schemas zod das entidades, e as primitivas de texto e formatação (`normalizeText`, `formatMb`, `clock`) que as regras usam para montar mensagem.
+- `utils` — lógica derivada sobre os tipos do domínio, compartilhada entre main e renderer: predicados da fila, progresso, agrupamento do resumo.
+- `ipc-contract` — schemas e tipos dos canais de IPC.
+
+Uma aresta na direção contrária quebra o `pnpm -r` com `ERR_PNPM_TASK_CYCLE`, não só o bom gosto. Se o domínio precisar de algo que está em `utils`, essa coisa desce para o domínio.
 
 - `pnpm dev` — sobe o app em desenvolvimento.
 - `pnpm build` / `pnpm dist` — build de produção / instalador.
 - `pnpm typecheck` — `tsc --noEmit` em cada workspace.
-- `pnpm test` — testes de `vitest` (domain, e infra testável sem PowerShell/winget reais).
+- `pnpm test` — o teste de arquitetura da raiz, depois os de `vitest` de cada workspace.
+
+`architecture.test.ts`, na raiz, percorre os imports e reprova quem cruza camada. Ele é o que faz as regras acima valerem de verdade, então regra nova aqui é regra nova lá.
+
+A versão do pnpm está fixada em `packageManager`. Os shims do corepack estão desligados nesta máquina, porque o corepack que vem com o Node 24 procura `bin/pnpm.cjs`, arquivo que o pnpm 12 não publica mais. Se `pnpm` voltar a falhar com `Cannot find module ... pnpm.cjs`, rode `corepack disable pnpm`.
 
 ## Terminal
 
