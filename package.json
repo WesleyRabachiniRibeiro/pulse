@@ -10,10 +10,12 @@
     "dev": "pnpm --filter desktop dev",
     "build": "pnpm -r build",
     "dist": "pnpm --filter desktop dist",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "typecheck": "tsc --noEmit -p tsconfig.root.json && pnpm -r typecheck",
+    "test": "vitest run && pnpm -r test"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
   }
 }
