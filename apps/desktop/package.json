@@ -1,0 +1,43 @@
+{
+  "name": "desktop",
+  "productName": "Pulse",
+  "version": "0.1.5",
+  "description": "Sets up a new PC in one pass: pick the programs, install them all in sequence.",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "pnpm typecheck && electron-vite build",
+    "dist": "pnpm build && electron-builder --win",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pulse/catalog-data": "workspace:*",
+    "@pulse/domain": "workspace:*",
+    "@pulse/ipc-contract": "workspace:*",
+    "@pulse/utils": "workspace:*",
+    "electron-updater": "^6.8.9",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "44.2.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "5.0.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-icons": "5.7.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "3.2.4",
+    "zustand": "5.0.15"
+  },
+  "author": "Wesley Rabachini Ribeiro"
+}

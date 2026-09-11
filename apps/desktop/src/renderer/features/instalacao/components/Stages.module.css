@@ -1,0 +1,63 @@
+.track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--tx-6);
+}
+
+.stage + .stage::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: var(--border-wire);
+  margin: 0 9px 0 2px;
+}
+
+.mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-field);
+}
+
+.stage[data-state='done'] {
+  color: var(--tx-4);
+}
+
+.stage[data-state='done'] .mark {
+  background: var(--ok);
+  border-color: transparent;
+}
+
+.stage[data-state='current'] {
+  color: var(--tx);
+}
+
+.stage[data-state='current'] .mark {
+  background: var(--grad-txt-a);
+  border-color: transparent;
+  animation: ia-pulse 1.2s ease-in-out infinite;
+}
+
+.stage[data-state='stopped'] {
+  color: var(--blocker);
+}
+
+.stage[data-state='stopped'] .mark {
+  background: var(--blocker);
+  border-color: transparent;
+}

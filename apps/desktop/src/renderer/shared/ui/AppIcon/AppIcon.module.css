@@ -1,0 +1,30 @@
+.tile {
+  flex: 0 0 var(--side);
+  width: var(--side);
+  height: var(--side);
+  border-radius: calc(var(--side) * 0.29);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--tint) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tint) 26%, transparent);
+}
+
+.brand {
+  width: 56%;
+  height: 56%;
+  background: var(--tint);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.monogram {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: calc(var(--side) * 0.35);
+  color: var(--tint);
+}
