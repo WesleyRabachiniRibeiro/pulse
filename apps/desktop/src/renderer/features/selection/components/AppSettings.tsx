@@ -90,23 +90,23 @@ export function AppSettings({
   const removing = useUninstalling(program.id)
   const removed = useUninstalled(program.id)
   const error = useUninstallError(program.id)
-  const [gitDaMaquina, setGitDaMaquina] = useState<GitConfig | null>(null)
+  const [machineGit, setGitDaMaquina] = useState<GitConfig | null>(null)
 
   const kind = program.settingsKind
 
   useEffect(() => {
     if (kind !== 'git') return
-    let vivo = true
+    let alive = true
     void bridge
       .invoke('git:config', undefined)
       .then((c) => {
-        if (vivo) setGitDaMaquina(c)
+        if (alive) setGitDaMaquina(c)
       })
       .catch(() => {
-        if (vivo) setGitDaMaquina(DEFAULT_GIT)
+        if (alive) setGitDaMaquina(DEFAULT_GIT)
       })
     return () => {
-      vivo = false
+      alive = false
     }
   }, [kind])
   const installsItself = program.source !== 'pages'
@@ -138,7 +138,7 @@ export function AppSettings({
     const value = wanted === currentAutostart ? undefined : wanted === 'on'
     onChangeSettings(program.id, { ...settings, autostart: value })
   }
-  const git: GitConfig = settings.git ?? gitDaMaquina ?? DEFAULT_GIT
+  const git: GitConfig = settings.git ?? machineGit ?? DEFAULT_GIT
   const canApply = installed && !settingsAreEmpty(settings)
 
   function toggleOption(id: string) {

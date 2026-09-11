@@ -20,7 +20,7 @@ const CHECK_LABELS: Record<CheckId, string> = {
 
 export function Welcome({ onNext, queueOn }: Props) {
   const state = usePreflightState()
-  const verificando = usePreflightBusy()
+  const checking = usePreflightBusy()
 
   const cleared = state.phase === 'ready' && state.data.overall !== 'blocker'
 
@@ -31,7 +31,7 @@ export function Welcome({ onNext, queueOn }: Props) {
       case 'choosing':
         return 'escolha um disco para começar a verificação'
       case 'checking':
-        return 'verificando o seu sistema…'
+        return 'checking o seu sistema…'
       case 'error':
         return 'resolva o erro acima para continuar'
       case 'ready':
@@ -91,7 +91,7 @@ export function Welcome({ onNext, queueOn }: Props) {
             const found =
               state.phase === 'ready'
                 ? state.data.checks.find((c) => c.id === id)
-                : state.parciais.find((c) => c.id === id)
+                : state.partialChecks.find((c) => c.id === id)
 
             return found ? (
               <CheckCard key={id} check={found} />
@@ -110,7 +110,7 @@ export function Welcome({ onNext, queueOn }: Props) {
         <button
           className={s.secondary}
           onClick={() => void reloadPreflight(true)}
-          disabled={verificando}
+          disabled={checking}
         >
           Verificar de novo
         </button>

@@ -32,12 +32,12 @@ export function useLoadPreferences(): void {
   }, [])
 }
 
-export async function savePreference(mudanca: Preferences): Promise<void> {
-  const atual = usePreferencesStore.getState().prefs
-  usePreferencesStore.getState().set({ ...atual, ...mudanca })
+export async function savePreference(change: Preferences): Promise<void> {
+  const current = usePreferencesStore.getState().prefs
+  usePreferencesStore.getState().set({ ...current, ...change })
   try {
-    const salvo = await bridge.invoke('prefs:write', mudanca)
-    usePreferencesStore.getState().set(salvo)
+    const saved = await bridge.invoke('prefs:write', change)
+    usePreferencesStore.getState().set(saved)
   } catch {
     /* empty */
   }

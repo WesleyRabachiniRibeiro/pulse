@@ -6,7 +6,7 @@ import { bridge } from '@/shared/lib/bridge'
 export type PreflightState =
   | { phase: 'drives' }
   | { phase: 'choosing'; drives: Drive[] }
-  | { phase: 'checking'; drives: Drive[]; chosen: string; parciais: Check[] }
+  | { phase: 'checking'; drives: Drive[]; chosen: string; partialChecks: Check[] }
   | { phase: 'ready'; data: Preflight }
   | { phase: 'error'; message: string }
 
@@ -30,7 +30,7 @@ function messageOf(e: unknown): string {
 
 async function check(drives: Drive[], letter: string): Promise<void> {
   const mine = ++generation
-  put({ phase: 'checking', drives, chosen: letter, parciais: [] })
+  put({ phase: 'checking', drives, chosen: letter, partialChecks: [] })
   try {
     const data = await bridge.invoke('preflight:run', { drive: letter })
     if (generation === mine) put({ phase: 'ready', data })
@@ -100,7 +100,7 @@ export function useWatchPreflight(): void {
       if (state.phase === 'checking') {
         put({
           ...state,
-          parciais: partial.checks ?? state.parciais,
+          partialChecks: partial.checks ?? state.partialChecks,
           drives: partial.drives ?? state.drives,
         })
         return
