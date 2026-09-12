@@ -18,6 +18,8 @@ import {
   IMPORT_MODES,
   historySchema,
   upgradeSchema,
+  startupEntrySchema,
+  startupInputSchema,
 } from '@pulse/domain'
 
 // O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
@@ -147,6 +149,14 @@ export const ipcContracts = {
       current: profileSchema,
     }),
     output: importResultSchema,
+  },
+  'catalog:startup': {
+    input: z.void(),
+    output: z.array(startupEntrySchema),
+  },
+  'catalog:setStartup': {
+    input: startupInputSchema,
+    output: z.array(startupEntrySchema),
   },
   'catalog:upgrades': {
     input: z.void(),

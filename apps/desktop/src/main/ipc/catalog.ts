@@ -5,6 +5,10 @@ const WARM_DELAY_MS = 5000
 
 export function registerCatalog(catalogService: CatalogService): void {
   register('catalog:upgrades', () => catalogService.listUpgrades())
+  register('catalog:startup', async () => [...(await catalogService.listStartup())])
+  register('catalog:setStartup', async (input) => [
+    ...(await catalogService.setStartup(input.name, input.on)),
+  ])
   register('catalog:installed', (input) => catalogService.listInstalled(Boolean(input.fresh)))
   register('catalog:autostart', () => catalogService.listAutostart())
   register('catalog:versions', (input) => catalogService.listVersions(input.id))

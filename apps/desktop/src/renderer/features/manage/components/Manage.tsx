@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { HistoryTab } from './HistoryTab'
 import { UpdatesTab } from './UpdatesTab'
+import { StartupTab } from './StartupTab'
 import s from './Manage.module.css'
 
-type TabId = 'updates' | 'history'
+type TabId = 'updates' | 'startup' | 'history'
 
 interface Tab {
   id: TabId
   name: string
 }
 
-// As abas de instalados e inicialização entram aqui.
+// A aba de instalados entra aqui.
 const TABS: readonly Tab[] = [
   { id: 'updates', name: 'ATUALIZAÇÕES' },
+  { id: 'startup', name: 'INICIALIZAÇÃO' },
   { id: 'history', name: 'HISTÓRICO' },
 ]
 
@@ -49,6 +51,7 @@ export function Manage({ onBack }: Props) {
 
       <div className={s.body}>
         {tab === 'updates' && <UpdatesTab />}
+        {tab === 'startup' && <StartupTab />}
         {tab === 'history' && <HistoryTab />}
       </div>
     </div>

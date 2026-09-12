@@ -36,12 +36,17 @@ Node.js                          OpenJS.NodeJS               23.3.0   winget
 Node.js (16)                     OpenJS.NodeJS.16             16.20.2 winget
 `
 
+function fakeStartup() {
+  return { list: async () => [], set: async () => {} }
+}
+
 describe('CatalogService.listVersions', () => {
   it('returns an empty list for a program with no family', async () => {
     const service = new CatalogService(
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(''),
+      fakeStartup(),
     )
     expect(await service.listVersions('chrome')).toEqual([])
   })
@@ -51,6 +56,7 @@ describe('CatalogService.listVersions', () => {
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
+      fakeStartup(),
     )
     const versions = await service.listVersions('node')
     // OpenJS.NodeJS.LTS ganha por ser tratado como "sempre a mais nova"; entre
@@ -68,6 +74,7 @@ describe('CatalogService.listVersions', () => {
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
+      fakeStartup(),
     )
     const versions = await service.listVersions('node')
     const recommended = versions.find((v) => v.recommended)
@@ -81,6 +88,7 @@ describe('CatalogService passthroughs', () => {
       fakePackageReader(['chrome', 'vscode']),
       fakeAutostartReader(),
       fakeProcessRunner(''),
+      fakeStartup(),
     )
     expect(await service.listInstalled(false)).toEqual(['chrome', 'vscode'])
   })

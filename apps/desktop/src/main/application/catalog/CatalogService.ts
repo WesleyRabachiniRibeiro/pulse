@@ -1,14 +1,16 @@
-import { CATALOG, PROGRAM_BY_ID, type PackageVersion, type Upgrade } from '@pulse/domain'
+import { CATALOG, PROGRAM_BY_ID, type PackageVersion, type StartupEntry, type Upgrade } from '@pulse/domain'
 import { compareVersions } from '@pulse/utils'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
 import type { AutostartEntry, AutostartReader } from '../../ports/autostart-reader'
+import type { StartupEntries } from '../../ports/startup-entries'
 
 export class CatalogService {
   constructor(
     private readonly packageReader: CatalogPackageReader,
     private readonly autostartReader: AutostartReader,
     private readonly processRunner: ProcessRunner,
+    private readonly startupEntries: StartupEntries,
   ) {}
 
   listInstalled(fresh: boolean): Promise<string[]> {
@@ -27,6 +29,15 @@ export class CatalogService {
       const programId = byWinget.get(one.wingetId.toLowerCase())
       return programId ? { ...one, programId } : { ...one }
     })
+  }
+
+  listStartup(): Promise<readonly StartupEntry[]> {
+    return this.startupEntries.list()
+  }
+
+  async setStartup(name: string, on: boolean): Promise<readonly StartupEntry[]> {
+    await this.startupEntries.set(name, on)
+    return this.startupEntries.list()
   }
 
   listAutostart(): Promise<AutostartEntry[]> {
