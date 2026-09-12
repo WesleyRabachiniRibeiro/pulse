@@ -89,6 +89,7 @@ function makeOrchestrator(
     fakeAutostartRegistry(),
     new InMemoryQueueRepository(),
     fakeClipboard(),
+    { apply: async () => 'written' },
   )
 }
 

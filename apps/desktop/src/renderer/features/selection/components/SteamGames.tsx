@@ -4,6 +4,7 @@ import { formatBytes } from '@pulse/domain'
 import type { SteamGame, SteamLibrary } from '@pulse/domain'
 import { bridge } from '@/shared/lib/bridge'
 import s from './AppSettings.module.css'
+import { CheckOption } from './CheckOption'
 
 interface Props {
   chosen: readonly SteamGame[]
@@ -62,30 +63,19 @@ export function SteamGames({ chosen, onToggle }: Props) {
     const picked = isChecked(game.appid)
 
     return (
-      <button
-        key={game.appid}
-        type="button"
-        role="checkbox"
-        aria-checked={alreadyInstalled || picked}
-        aria-disabled={alreadyInstalled}
-        data-installed={alreadyInstalled}
-        className={s.option}
+      <CheckOption
+        checked={alreadyInstalled || picked}
         disabled={alreadyInstalled}
-        onClick={() => onToggle({ appid: game.appid, name: game.name })}
-      >
-        <span className={s.box} aria-hidden>
-          {alreadyInstalled || picked ? '✓' : ''}
-        </span>
-        <span className={s.optionBody}>
-          <span className={s.optionName}>{game.name}</span>
-          <span className={s.optionHint}>
-            {game.bytes
-              ? `${formatBytes(game.bytes)} em ${game.drive ?? 'disco'}`
-              : `appid ${game.appid}`}
-          </span>
-        </span>
-        <span className={s.optionCategory}>{alreadyInstalled ? 'JÁ NO SEU PC' : tag}</span>
-      </button>
+        installed={alreadyInstalled}
+        name={game.name}
+        hint={
+          game.bytes
+            ? `${formatBytes(game.bytes)} em ${game.drive ?? 'disco'}`
+            : `appid ${game.appid}`
+        }
+        category={alreadyInstalled ? 'JÁ NO SEU PC' : tag}
+        onToggle={() => onToggle({ appid: game.appid, name: game.name })}
+      />
     )
   }
 

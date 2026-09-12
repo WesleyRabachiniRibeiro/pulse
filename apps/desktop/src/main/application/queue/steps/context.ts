@@ -3,6 +3,7 @@ import type { ProcessRunner } from '../../../ports/process-runner'
 import type { PackageInstaller } from '../../../ports/package-installer'
 import type { AutostartRegistry } from '../../../ports/autostart-registry'
 import type { SteamGameRequester } from '../../../ports/steam-game-requester'
+import type { EditorSettingsStore } from '../../../ports/editor-settings-store'
 
 export type StepResult = Partial<NonNullable<Item['result']>>
 
@@ -11,6 +12,7 @@ export interface StepPorts {
   packageInstaller: PackageInstaller
   autostartRegistry: AutostartRegistry
   steamGameRequester: SteamGameRequester
+  editorSettingsStore: EditorSettingsStore
 }
 
 export interface StepContext {

@@ -36,6 +36,7 @@ export const itemSchema = z.object({
       gamesRefused: z.array(z.string()),
       gamesPending: z.array(z.string()),
       autostart: z.enum(['on', 'off', 'no-entry']).optional(),
+      editor: z.enum(['written', 'nothing', 'unreadable', 'failed']).optional(),
       pagesOpened: z.array(z.string()),
       riotInstalled: z.array(z.string()),
       riotFailed: z.array(z.string()),

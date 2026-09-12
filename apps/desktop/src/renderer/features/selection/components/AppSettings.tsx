@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { LuSearch } from 'react-icons/lu'
 import {
-  categoriesOf,
   DEFAULT_GIT,
   formatGb,
   formatMb,
-  listStepFor,
   listValue,
   stepForKind,
+  stepsFor,
   settingsAreEmpty,
   withListValue,
+  type AnyStep,
   type GitConfig,
   type Settings,
 } from '@pulse/domain'
@@ -25,6 +24,9 @@ import {
   useUninstallError,
 } from '../store/useUninstall'
 import s from './AppSettings.module.css'
+import { CheckOption } from './CheckOption'
+import { StepSection } from './StepSection'
+import { StepOptionList } from './StepOptionList'
 import { SteamGames } from './SteamGames'
 import { PackageVersions } from './PackageVersions'
 
@@ -43,13 +45,6 @@ interface Props {
 }
 
 
-function normalize(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-}
-
 export function AppSettings({
   program,
   installed,
@@ -63,8 +58,6 @@ export function AppSettings({
   onApplyNow,
   onBack,
 }: Props) {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('Tudo')
   const [confirming, setConfirming] = useState(false)
   const removing = useUninstalling(program.id)
   const removed = useUninstalled(program.id)
@@ -89,20 +82,13 @@ export function AppSettings({
     }
   }, [kind])
   const installsItself = program.source !== 'pages'
+  const programSteps = useMemo(() => stepsFor(program), [program])
+  const listSteps = programSteps.filter((x) => x.options ?? x.optionsFor)
   const step = stepForKind(kind)
-  const listStep = listStepFor(kind)
-  const options = listStep?.options ?? []
-  const categories = useMemo(() => categoriesOf(options), [options])
-
-  const term = normalize(search.trim())
-  const visible = options.filter(
-    (o) =>
-      (filter === 'Tudo' || o.category === filter) && (!term || normalize(o.name).includes(term)),
-  )
+  const has = (id: string) => programSteps.some((x) => x.id === id)
 
   const steps = settings.steps ?? {}
   const browser = steps.browserDefault ?? {}
-  const checked = listValue(steps, listStep)
 
   function patchSteps(patch: Partial<NonNullable<Settings['steps']>>) {
     onChangeSettings(program.id, { ...settings, steps: { ...steps, ...patch } })
@@ -118,9 +104,9 @@ export function AppSettings({
   const git: GitConfig = steps.gitConfig ?? machineGit ?? DEFAULT_GIT
   const canApply = installed && !settingsAreEmpty(settings)
 
-  function toggleOption(id: string) {
-    if (!listStep) return
-    const next = checked.includes(id) ? checked.filter((x) => x !== id) : [...checked, id]
+  function toggleOption(listStep: AnyStep, id: string) {
+    const chosen = listValue(steps, listStep)
+    const next = chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id]
     onChangeSettings(program.id, { ...settings, steps: withListValue(steps, listStep, next) })
   }
 
@@ -163,19 +149,15 @@ export function AppSettings({
 
       <div className={s.body}>
         {program.notice && (
-          <section className={s.section}>
-            <div className={s.label}>ANTES DE INSTALAR</div>
-            <p className={s.description}>{program.notice}</p>
-          </section>
+          <StepSection title="ANTES DE INSTALAR" description={program.notice} />
         )}
 
         {installsItself && (
-        <section className={s.section} data-tour="aj-disco">
-          <div className={s.label}>ONDE INSTALAR ESTE PROGRAMA</div>
-          <p className={s.description}>
-            Vale só para o {program.name}. Os outros seguem o disco geral, escolhido nas
-            boas-vindas.
-          </p>
+        <StepSection
+          title="ONDE INSTALAR ESTE PROGRAMA"
+          description={`Vale só para o ${program.name}. Os outros seguem o disco geral, escolhido nas boas-vindas.`}
+          tour="aj-disco"
+        >
 
           <div className={s.drives}>
             <button
@@ -208,16 +190,14 @@ export function AppSettings({
               </button>
             ))}
           </div>
-        </section>
+        </StepSection>
         )}
 
         {program.family && (
-          <section className={s.section}>
-            <div className={s.label}>QUAL VERSÃO INSTALAR</div>
-            <p className={s.description}>
-              O {program.name} existe em várias versões que convivem na mesma máquina. A lista vem
-              do próprio winget, então está sempre atual.
-            </p>
+          <StepSection
+            title="QUAL VERSÃO INSTALAR"
+            description={`O ${program.name} existe em várias versões que convivem na mesma máquina. A lista vem do próprio winget, então está sempre atual.`}
+          >
 
             <PackageVersions
               id={program.id}
@@ -229,7 +209,7 @@ export function AppSettings({
                 })
               }
             />
-          </section>
+          </StepSection>
         )}
 
         {installsItself && (
@@ -264,123 +244,45 @@ export function AppSettings({
         </section>
         )}
 
-        {kind === 'steam' && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{step?.title}</div>
-            <p className={s.description}>{step?.description}</p>
+        {has('steamGames') && (
+          <StepSection title={step?.title} description={step?.description} tour="aj-kind">
             <SteamGames chosen={steps.steamGames ?? []} onToggle={toggleGame} />
-          </section>
+          </StepSection>
         )}
 
-        {(kind === 'vscode' || kind === 'tibia' || kind === 'riot' || kind === 'vs') && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{step?.title}</div>
-            <p className={s.description}>{step?.description}</p>
+        {listSteps.map((listStep) => (
+          <StepOptionList
+            key={listStep.id}
+            step={listStep}
+            programId={program.id}
+            chosen={listValue(steps, listStep)}
+            onToggle={toggleOption}
+          />
+        ))}
 
-            <div className={s.search}>
-              <LuSearch className={s.magnifier} size={15} aria-hidden />
-              <input
-                className={s.searchInput}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={listStep?.searchPlaceholder ?? 'Buscar…'}
-                aria-label="Buscar"
-              />
-              <span className={s.count}>
-                {visible.length} de {options.length}
-              </span>
-            </div>
-
-            <div className={s.filters}>
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={s.filter}
-                  aria-pressed={filter === c}
-                  onClick={() => setFilter(c)}
-                >
-                  {c} · {c === 'Tudo' ? options.length : options.filter((o) => o.category === c).length}
-                </button>
-              ))}
-            </div>
+        {has('browserDefault') && (
+          <StepSection title={step?.title} description={step?.description} tour="aj-kind">
 
             <div className={s.options}>
-              {visible.length === 0 ? (
-                <p className={s.empty}>Nada com esse nome por aqui.</p>
-              ) : (
-                visible.map((o) => (
-                  <button
-                    key={o.id}
-                    type="button"
-                    role="checkbox"
-                    aria-checked={checked.includes(o.id)}
-                    className={s.option}
-                    onClick={() => toggleOption(o.id)}
-                  >
-                    <span className={s.box} aria-hidden>
-                      {checked.includes(o.id) ? '✓' : ''}
-                    </span>
-                    <span className={s.optionBody}>
-                      <span className={s.optionName}>{o.name}</span>
-                      <span className={s.optionHint}>{o.hint}</span>
-                    </span>
-                    <span className={s.optionCategory}>{o.category}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          </section>
-        )}
-
-        {kind === 'browser' && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{step?.title}</div>
-            <p className={s.description}>{step?.description}</p>
-
-            <div className={s.options}>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={browser.makeDefault === true}
-                className={s.option}
-                onClick={() =>
+              <CheckOption
+                checked={browser.makeDefault === true}
+                name="Deixar como navegador padrão"
+                hint="se você marcar mais de um, vale o último que terminar de instalar"
+                category="PADRÃO"
+                onToggle={() =>
                   patchSteps({ browserDefault: { ...browser, makeDefault: !browser.makeDefault } })
                 }
-              >
-                <span className={s.box} aria-hidden>
-                  {browser.makeDefault ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Deixar como navegador padrão</span>
-                  <span className={s.optionHint}>
-                    se você marcar mais de um, vale o último que terminar de instalar
-                  </span>
-                </span>
-                <span className={s.optionCategory}>PADRÃO</span>
-              </button>
+              />
 
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={browser.openAfter === true}
-                className={s.option}
-                onClick={() =>
+              <CheckOption
+                checked={browser.openAfter === true}
+                name="Abrir no fim para importar meus dados"
+                hint="o Firefox abre direto no assistente; Chrome, Opera e Brave não deixam abrir essa tela por fora, então o Pulse mostra o endereço e copia para você colar"
+                category="DADOS"
+                onToggle={() =>
                   patchSteps({ browserDefault: { ...browser, openAfter: !browser.openAfter } })
                 }
-              >
-                <span className={s.box} aria-hidden>
-                  {browser.openAfter ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Abrir no fim para importar meus dados</span>
-                  <span className={s.optionHint}>
-                    o Firefox abre direto no assistente; Chrome, Opera e Brave não deixam abrir essa
-                    tela por fora, então o Pulse mostra o endereço e copia para você colar
-                  </span>
-                </span>
-                <span className={s.optionCategory}>DADOS</span>
-              </button>
+              />
             </div>
 
             <p className={s.description}>
@@ -389,13 +291,11 @@ export function AppSettings({
               assistente do Firefox traz favoritos, senhas, histórico, extensões e preenchimento
               automático. Nada dos seus perfis é tocado por aqui.
             </p>
-          </section>
+          </StepSection>
         )}
 
-        {kind === 'git' && (
-          <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{step?.title}</div>
-            <p className={s.description}>{step?.description}</p>
+        {has('gitConfig') && (
+          <StepSection title={step?.title} description={step?.description} tour="aj-kind">
 
             <div className={s.fields}>
               <label className={s.fieldBlock}>
@@ -433,27 +333,13 @@ export function AppSettings({
             </div>
 
             <div className={s.options}>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={git.saveLogin === true}
-                className={s.option}
-                onClick={() =>
-                  patchSteps({ gitConfig: { ...git, saveLogin: !git.saveLogin } })
-                }
-              >
-                <span className={s.box} aria-hidden>
-                  {git.saveLogin ? '✓' : ''}
-                </span>
-                <span className={s.optionBody}>
-                  <span className={s.optionName}>Guardar o login do GitHub</span>
-                  <span className={s.optionHint}>
-                    no primeiro push o GitHub abre no navegador, você entra por lá e o Windows
-                    lembra dali em diante
-                  </span>
-                </span>
-                <span className={s.optionCategory}>CONTA</span>
-              </button>
+              <CheckOption
+                checked={git.saveLogin === true}
+                name="Guardar o login do GitHub"
+                hint="no primeiro push o GitHub abre no navegador, você entra por lá e o Windows lembra dali em diante"
+                category="CONTA"
+                onToggle={() => patchSteps({ gitConfig: { ...git, saveLogin: !git.saveLogin } })}
+              />
             </div>
 
             <p className={s.description}>
@@ -461,7 +347,7 @@ export function AppSettings({
               credenciais que já vem com o Git para Windows, e quem cuida do login é o próprio
               GitHub, na janela do navegador.
             </p>
-          </section>
+          </StepSection>
         )}
 
         {removed && !installed && (

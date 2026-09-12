@@ -21,6 +21,7 @@ import type { BrowserDefaultSetter } from '../../ports/browser-default-setter'
 import type { AutostartRegistry } from '../../ports/autostart-registry'
 import type { QueueRepository } from '../../ports/queue-repository'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
+import type { EditorSettingsStore } from '../../ports/editor-settings-store'
 import type {
   InstallProgress,
   InstallSpec,
@@ -85,6 +86,7 @@ export class QueueOrchestrator {
     private readonly autostartRegistry: AutostartRegistry,
     private readonly queueRepository: QueueRepository,
     private readonly clipboard: ClipboardWriter,
+    private readonly editorSettingsStore: EditorSettingsStore,
   ) {}
 
   subscribe(listener: Listener): () => void {
@@ -360,6 +362,7 @@ export class QueueOrchestrator {
         packageInstaller: this.packageInstaller,
         autostartRegistry: this.autostartRegistry,
         steamGameRequester: this.steamGameRequester,
+        editorSettingsStore: this.editorSettingsStore,
       },
       say: (detail) => {
         target.status = 'configuring'

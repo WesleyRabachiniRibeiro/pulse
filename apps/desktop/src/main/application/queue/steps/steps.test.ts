@@ -28,6 +28,7 @@ function fakePorts(overrides: Partial<StepPorts> = {}): StepPorts {
       cancel: () => {},
     },
     autostartRegistry: { setAutostart: async () => 'on' },
+    editorSettingsStore: { apply: async () => 'written' },
     steamGameRequester: {
       isSignedIn: async () => true,
       hasManifest: async () => true,
@@ -209,11 +210,69 @@ describe('runSteps', () => {
   it('a ordem declarada é a que a pessoa vê acontecer', () => {
     expect(STEP_IDS).toEqual([
       'vscodeExtensions',
+      'editorTweaks',
       'gitConfig',
       'autostart',
       'steamGames',
       'tibiaPages',
       'riotProducts',
     ])
+  })
+})
+
+describe('ajustes do editor', () => {
+  it('grava os marcados e relata que gravou', async () => {
+    const ports = fakePorts()
+    let seen: readonly string[] = []
+    ports.editorSettingsStore.apply = async (_id, ids) => {
+      seen = ids
+      return 'written'
+    }
+    const { ctx, notes } = fakeContext(ports, vscode)
+
+    const result = await runSteps({ steps: { editorTweaks: ['wordWrap', 'bigFont'] } }, ctx)
+
+    expect(seen).toEqual(['wordWrap', 'bigFont'])
+    expect(result.editor).toBe('written')
+    expect(notes.join(' ')).toContain('2 ajustes gravados')
+  })
+
+  // O settings.json aceita comentário, que não é JSON. Nesse caso o arquivo
+  // fica como está, e a pessoa precisa saber disso pelo resumo.
+  it('arquivo ilegível não é sobrescrito, e o resumo diz', async () => {
+    const ports = fakePorts()
+    ports.editorSettingsStore.apply = async () => 'unreadable'
+    const { ctx, notes } = fakeContext(ports, vscode)
+
+    const result = await runSteps({ steps: { editorTweaks: ['wordWrap'] } }, ctx)
+
+    expect(result.editor).toBe('unreadable')
+    expect(notes.join(' ')).toContain('deixei como estava')
+  })
+
+  it('um erro na gravação vira falha, não exceção', async () => {
+    const ports = fakePorts()
+    ports.editorSettingsStore.apply = async () => {
+      throw new Error('disco cheio')
+    }
+    const { ctx } = fakeContext(ports, vscode)
+
+    const result = await runSteps({ steps: { editorTweaks: ['wordWrap'] } }, ctx)
+
+    expect(result.editor).toBe('failed')
+  })
+
+  it('nada marcado não chama o disco', async () => {
+    const ports = fakePorts()
+    let called = false
+    ports.editorSettingsStore.apply = async () => {
+      called = true
+      return 'written'
+    }
+    const { ctx } = fakeContext(ports, vscode)
+
+    await runSteps({ steps: { editorTweaks: [] } }, ctx)
+
+    expect(called).toBe(false)
   })
 })

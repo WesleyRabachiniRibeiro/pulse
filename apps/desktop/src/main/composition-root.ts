@@ -15,6 +15,7 @@ import { WindowsAutostartReader } from './infra/catalog/WindowsAutostartReader'
 import { SteamAdapter } from './infra/steam/SteamAdapter'
 import { BrowserDefaultSetterAdapter } from './infra/browsers/BrowserDefaultSetterAdapter'
 import { JsonPreferencesStore } from './infra/preferences/JsonPreferencesStore'
+import { JsonEditorSettingsStore } from './infra/editor/JsonEditorSettingsStore'
 import { ElectronUpdateChecker } from './infra/updates/ElectronUpdateChecker'
 import { ElectronNotificationPresenter, nameAppForWindows } from './infra/electron/ElectronNotificationPresenter'
 
@@ -62,6 +63,7 @@ export function composeMain(): MainComponents {
     autostartRegistry,
     queueRepository,
     clipboardWriter,
+    new JsonEditorSettingsStore(),
   )
 
   registerInstallation(queueOrchestrator)
