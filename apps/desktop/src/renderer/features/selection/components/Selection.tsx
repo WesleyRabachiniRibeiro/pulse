@@ -40,13 +40,15 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const parental = useParental()
   const [askingFor, setAskingFor] = useState<string | null>(null)
 
-  // Marcar um bloqueado pede o PIN. Desmarcar não pede: tirar da fila nunca
-  // precisa de permissão.
+  // O cartão mostra o bloqueio mesmo quando o item já está marcado.
   const blocks = (id: string): boolean =>
-    parental.on && parental.hasPin && parental.blocked.includes(id) && !selected.has(id)
+    parental.on && parental.hasPin && parental.blocked.includes(id)
+
+  // Desmarcar nunca pede PIN: tirar da fila não precisa de permissão.
+  const asksPin = (id: string): boolean => blocks(id) && !selected.has(id)
 
   function toggleGuarded(id: string) {
-    if (blocks(id)) setAskingFor(id)
+    if (asksPin(id)) setAskingFor(id)
     else toggle(id)
   }
 
@@ -212,6 +214,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
                         installed={installed.has(p.id)}
                         chosenDrive={drivesByApp[p.id] ?? null}
                         settingsSummary={settingsSummary(settingsByApp[p.id])}
+                        blocked={blocks(p.id)}
                         onToggle={toggleGuarded}
                         onOpenSettings={setInSettings}
                       />
