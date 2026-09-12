@@ -22,6 +22,7 @@ import { PreferencesParentalStore } from './infra/parental/PreferencesParentalSt
 import { RegistryWindowsTweaks } from './infra/windows/RegistryWindowsTweaks'
 import { ElectronFileDialog } from './infra/dialogs/ElectronFileDialog'
 import { NodeRemoteFetch } from './infra/net/NodeRemoteFetch'
+import { JsonHistoryStore } from './infra/history/JsonHistoryStore'
 import { ElectronUpdateChecker } from './infra/updates/ElectronUpdateChecker'
 import { ElectronNotificationPresenter, nameAppForWindows } from './infra/electron/ElectronNotificationPresenter'
 
@@ -31,6 +32,7 @@ import { ReadGitConfig } from './application/git/ReadGitConfig'
 import { PreferencesService } from './application/preferences/PreferencesService'
 import { ParentalService } from './application/parental/ParentalService'
 import { ProfileService } from './application/profile/ProfileService'
+import { HistoryService } from './application/history/HistoryService'
 import { SteamService } from './application/steam/SteamService'
 import { SystemService } from './application/system/SystemService'
 import { UpdateService } from './application/updates/UpdateService'
@@ -41,6 +43,7 @@ import { registerSteam } from './ipc/steam'
 import { registerPreferences } from './ipc/preferences'
 import { registerParental } from './ipc/parental'
 import { registerProfile } from './ipc/profile'
+import { registerHistory } from './ipc/history'
 import { registerSystem } from './ipc/system'
 import { registerUpdates } from './ipc/updates'
 
@@ -118,6 +121,10 @@ export function composeMain(): MainComponents {
     return run !== null && run.finishedAt === null
   })
   registerUpdates(updateService)
+
+  const historyService = new HistoryService(new JsonHistoryStore())
+  registerHistory(historyService)
+  queueOrchestrator.subscribe((run) => void historyService.onRunChanged(run))
 
   const notificationPresenter = new ElectronNotificationPresenter()
   queueOrchestrator.subscribe((run) => notificationPresenter.present(run))

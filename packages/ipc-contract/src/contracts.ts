@@ -16,6 +16,7 @@ import {
   profileSchema,
   EXPORT_FORMATS,
   IMPORT_MODES,
+  historySchema,
 } from '@pulse/domain'
 
 // O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
@@ -145,6 +146,14 @@ export const ipcContracts = {
       current: profileSchema,
     }),
     output: importResultSchema,
+  },
+  'history:read': {
+    input: z.void(),
+    output: historySchema,
+  },
+  'history:clear': {
+    input: z.void(),
+    output: historySchema,
   },
   'prefs:read': {
     input: z.void(),
