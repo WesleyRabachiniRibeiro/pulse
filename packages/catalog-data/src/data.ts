@@ -81,6 +81,7 @@ export const CATALOG: readonly Program[] = [
     mb: 30,
     category: 'dev',
     hints: ['node.js'],
+    steps: ['runtimePackages'],
     family: { prefix: 'OpenJS.NodeJS', pattern: '^OpenJS\\.NodeJS(\\.LTS|\\.\\d+)?$' },
   },
   {
@@ -91,6 +92,7 @@ export const CATALOG: readonly Program[] = [
     mb: 28,
     category: 'dev',
     hints: ['python 3'],
+    steps: ['runtimePackages'],
     family: { prefix: 'Python.Python', pattern: '^Python\\.Python\\.3\\.\\d+$' },
   },
   { id: 'vs', name: 'Visual Studio', winget: 'Microsoft.VisualStudio.Community', version: '2026', mb: 1800, category: 'dev', hints: ['visual studio community'], settingsKind: 'vs' },

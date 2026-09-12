@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type { SettingsKind } from '@pulse/catalog-data'
 import { vscodeExtensions } from './vscodeExtensions'
 import { editorTweaks } from './editorTweaks'
+import { runtimePackages } from './runtimePackages'
 import { steamGames } from './steamGames'
 import { tibiaPages } from './tibiaPages'
 import { riotProducts } from './riotProducts'
@@ -18,6 +19,7 @@ export { browserChoiceSchema, type BrowserChoice } from './browserDefault'
 export const STEPS: readonly AnyStep[] = [
   anyStep(vscodeExtensions),
   anyStep(editorTweaks),
+  anyStep(runtimePackages),
   anyStep(steamGames),
   anyStep(tibiaPages),
   anyStep(riotProducts),
@@ -31,6 +33,7 @@ export const STEP_BY_ID: ReadonlyMap<string, AnyStep> = new Map(STEPS.map((s) =>
 export const stepsSchema = z.object({
   vscodeExtensions: vscodeExtensions.schema.optional(),
   editorTweaks: editorTweaks.schema.optional(),
+  runtimePackages: runtimePackages.schema.optional(),
   steamGames: steamGames.schema.optional(),
   tibiaPages: tibiaPages.schema.optional(),
   riotProducts: riotProducts.schema.optional(),

@@ -18,6 +18,9 @@ export interface Program {
   hints: readonly string[]
   notice?: string
   settingsKind?: SettingsKind
+  // Declara os ajustes por id. Quem usa isto dispensa settingsKind, que é o
+  // atalho de quando um programa tinha exatamente um tipo de ajuste.
+  steps?: readonly string[]
   family?: {
     prefix: string
     pattern: string

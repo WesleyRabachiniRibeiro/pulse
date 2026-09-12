@@ -214,6 +214,7 @@ describe('runSteps', () => {
     expect(STEP_IDS).toEqual([
       'vscodeExtensions',
       'editorTweaks',
+      'runtimePackages',
       'gitConfig',
       'autostart',
       'steamGames',
@@ -275,6 +276,70 @@ describe('ajustes do editor', () => {
     const { ctx } = fakeContext(ports, vscode)
 
     await runSteps({ steps: { editorTweaks: [] } }, ctx)
+
+    expect(called).toBe(false)
+  })
+})
+
+describe('ferramentas do runtime', () => {
+  const node = PROGRAM_BY_ID.get('node') as Program
+
+  // A ordem dos pacotes é a do catálogo do runtime, não a ordem em que a
+  // pessoa marcou, para a linha de comando sair sempre igual.
+  it('instala tudo numa chamada só, com os argumentos do npm', async () => {
+    const ports = fakePorts()
+    let seen: [string, readonly string[]] | null = null
+    ports.toolchain.locate = async () => 'npm.cmd'
+    ports.toolchain.run = async (exe: string, args: readonly string[]) => {
+      seen = [exe, args]
+      return true
+    }
+    const { ctx } = fakeContext(ports, node)
+
+    const result = await runSteps({ steps: { runtimePackages: ['pnpm', 'typescript'] } }, ctx)
+
+    expect(seen).toEqual(['npm.cmd', ['install', '--global', 'typescript', 'pnpm']])
+    expect(result.packagesInstalled).toEqual(['typescript', 'pnpm'])
+  })
+
+  // Um id que não é do catálogo daquele runtime não pode virar argumento de
+  // linha de comando.
+  it('ignora pacote que não é do runtime escolhido', async () => {
+    const ports = fakePorts()
+    let seen: readonly string[] = []
+    ports.toolchain.locate = async () => 'npm.cmd'
+    ports.toolchain.run = async (_exe: string, args: readonly string[]) => {
+      seen = args
+      return true
+    }
+    const { ctx } = fakeContext(ports, node)
+
+    await runSteps({ steps: { runtimePackages: ['pnpm', 'ruff', 'inventado'] } }, ctx)
+
+    expect(seen).toEqual(['install', '--global', 'pnpm'])
+  })
+
+  it('sem o gerenciador no PATH, fica para depois e o resumo diz', async () => {
+    const ports = fakePorts()
+    ports.toolchain.locate = async () => null
+    const { ctx, notes } = fakeContext(ports, node)
+
+    const result = await runSteps({ steps: { runtimePackages: ['pnpm'] } }, ctx)
+
+    expect(result.packagesFailed).toEqual(['pnpm'])
+    expect(notes.join(' ')).toContain('não achei o npm')
+  })
+
+  it('um programa que não é runtime não roda nada', async () => {
+    const ports = fakePorts()
+    let called = false
+    ports.toolchain.run = async () => {
+      called = true
+      return true
+    }
+    const { ctx } = fakeContext(ports, vscode)
+
+    await runSteps({ steps: { runtimePackages: ['pnpm'] } }, ctx)
 
     expect(called).toBe(false)
   })
