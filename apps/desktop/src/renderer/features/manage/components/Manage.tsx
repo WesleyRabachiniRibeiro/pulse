@@ -2,17 +2,18 @@ import { useState } from 'react'
 import { HistoryTab } from './HistoryTab'
 import { UpdatesTab } from './UpdatesTab'
 import { StartupTab } from './StartupTab'
+import { InstalledTab } from './InstalledTab'
 import s from './Manage.module.css'
 
-type TabId = 'updates' | 'startup' | 'history'
+type TabId = 'installed' | 'updates' | 'startup' | 'history'
 
 interface Tab {
   id: TabId
   name: string
 }
 
-// A aba de instalados entra aqui.
 const TABS: readonly Tab[] = [
+  { id: 'installed', name: 'INSTALADOS' },
   { id: 'updates', name: 'ATUALIZAÇÕES' },
   { id: 'startup', name: 'INICIALIZAÇÃO' },
   { id: 'history', name: 'HISTÓRICO' },
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export function Manage({ onBack }: Props) {
-  const [tab, setTab] = useState<TabId>('updates')
+  const [tab, setTab] = useState<TabId>('installed')
 
   return (
     <div className={s.screen}>
@@ -50,6 +51,7 @@ export function Manage({ onBack }: Props) {
       </header>
 
       <div className={s.body}>
+        {tab === 'installed' && <InstalledTab />}
         {tab === 'updates' && <UpdatesTab />}
         {tab === 'startup' && <StartupTab />}
         {tab === 'history' && <HistoryTab />}

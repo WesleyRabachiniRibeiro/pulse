@@ -1,9 +1,10 @@
-import { CATALOG, PROGRAM_BY_ID, type PackageVersion, type StartupEntry, type Upgrade } from '@pulse/domain'
-import { compareVersions } from '@pulse/utils'
+import { CATALOG, PROGRAM_BY_ID, type PackageVersion, type InstalledTree, type StartupEntry, type Upgrade } from '@pulse/domain'
+import { buildInstalled, compareVersions } from '@pulse/utils'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
 import type { AutostartEntry, AutostartReader } from '../../ports/autostart-reader'
 import type { StartupEntries } from '../../ports/startup-entries'
+import type { RegistryReader } from '../../ports/registry-reader'
 
 export class CatalogService {
   constructor(
@@ -11,6 +12,7 @@ export class CatalogService {
     private readonly autostartReader: AutostartReader,
     private readonly processRunner: ProcessRunner,
     private readonly startupEntries: StartupEntries,
+    private readonly registryReader: RegistryReader,
   ) {}
 
   listInstalled(fresh: boolean): Promise<string[]> {
@@ -29,6 +31,21 @@ export class CatalogService {
       const programId = byWinget.get(one.wingetId.toLowerCase())
       return programId ? { ...one, programId } : { ...one }
     })
+  }
+
+  // O que o winget gerencia vira o que dá para desinstalar pelo Pulse. O resto
+  // aparece na lista mesmo assim, porque saber o que está no PC é o ponto.
+  async listInstalledTree(): Promise<InstalledTree> {
+    const [entries, managed] = await Promise.all([
+      this.registryReader.listEntries(),
+      this.packageReader.listInstalled().catch((): string[] => []),
+    ])
+
+    const wingetIds = managed
+      .map((id) => PROGRAM_BY_ID.get(id)?.winget)
+      .filter((id): id is string => Boolean(id))
+
+    return buildInstalled(entries, CATALOG, wingetIds)
   }
 
   listStartup(): Promise<readonly StartupEntry[]> {

@@ -14,6 +14,7 @@ import { WindowsPowerController } from './infra/system/WindowsPowerController'
 import { WingetPackageRepository } from './infra/catalog/WingetPackageRepository'
 import { WindowsAutostartReader } from './infra/catalog/WindowsAutostartReader'
 import { WindowsStartupEntries } from './infra/catalog/WindowsStartupEntries'
+import { WindowsRegistryReader } from './infra/catalog/WindowsRegistryReader'
 import { SteamAdapter } from './infra/steam/SteamAdapter'
 import { BrowserDefaultSetterAdapter } from './infra/browsers/BrowserDefaultSetterAdapter'
 import { JsonPreferencesStore } from './infra/preferences/JsonPreferencesStore'
@@ -96,6 +97,7 @@ export function composeMain(): MainComponents {
     new WindowsAutostartReader(powershellRunner),
     processRunner,
     new WindowsStartupEntries(powershellRunner),
+    new WindowsRegistryReader(powershellRunner),
   )
   registerCatalog(catalogService)
 

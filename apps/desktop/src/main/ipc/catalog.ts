@@ -4,6 +4,7 @@ import type { CatalogService } from '../application/catalog/CatalogService'
 const WARM_DELAY_MS = 5000
 
 export function registerCatalog(catalogService: CatalogService): void {
+  register('catalog:tree', () => catalogService.listInstalledTree())
   register('catalog:upgrades', () => catalogService.listUpgrades())
   register('catalog:startup', async () => [...(await catalogService.listStartup())])
   register('catalog:setStartup', async (input) => [
