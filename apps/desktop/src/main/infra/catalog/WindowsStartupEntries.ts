@@ -1,4 +1,4 @@
-import type { StartupEntry } from '@pulse/domain'
+import type { Catalog, StartupEntry } from '@pulse/domain'
 import { tidyStartup, withPrograms } from '@pulse/utils'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
 import type { StartupEntries } from '../../ports/startup-entries'
@@ -12,7 +12,10 @@ interface RawEntry {
 }
 
 export class WindowsStartupEntries implements StartupEntries {
-  constructor(private readonly powershell: PowerShellRunner) {}
+  constructor(
+    private readonly catalog: Catalog,
+    private readonly powershell: PowerShellRunner,
+  ) {}
 
   async list(): Promise<readonly StartupEntry[]> {
     const raw = await this.powershell
@@ -27,7 +30,7 @@ export class WindowsStartupEntries implements StartupEntries {
         enabled: entry.enabled,
       }))
 
-    return tidyStartup(withPrograms(entries))
+    return tidyStartup(withPrograms(this.catalog, entries))
   }
 
   async set(name: string, on: boolean): Promise<void> {

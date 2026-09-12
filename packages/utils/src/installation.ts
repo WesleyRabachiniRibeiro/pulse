@@ -1,4 +1,5 @@
 import { minutesFor, sizeOf } from './catalog'
+import type { Catalog } from '@pulse/domain'
 import { equalsIgnoreCase } from '@pulse/domain'
 import { STEPS, stepsAreEmpty } from '@pulse/domain'
 import type { Item, ItemStage, ItemStatus, Request, Run, Settings } from '@pulse/domain'
@@ -109,8 +110,8 @@ export function elapsedSeconds(run: Run, now: number = Date.now()): number {
 
 // Programa fora do catálogo pesa um chute, para ele não sumir da barra de
 // progresso como se não custasse nada.
-function weight(item: Item): number {
-  return sizeOf(item.id, 100)
+function weight(catalog: Catalog, item: Item): number {
+  return sizeOf(catalog, item.id, 100)
 }
 
 export function itemPercent(item: Item): number {
@@ -121,11 +122,14 @@ export function itemPercent(item: Item): number {
   return 0
 }
 
-export function overallPercent(items: readonly Item[]): number {
-  const total = items.reduce((sum, item) => sum + weight(item), 0)
+export function overallPercent(catalog: Catalog, items: readonly Item[]): number {
+  const total = items.reduce((sum, item) => sum + weight(catalog, item), 0)
   if (total === 0) return 0
 
-  const done = items.reduce((sum, item) => sum + weight(item) * (itemPercent(item) / 100), 0)
+  const done = items.reduce(
+    (sum, item) => sum + weight(catalog, item) * (itemPercent(item) / 100),
+    0,
+  )
   return Math.min(100, Math.round((done / total) * 100))
 }
 
@@ -147,17 +151,17 @@ export function tally(items: readonly Item[]): Tally {
   }
 }
 
-export function remainingMb(items: readonly Item[]): number {
+export function remainingMb(catalog: Catalog, items: readonly Item[]): number {
   return items.reduce((sum, item) => {
     if (isFinished(item)) return sum
-    const size = weight(item)
+    const size = weight(catalog, item)
     if (item.status === 'downloading') return sum + size * (1 - item.percent / 100)
     return sum + size
   }, 0)
 }
 
-export function remainingMinutes(items: readonly Item[]): number {
-  return minutesFor(remainingMb(items), 1)
+export function remainingMinutes(catalog: Catalog, items: readonly Item[]): number {
+  return minutesFor(remainingMb(catalog, items), 1)
 }
 
 export type SummaryGroupKind = 'ready' | 'restart' | 'attention' | 'out'

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { SEED_CATALOG } from '@pulse/domain'
 import type { StartupEntry } from '@pulse/domain'
 import { tidyStartup, withPrograms } from './startup'
 
@@ -32,14 +33,14 @@ describe('entradas de inicialização', () => {
   })
 
   it('o que casa com o catálogo ganha o id do programa', () => {
-    const found = withPrograms([entry('Steam', { value: 'C:\Steam\steam.exe' })])
+    const found = withPrograms(SEED_CATALOG, [entry('Steam', { value: 'C:\Steam\steam.exe' })])
     expect(found[0]?.programId).toBe('steam')
   })
 
   // Programa que o Pulse não instalou é justamente o que mais interessa nesta
   // aba, então ele fica na lista, só sem ícone.
   it('o que não casa continua na lista, sem id', () => {
-    const found = withPrograms([entry('Algum Programa Qualquer')])
+    const found = withPrograms(SEED_CATALOG, [entry('Algum Programa Qualquer')])
     expect(found).toHaveLength(1)
     expect(found[0]?.programId).toBeUndefined()
   })

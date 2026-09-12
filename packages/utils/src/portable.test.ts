@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { PROGRAM_BY_ID, type Program } from '@pulse/catalog-data'
-import { EMPTY_PROFILE, PORTABLE_VERSION, readPortable, type Profile } from '@pulse/domain'
+import {
+  EMPTY_PROFILE,
+  PORTABLE_VERSION,
+  readPortable,
+  SEED_CATALOG,
+  type Profile,
+} from '@pulse/domain'
 import {
   cleanProfile,
   csvOf,
@@ -31,24 +37,24 @@ describe('exportar', () => {
   })
 
   it('o script usa CRLF, porque o destino é um PowerShell no Windows', () => {
-    const text = scriptOf(['chrome'])
+    const text = scriptOf(SEED_CATALOG, ['chrome'])
     expect(text).toContain('\r\n')
     expect(text).not.toMatch(/[^\r]\n/)
   })
 
   it('a planilha separa por ponto e vírgula', () => {
-    const text = csvOf(['chrome'])
+    const text = csvOf(SEED_CATALOG, ['chrome'])
     expect(text.split('\r\n')[0]).toBe('nome;identificador;categoria;tamanho_mb')
   })
 
   it('id que não está no catálogo não vira linha nem pacote', () => {
-    expect(csvOf(['inventado'])).toBe('nome;identificador;categoria;tamanho_mb\r\n')
-    const list = JSON.parse(wingetImportOf(['inventado'])) as { Sources: { Packages: [] }[] }
+    expect(csvOf(SEED_CATALOG, ['inventado'])).toBe('nome;identificador;categoria;tamanho_mb\r\n')
+    const list = JSON.parse(wingetImportOf(SEED_CATALOG, ['inventado'])) as { Sources: { Packages: [] }[] }
     expect(list.Sources[0]?.Packages).toEqual([])
   })
 
   it('cada formato produz um arquivo diferente da mesma seleção', () => {
-    const formats = (['pulse', 'winget', 'script', 'csv'] as const).map((f) => fileFor(f, mine))
+    const formats = (['pulse', 'winget', 'script', 'csv'] as const).map((f) => fileFor(SEED_CATALOG, f, mine))
     expect(new Set(formats).size).toBe(4)
   })
 })
@@ -118,9 +124,9 @@ describe('identificador vindo de fora', () => {
 
       const get = vi.spyOn(PROGRAM_BY_ID, 'get').mockReturnValue(forged)
 
-      const script = scriptOf(['forjado'])
+      const script = scriptOf(SEED_CATALOG, ['forjado'])
       const commands = script.split('\r\n').filter((line) => line.startsWith('winget install'))
-      const list = JSON.parse(wingetImportOf(['forjado'])) as { Sources: { Packages: [] }[] }
+      const list = JSON.parse(wingetImportOf(SEED_CATALOG, ['forjado'])) as { Sources: { Packages: [] }[] }
 
       expect(commands, winget).toEqual([])
       expect(list.Sources[0]?.Packages, winget).toEqual([])
@@ -130,6 +136,6 @@ describe('identificador vindo de fora', () => {
   })
 
   it('um identificador comum continua passando', () => {
-    expect(scriptOf(['chrome'])).toContain('winget install --id Google.Chrome')
+    expect(scriptOf(SEED_CATALOG, ['chrome'])).toContain('winget install --id Google.Chrome')
   })
 })

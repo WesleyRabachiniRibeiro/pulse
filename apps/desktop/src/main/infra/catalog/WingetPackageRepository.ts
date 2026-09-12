@@ -1,6 +1,5 @@
-import { CATALOG, PROGRAM_BY_ID, type Upgrade } from '@pulse/domain'
-import { installedIds, nameMatchesProgram } from '@pulse/utils'
-import { readUpgrades } from '@pulse/utils'
+import type { Catalog, Upgrade } from '@pulse/domain'
+import { installedIds, nameMatchesProgram, readUpgrades } from '@pulse/utils'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
 import type { PackageRepository } from '../../ports/package-repository'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
@@ -37,6 +36,7 @@ export class WingetPackageRepository implements PackageRepository, CatalogPackag
   private inFlight: { generation: number; reading: Promise<string[]> } | null = null
 
   constructor(
+    private readonly catalog: Catalog,
     private readonly powershell: PowerShellRunner,
     private readonly processRunner: ProcessRunner,
   ) {}
@@ -60,7 +60,7 @@ export class WingetPackageRepository implements PackageRepository, CatalogPackag
       '--disable-interactivity',
     ])
 
-    const known = CATALOG.map((program) => program.winget).filter((id): id is string => Boolean(id))
+    const known = this.catalog.programs.map((program) => program.winget).filter((id): id is string => Boolean(id))
     return readUpgrades(text, known)
   }
 
@@ -72,7 +72,7 @@ export class WingetPackageRepository implements PackageRepository, CatalogPackag
   }
 
   async quietUninstallCommands(id: string): Promise<string[]> {
-    const program = PROGRAM_BY_ID.get(id)
+    const program = this.catalog.byId.get(id)
     if (!program) return []
 
     const { entries } = await this.powershell
@@ -116,6 +116,6 @@ export class WingetPackageRepository implements PackageRepository, CatalogPackag
       undefined,
       SCRIPT_TIMEOUT_MS,
     )
-    return installedIds(names.filter((n): n is string => typeof n === 'string'))
+    return installedIds(this.catalog, names.filter((n): n is string => typeof n === 'string'))
   }
 }

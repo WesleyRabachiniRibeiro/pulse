@@ -1,3 +1,4 @@
+import { SEED_CATALOG } from '@pulse/domain'
 import type { Item } from '@pulse/domain'
 import { describe, expect, it } from 'vitest'
 import { canEnqueue, itemPercent, overallPercent, tally } from './installation'
@@ -60,12 +61,12 @@ describe('overallPercent', () => {
       item({ id: 'chrome', status: 'done' }),
       item({ id: 'firefox', status: 'queued' }),
     ]
-    expect(overallPercent(items)).toBeGreaterThan(0)
-    expect(overallPercent(items)).toBeLessThan(100)
+    expect(overallPercent(SEED_CATALOG, items)).toBeGreaterThan(0)
+    expect(overallPercent(SEED_CATALOG, items)).toBeLessThan(100)
   })
 
   it('returns 0 for an empty queue', () => {
-    expect(overallPercent([])).toBe(0)
+    expect(overallPercent(SEED_CATALOG, [])).toBe(0)
   })
 })
 

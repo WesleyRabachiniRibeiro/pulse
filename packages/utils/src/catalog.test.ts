@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { filterCatalog, installedIds, bundleIsActive, totalSizeMb, compareVersions } from './catalog'
 import { BUNDLES } from '@pulse/catalog-data'
+import { SEED_CATALOG } from '@pulse/domain'
 import type { PackageVersion } from '@pulse/domain'
 
 function version(overrides: Partial<PackageVersion>): PackageVersion {
@@ -9,29 +10,29 @@ function version(overrides: Partial<PackageVersion>): PackageVersion {
 
 describe('installedIds', () => {
   it('matches installed program names against catalog hints', () => {
-    expect(installedIds(['Google Chrome', 'Some Unrelated Tool'])).toEqual(['chrome'])
+    expect(installedIds(SEED_CATALOG, ['Google Chrome', 'Some Unrelated Tool'])).toEqual(['chrome'])
   })
 
   it('matches a hint followed by a qualifier in parentheses', () => {
-    expect(installedIds(['Google Chrome (64-bit)'])).toEqual(['chrome'])
+    expect(installedIds(SEED_CATALOG, ['Google Chrome (64-bit)'])).toEqual(['chrome'])
   })
 
   it('picks the longest matching hint when a shorter one is also a prefix', () => {
-    expect(installedIds(['Claude Code'])).toEqual(['claudecode'])
+    expect(installedIds(SEED_CATALOG, ['Claude Code'])).toEqual(['claudecode'])
   })
 
   it('does not match unrelated program names', () => {
-    expect(installedIds(['Notepad++'])).toEqual([])
+    expect(installedIds(SEED_CATALOG, ['Notepad++'])).toEqual([])
   })
 })
 
 describe('filterCatalog', () => {
   it('returns the full catalog for an empty term', () => {
-    expect(filterCatalog('   ').length).toBeGreaterThan(40)
+    expect(filterCatalog(SEED_CATALOG, '   ').length).toBeGreaterThan(40)
   })
 
   it('matches by category name regardless of accents/case', () => {
-    expect(filterCatalog('midia').some((p) => p.id === 'discord')).toBe(true)
+    expect(filterCatalog(SEED_CATALOG, 'midia').some((p) => p.id === 'discord')).toBe(true)
   })
 })
 
@@ -45,7 +46,7 @@ describe('bundleIsActive', () => {
 
 describe('totalSizeMb', () => {
   it('sums known program sizes and ignores unknown ids', () => {
-    expect(totalSizeMb(['chrome', 'unknown-id'])).toBe(118)
+    expect(totalSizeMb(SEED_CATALOG, ['chrome', 'unknown-id'])).toBe(118)
   })
 })
 

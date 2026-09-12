@@ -1,6 +1,5 @@
-import { CATALOG, CATEGORIES, PROGRAM_BY_ID } from '@pulse/catalog-data'
 import type { Bundle, Category, Program } from '@pulse/catalog-data'
-import { normalizeText, type PackageVersion } from '@pulse/domain'
+import { normalizeText, type Catalog, type PackageVersion } from '@pulse/domain'
 
 // Estimativa grosseira de banda, em megabytes por minuto. Era um 90 solto em
 // dois lugares, com pisos diferentes, e ninguém saberia mexer nos dois.
@@ -8,13 +7,13 @@ export const MB_PER_MINUTE = 90
 
 // O padrão muda com o uso: somar a seleção ignora o que não está no catálogo,
 // enquanto medir progresso chuta um peso para o item não sumir da barra.
-export function sizeOf(id: string, fallbackMb = 0): number {
-  return PROGRAM_BY_ID.get(id)?.mb ?? fallbackMb
+export function sizeOf(catalog: Catalog, id: string, fallbackMb = 0): number {
+  return catalog.byId.get(id)?.mb ?? fallbackMb
 }
 
-export function totalSizeMb(ids: Iterable<string>): number {
+export function totalSizeMb(catalog: Catalog, ids: Iterable<string>): number {
   let total = 0
-  for (const id of ids) total += sizeOf(id)
+  for (const id of ids) total += sizeOf(catalog, id)
   return total
 }
 
@@ -44,12 +43,12 @@ export function compareVersions(a: PackageVersion, b: PackageVersion): number {
   return 0
 }
 
-export function filterCatalog(term: string): readonly Program[] {
+export function filterCatalog(catalog: Catalog, term: string): readonly Program[] {
   const needle = normalizeText(term.trim())
-  if (!needle) return CATALOG
+  if (!needle) return catalog.programs
 
-  const categoryNames = new Map(CATEGORIES.map((c) => [c.id, normalizeText(c.name)]))
-  return CATALOG.filter(
+  const categoryNames = new Map(catalog.categories.map((c) => [c.id, normalizeText(c.name)]))
+  return catalog.programs.filter(
     (p) =>
       normalizeText(p.name).includes(needle) ||
       (categoryNames.get(p.category) ?? '').includes(needle),
@@ -89,7 +88,7 @@ export function entryMatchesProgram(
 
 // Quando duas dicas casam com o mesmo nome, a mais longa ganha: entre "visual
 // studio" e "visual studio code", o nome mais específico é o certo.
-export function installedIds(installedNames: readonly string[]): string[] {
+export function installedIds(catalog: Catalog, installedNames: readonly string[]): string[] {
   const found = new Set<string>()
 
   for (const raw of installedNames) {
@@ -97,7 +96,7 @@ export function installedIds(installedNames: readonly string[]): string[] {
     let longest = 0
     let owners: string[] = []
 
-    for (const program of CATALOG) {
+    for (const program of catalog.programs) {
       for (const hint of program.hints) {
         if (!hintMatches(name, hint)) continue
         if (hint.length > longest) {
@@ -112,7 +111,7 @@ export function installedIds(installedNames: readonly string[]): string[] {
     for (const owner of owners) found.add(owner)
   }
 
-  return CATALOG.filter((p) => found.has(p.id)).map((p) => p.id)
+  return catalog.programs.filter((p) => found.has(p.id)).map((p) => p.id)
 }
 
 export interface CategoryGroup {
@@ -120,8 +119,11 @@ export interface CategoryGroup {
   programs: readonly Program[]
 }
 
-export function groupByCategory(programs: readonly Program[]): readonly CategoryGroup[] {
-  return CATEGORIES.map((category) => ({
+export function groupByCategory(
+  catalog: Catalog,
+  programs: readonly Program[],
+): readonly CategoryGroup[] {
+  return catalog.categories.map((category) => ({
     category,
     programs: programs
       .filter((p) => p.category === category.id)

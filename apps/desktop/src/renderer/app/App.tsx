@@ -26,6 +26,7 @@ import {
   usePreferences,
   usePreferencesLoaded,
 } from '@/features/preferences'
+import { useCatalog } from '@/features/catalog'
 import s from './App.module.css'
 
 const VERSION = __APP_VERSION__
@@ -54,6 +55,7 @@ export function App() {
 }
 
 function Shell({ savedDrive }: { savedDrive: string | null }) {
+  const catalog = useCatalog()
   const [step, setStep] = useState(0)
   const [overlay, setOverlay] = useState<'config' | 'manage' | null>(null)
   const [drive, setDrive] = useState<string | null>(savedDrive)
@@ -70,7 +72,7 @@ function Shell({ savedDrive }: { savedDrive: string | null }) {
   useWatchAutostart(run?.finishedAt ?? null, pastPreflight)
   useOpenOnFirstVisit()
 
-  const totalMb = totalSizeMb(selected)
+  const totalMb = totalSizeMb(catalog, selected)
   const size = selected.size === 0 ? 'nada escolhido ainda' : `${formatMb(totalMb)} para baixar`
 
   const available = [1, ...(drive ? [2] : []), ...(run ? [3] : []), ...(run?.finishedAt ? [4] : [])]

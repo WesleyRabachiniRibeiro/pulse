@@ -20,6 +20,7 @@ import { useTourStore } from '@/features/tour'
 import { AppSettings } from './AppSettings'
 import { AppCard, AppCardSkeleton } from './AppCard'
 import { PinDialog, checkParentalPin, useParental } from '@/features/parental'
+import { useCatalog } from '@/features/catalog'
 import s from './Selection.module.css'
 
 interface Props {
@@ -32,6 +33,7 @@ function messageOf(e: unknown): string {
 }
 
 export function Selection({ drive, onGoToInstallation }: Props) {
+  const catalog = useCatalog()
   const [search, setSearch] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [inSettings, setInSettings] = useState<string | null>(null)
@@ -76,7 +78,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
     useTourStore.getState().setContext(inSettings ? 'settings' : 'grid')
   }, [inSettings])
 
-  const groups = useMemo(() => groupByCategory(filterCatalog(search)), [search])
+  const groups = useMemo(() => groupByCategory(catalog, filterCatalog(catalog, search)), [search])
   const found = useMemo(() => groups.reduce((t, g) => t + g.programs.length, 0), [groups])
 
   const searching = search.trim().length > 0
@@ -96,7 +98,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
     [selected, installed, drivesByApp, settingsByApp, drive],
   )
   const fresh = useMemo(() => requestsToAppend(checked, run), [checked, run])
-  const totalMb = totalSizeMb(fresh.map((r) => r.id))
+  const totalMb = totalSizeMb(catalog, fresh.map((r) => r.id))
   const nothing = fresh.length === 0
   const howMany = `${fresh.length} ${fresh.length === 1 ? 'programa' : 'programas'}`
   const repeated = checked.length - fresh.length

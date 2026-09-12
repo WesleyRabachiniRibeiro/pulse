@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_PROFILE, type Profile } from '@pulse/domain'
+import { EMPTY_PROFILE, SEED_CATALOG, type Profile } from '@pulse/domain'
 import { portableOf } from '@pulse/utils'
 import { ProfileService } from './ProfileService'
 import type { FileDialog, SaveRequest } from '../../ports/file-dialog'
@@ -25,7 +25,7 @@ function make(over: { dialog?: Partial<FileDialog>; remote?: Partial<RemoteFetch
 
   const remote: RemoteFetch = { text: async () => null, ...over.remote }
 
-  return { saved, service: new ProfileService(dialog, remote) }
+  return { saved, service: new ProfileService(SEED_CATALOG, dialog, remote) }
 }
 
 describe('exportar', () => {

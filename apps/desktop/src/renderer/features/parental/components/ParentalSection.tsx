@@ -11,15 +11,17 @@ import {
   useParental,
 } from '../store/useParental'
 import { PinDialog } from './PinDialog'
+import { useCatalog } from '@/features/catalog'
 import s from './ParentalSection.module.css'
 
 export function ParentalSection() {
+  const catalog = useCatalog()
   const { on, hasPin, blocked } = useParental()
   const [asking, setAsking] = useState<PinPurpose | null>(null)
   const [editing, setEditing] = useState(false)
 
   const locked = on && hasPin
-  const groups = groupByCategory(CATALOG)
+  const groups = groupByCategory(catalog, CATALOG)
 
   // 'list' só confere o PIN: mexer na lista não liga nem desliga o controle.
   function answer(purpose: PinPurpose, pin: string, next?: string): Promise<boolean> {

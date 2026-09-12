@@ -1,3 +1,4 @@
+import { SEED_CATALOG } from '@pulse/domain'
 import { NodePowerShellRunner } from './infra/powershell/NodePowerShellRunner'
 import { WindowsProcessRunner } from './infra/process/WindowsProcessRunner'
 import { WingetPackageInstaller } from './infra/winget/WingetPackageInstaller'
@@ -65,7 +66,7 @@ export function composeMain(): MainComponents {
   const clipboardWriter = new ElectronClipboardWriter()
   const queueRepository = new InMemoryQueueRepository()
 
-  const packageRepository = new WingetPackageRepository(powershellRunner, processRunner)
+  const packageRepository = new WingetPackageRepository(SEED_CATALOG, powershellRunner, processRunner)
   const diskSpaceProbe = new WindowsDiskSpaceProbe(powershellRunner)
   const steamAdapter = new SteamAdapter(powershellRunner)
   const browserDefaultSetter = new BrowserDefaultSetterAdapter(powershellRunner, processRunner)
@@ -96,7 +97,7 @@ export function composeMain(): MainComponents {
     packageRepository,
     new WindowsAutostartReader(powershellRunner),
     processRunner,
-    new WindowsStartupEntries(powershellRunner),
+    new WindowsStartupEntries(SEED_CATALOG, powershellRunner),
     new WindowsRegistryReader(powershellRunner),
   )
   registerCatalog(catalogService)
@@ -112,7 +113,7 @@ export function composeMain(): MainComponents {
   const readGitConfig = new ReadGitConfig(toolchain)
   registerPreferences(preferencesService, readGitConfig)
 
-  registerProfile(new ProfileService(new ElectronFileDialog(), new NodeRemoteFetch()))
+  registerProfile(new ProfileService(SEED_CATALOG, new ElectronFileDialog(), new NodeRemoteFetch()))
 
   const systemService = new SystemService(
     new WindowsPowerController(processRunner),

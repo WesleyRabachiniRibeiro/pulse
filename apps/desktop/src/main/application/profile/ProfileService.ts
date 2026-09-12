@@ -1,7 +1,7 @@
 import {
   FORMAT_FILE,
-  PROGRAM_BY_ID,
   readPortable,
+  type Catalog,
   type ExportFormat,
   type ImportMode,
   type Profile,
@@ -24,6 +24,7 @@ export interface ImportResult {
 
 export class ProfileService {
   constructor(
+    private readonly catalog: Catalog,
     private readonly dialog: FileDialog,
     private readonly remote: RemoteFetch,
   ) {}
@@ -34,7 +35,7 @@ export class ProfileService {
       suggestedName: this.suggestedName(format),
       filterName: file.name,
       extension: file.extension,
-      contents: fileFor(format, profile, drive),
+      contents: fileFor(this.catalog, format, profile, drive),
     })
 
     return outcome === 'saved' ? { status: 'saved', ...(path ? { path } : {}) } : { status: outcome }
@@ -67,7 +68,7 @@ export class ProfileService {
     const portable = readPortable(parsed)
     if (!portable) return { status: 'invalid' }
 
-    const known = (id: string): boolean => PROGRAM_BY_ID.has(id)
+    const known = (id: string): boolean => this.catalog.byId.has(id)
     const wanted = profileOf(portable, mode, current)
     const profile = cleanProfile(wanted, known)
 

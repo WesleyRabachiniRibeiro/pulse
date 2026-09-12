@@ -1,10 +1,10 @@
-import { PROGRAM_BY_ID } from '@pulse/catalog-data'
 import {
   PORTABLE_VERSION,
   profileSchema,
   settingsAreEmpty,
   type ExportFormat,
   type ImportMode,
+  type Catalog,
   type Portable,
   type Profile,
   type Settings,
@@ -71,11 +71,11 @@ export function profileOf(portable: Portable, mode: ImportMode, current: Profile
 // catálogo vai passar a aceitar programa vindo de fora.
 const SAFE_WINGET_ID = /^[A-Za-z0-9][A-Za-z0-9._+-]*$/
 
-function wingetIdsOf(ids: readonly string[]): string[] {
+function wingetIdsOf(catalog: Catalog, ids: readonly string[]): string[] {
   const found: string[] = []
 
   for (const id of ids) {
-    const winget = PROGRAM_BY_ID.get(id)?.winget
+    const winget = catalog.byId.get(id)?.winget
     if (!winget || !SAFE_WINGET_ID.test(winget)) continue
     if (!found.includes(winget)) found.push(winget)
   }
@@ -83,8 +83,8 @@ function wingetIdsOf(ids: readonly string[]): string[] {
   return found
 }
 
-export function wingetImportOf(ids: readonly string[], at = new Date()): string {
-  const packages = wingetIdsOf(ids).map((PackageIdentifier) => ({ PackageIdentifier }))
+export function wingetImportOf(catalog: Catalog, ids: readonly string[], at = new Date()): string {
+  const packages = wingetIdsOf(catalog, ids).map((PackageIdentifier) => ({ PackageIdentifier }))
 
   return `${JSON.stringify(
     {
@@ -123,8 +123,8 @@ const SCRIPT_HEADER: readonly string[] = [
 //
 // CRLF porque o destino é um PowerShell no Windows, aberto no Bloco de Notas
 // com alguma frequência.
-export function scriptOf(ids: readonly string[]): string {
-  const lines = wingetIdsOf(ids).map((winget) => `winget install --id ${winget} ${SCRIPT_ARGS}`)
+export function scriptOf(catalog: Catalog, ids: readonly string[]): string {
+  const lines = wingetIdsOf(catalog, ids).map((winget) => `winget install --id ${winget} ${SCRIPT_ARGS}`)
 
   return [...SCRIPT_HEADER, ...lines, ''].join('\r\n')
 }
@@ -134,11 +134,11 @@ function csvCell(value: string): string {
 }
 
 // Ponto e vírgula porque o Excel em português usa vírgula como decimal.
-export function csvOf(ids: readonly string[]): string {
+export function csvOf(catalog: Catalog, ids: readonly string[]): string {
   const rows = [['nome', 'identificador', 'categoria', 'tamanho_mb']]
 
   for (const id of ids) {
-    const program = PROGRAM_BY_ID.get(id)
+    const program = catalog.byId.get(id)
     if (!program) continue
     rows.push([program.name, program.winget ?? '', program.category, String(program.mb)])
   }
@@ -146,12 +146,17 @@ export function csvOf(ids: readonly string[]): string {
   return `${rows.map((row) => row.map(csvCell).join(';')).join('\r\n')}\r\n`
 }
 
-export function fileFor(format: ExportFormat, profile: Profile, drive?: string): string {
+export function fileFor(
+  catalog: Catalog,
+  format: ExportFormat,
+  profile: Profile,
+  drive?: string,
+): string {
   const ids = [...profile.selected]
 
-  if (format === 'winget') return wingetImportOf(ids)
-  if (format === 'script') return scriptOf(ids)
-  if (format === 'csv') return csvOf(ids)
+  if (format === 'winget') return wingetImportOf(catalog, ids)
+  if (format === 'script') return scriptOf(catalog, ids)
+  if (format === 'csv') return csvOf(catalog, ids)
 
   return `${JSON.stringify(portableOf(profile, drive), null, 2)}\n`
 }

@@ -2,6 +2,7 @@ import { CATALOG, formatMb } from '@pulse/domain'
 import { totalSizeMb } from '@pulse/utils'
 import { useTourStore } from '@/features/tour'
 import logo from '@/shared/assets/logo.png'
+import { useCatalog } from '@/features/catalog'
 import s from './Home.module.css'
 
 interface Props {
@@ -27,7 +28,8 @@ const CARDS = [
 ]
 
 export function Home({ onStart }: Props) {
-  const total = totalSizeMb(CATALOG.map((p) => p.id))
+  const catalog = useCatalog()
+  const total = totalSizeMb(catalog, CATALOG.map((p) => p.id))
 
   return (
     <div className={s.screen}>
