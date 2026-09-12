@@ -1,3 +1,4 @@
+import { withExtras } from '@pulse/utils'
 import {
   CATALOG_VERSION,
   catalogOf,
@@ -12,6 +13,8 @@ import {
 // enxergando o catálogo atual sem saber que ele troca. Sem isso, todo serviço
 // que guardou o valor no construtor ficaria com a semente para sempre.
 export class LiveCatalog implements Catalog {
+  private base: Catalog = SEED_CATALOG
+  private extras: readonly Program[] = []
   private inner: Catalog = SEED_CATALOG
 
   get categories(): Catalog['categories'] {
@@ -44,10 +47,30 @@ export class LiveCatalog implements Catalog {
   }
 
   adopt(payload: CatalogPayload): void {
-    this.inner = catalogOf(
+    this.base = catalogOf(
       payload.programs as readonly Program[],
       payload.categories as readonly Category[],
       payload.bundles,
     )
+    this.republish()
+  }
+
+  setExtras(extras: readonly Program[]): void {
+    this.extras = extras
+    this.republish()
+  }
+
+  hasPublished(id: string): boolean {
+    return this.base.byId.has(id)
+  }
+
+  myPrograms(): readonly Program[] {
+    return this.extras
+  }
+
+  // A soma é refeita a cada mudança dos dois lados, para nunca existir um
+  // estado em que o catálogo publicado e os programas locais discordam.
+  private republish(): void {
+    this.inner = withExtras(this.base, this.extras)
   }
 }

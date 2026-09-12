@@ -1,4 +1,4 @@
-import { type CatalogState, type PackageVersion, type InstalledTree, type StartupEntry, type Upgrade } from '@pulse/domain'
+import { type CatalogState, type PackageVersion, type InstalledTree, type Program, type StartupEntry, type Upgrade } from '@pulse/domain'
 import { buildInstalled, compareVersions, readCatalogPayload } from '@pulse/utils'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
@@ -6,6 +6,7 @@ import type { AutostartEntry, AutostartReader } from '../../ports/autostart-read
 import type { StartupEntries } from '../../ports/startup-entries'
 import type { RegistryReader } from '../../ports/registry-reader'
 import type { CatalogCache } from '../../ports/catalog-cache'
+import type { CatalogExtras } from '../../ports/catalog-extras'
 import type { RemoteFetch } from '../../ports/remote-fetch'
 import type { LiveCatalog } from './LiveCatalog'
 
@@ -28,6 +29,7 @@ export class CatalogService {
     private readonly cache: CatalogCache,
     private readonly remote: RemoteFetch,
     private readonly sourceUrl: string,
+    private readonly extras: CatalogExtras,
   ) {}
 
   private state: CatalogState = { source: 'seed', checkedAt: null, loading: false }
@@ -50,6 +52,8 @@ export class CatalogService {
     if (this.state.loading) return
     this.announce({ ...this.state, loading: true })
 
+    this.catalog.setExtras(await this.extras.read())
+
     const cached = await this.cache.read()
     if (cached) {
       this.catalog.adopt(cached)
@@ -68,6 +72,31 @@ export class CatalogService {
 
     // Rede fora, ou resposta que não passa na validação: fica o que já havia.
     this.announce({ ...this.state, loading: false })
+  }
+
+  myPrograms(): readonly Program[] {
+    return this.catalog.myPrograms()
+  }
+
+  // Um id que já existe no catálogo publicado é recusado em vez de sobrescrever:
+  // o publicado manda, e a pessoa escolhe outro id.
+  async addProgram(program: Program): Promise<boolean> {
+    if (this.catalog.hasPublished(program.id)) return false
+
+    const rest = this.catalog.myPrograms().filter((one) => one.id !== program.id)
+    const next = [...rest, program]
+
+    await this.extras.write(next)
+    this.catalog.setExtras(next)
+    this.announce({ ...this.state })
+    return true
+  }
+
+  async removeProgram(id: string): Promise<void> {
+    const next = this.catalog.myPrograms().filter((one) => one.id !== id)
+    await this.extras.write(next)
+    this.catalog.setExtras(next)
+    this.announce({ ...this.state })
   }
 
   retry(): Promise<void> {

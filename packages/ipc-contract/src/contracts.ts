@@ -23,6 +23,7 @@ import {
   installedTreeSchema,
   catalogPayloadSchema,
   catalogStateSchema,
+  programSchema,
 } from '@pulse/domain'
 
 // O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
@@ -160,6 +161,18 @@ export const ipcContracts = {
   'catalog:payload': {
     input: z.void(),
     output: catalogPayloadSchema,
+  },
+  'catalog:mine': {
+    input: z.void(),
+    output: z.array(programSchema),
+  },
+  'catalog:add': {
+    input: programSchema,
+    output: z.object({ ok: z.boolean() }),
+  },
+  'catalog:remove': {
+    input: z.object({ id: z.string() }),
+    output: z.array(programSchema),
   },
   'catalog:retry': {
     input: z.void(),

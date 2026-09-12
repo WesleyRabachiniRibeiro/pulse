@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { filterCatalog, installedIds, bundleIsActive, totalSizeMb, compareVersions } from './catalog'
+import { withExtras, filterCatalog, installedIds, bundleIsActive, totalSizeMb, compareVersions } from './catalog'
 import { BUNDLES } from '@pulse/catalog-data'
-import { SEED_CATALOG } from '@pulse/domain'
+import { SEED_CATALOG, type Program } from '@pulse/domain'
 import type { PackageVersion } from '@pulse/domain'
 
 function version(overrides: Partial<PackageVersion>): PackageVersion {
@@ -67,5 +67,37 @@ describe('compareVersions', () => {
     const older = version({ winget: 'Vendor.Package', version: '2.5' })
     const newer = version({ winget: 'Vendor.Package', version: '2.10' })
     expect(compareVersions(older, newer)).toBeLessThan(0)
+  })
+})
+
+describe('meus programas', () => {
+  const meu: Program = {
+    id: 'meu-app',
+    name: 'Meu App',
+    winget: 'Alguem.MeuApp',
+    version: '1.0',
+    mb: 12,
+    category: 'dev',
+    hints: ['meu app'],
+  }
+
+  it('entram no catálogo depois do publicado', () => {
+    const found = withExtras(SEED_CATALOG, [meu])
+    expect(found.byId.get('meu-app')?.name).toBe('Meu App')
+    expect(found.programs.length).toBe(SEED_CATALOG.programs.length + 1)
+  })
+
+  // O publicado manda: senão um programa local sequestraria o nome de um
+  // oficial, e a pessoa instalaria outra coisa sem perceber.
+  it('id que já existe no publicado é descartado', () => {
+    const sequestro: Program = { ...meu, id: 'chrome', name: 'Não é o Chrome' }
+    const found = withExtras(SEED_CATALOG, [sequestro])
+
+    expect(found.byId.get('chrome')?.name).toBe('Google Chrome')
+    expect(found.programs.length).toBe(SEED_CATALOG.programs.length)
+  })
+
+  it('sem nada adicionado, o catálogo é o mesmo objeto', () => {
+    expect(withExtras(SEED_CATALOG, [])).toBe(SEED_CATALOG)
   })
 })

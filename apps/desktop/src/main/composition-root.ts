@@ -16,6 +16,7 @@ import { WindowsAutostartReader } from './infra/catalog/WindowsAutostartReader'
 import { WindowsStartupEntries } from './infra/catalog/WindowsStartupEntries'
 import { WindowsRegistryReader } from './infra/catalog/WindowsRegistryReader'
 import { JsonCatalogCache } from './infra/catalog/JsonCatalogCache'
+import { JsonCatalogExtras } from './infra/catalog/JsonCatalogExtras'
 import { LiveCatalog } from './application/catalog/LiveCatalog'
 import { SteamAdapter } from './infra/steam/SteamAdapter'
 import { BrowserDefaultSetterAdapter } from './infra/browsers/BrowserDefaultSetterAdapter'
@@ -112,6 +113,7 @@ export function composeMain(): MainComponents {
     new JsonCatalogCache(),
     new NodeRemoteFetch(),
     CATALOG_URL,
+    new JsonCatalogExtras(),
   )
   registerCatalog(catalogService, catalog)
   void catalogService.load()

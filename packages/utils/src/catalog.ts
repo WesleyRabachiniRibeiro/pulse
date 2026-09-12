@@ -4,6 +4,7 @@ import {
   catalogPayloadSchema,
   normalizeText,
   type Catalog,
+  catalogOf,
   type CatalogPayload,
   type PackageVersion,
 } from '@pulse/domain'
@@ -171,4 +172,15 @@ export function readCatalogPayload(raw: unknown): CatalogPayload | null {
   }
 
   return parsed.data
+}
+
+// O que a pessoa adicionou entra depois do catálogo publicado, e um id que já
+// existe lá é descartado: o publicado manda, senão um programa local
+// sequestraria o nome de um oficial.
+export function withExtras(base: Catalog, extras: readonly Program[]): Catalog {
+  const known = new Set(base.programs.map((program) => program.id))
+  const mine = extras.filter((program) => !known.has(program.id))
+  if (mine.length === 0) return base
+
+  return catalogOf([...base.programs, ...mine], base.categories, base.bundles)
 }

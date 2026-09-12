@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { CATALOG_VERSION, SEED_CATALOG, type CatalogPayload, type CatalogState } from '@pulse/domain'
+import {
+  CATALOG_VERSION,
+  SEED_CATALOG,
+  type CatalogPayload,
+  type CatalogState,
+  type Program,
+} from '@pulse/domain'
 import { CatalogService } from './CatalogService'
 import { LiveCatalog } from './LiveCatalog'
 import type { CatalogCache } from '../../ports/catalog-cache'
@@ -17,7 +23,9 @@ function payload(over: Partial<CatalogPayload> = {}): CatalogPayload {
   }
 }
 
-function make(over: { cached?: CatalogPayload | null; body?: string | null } = {}) {
+function make(
+  over: { cached?: CatalogPayload | null; body?: string | null; extras?: Program[] } = {},
+) {
   const catalog = new LiveCatalog()
   const written: CatalogPayload[] = []
   const states: CatalogState[] = []
@@ -51,6 +59,7 @@ function make(over: { cached?: CatalogPayload | null; body?: string | null } = {
     cache,
     remote,
     'https://example.test/catalog.json',
+    { read: async () => over.extras ?? [], write: async () => {} },
   )
 
   service.subscribe((state) => states.push(state))

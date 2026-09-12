@@ -1,12 +1,28 @@
 import { BrowserWindow } from 'electron'
+import type { Program } from '@pulse/domain'
+import type { IpcOutput } from '@pulse/ipc-contract'
 import { register } from './register'
 import type { CatalogService } from '../application/catalog/CatalogService'
 import type { LiveCatalog } from '../application/catalog/LiveCatalog'
 
 const WARM_DELAY_MS = 5000
 
+// O contrato descreve o que trafega, e o domínio o que o app manipula. As duas
+// formas são a mesma coisa com readonly e categoria tipada a mais de um lado.
+function wire(programs: readonly Program[]): IpcOutput<'catalog:mine'> {
+  return programs.map((program) => ({ ...program })) as unknown as IpcOutput<'catalog:mine'>
+}
+
 export function registerCatalog(catalogService: CatalogService, catalog: LiveCatalog): void {
   register('catalog:state', () => catalogService.currentState())
+  register('catalog:mine', () => wire(catalogService.myPrograms()))
+  register('catalog:add', async (input) => ({
+    ok: await catalogService.addProgram(input as unknown as Program),
+  }))
+  register('catalog:remove', async (input) => {
+    await catalogService.removeProgram(input.id)
+    return wire(catalogService.myPrograms())
+  })
   register('catalog:payload', () => catalog.payload())
   register('catalog:retry', async () => {
     await catalogService.retry()

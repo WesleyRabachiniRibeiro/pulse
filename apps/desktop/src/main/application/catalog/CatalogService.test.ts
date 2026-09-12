@@ -57,6 +57,7 @@ describe('CatalogService.listVersions', () => {
       { read: async () => null, write: async () => {} },
       { text: async () => null },
       'https://example.test/catalog.json',
+      { read: async () => [], write: async () => {} },
     )
     expect(await service.listVersions('chrome')).toEqual([])
   })
@@ -72,6 +73,7 @@ describe('CatalogService.listVersions', () => {
       { read: async () => null, write: async () => {} },
       { text: async () => null },
       'https://example.test/catalog.json',
+      { read: async () => [], write: async () => {} },
     )
     const versions = await service.listVersions('node')
     // OpenJS.NodeJS.LTS ganha por ser tratado como "sempre a mais nova"; entre
@@ -95,6 +97,7 @@ describe('CatalogService.listVersions', () => {
       { read: async () => null, write: async () => {} },
       { text: async () => null },
       'https://example.test/catalog.json',
+      { read: async () => [], write: async () => {} },
     )
     const versions = await service.listVersions('node')
     const recommended = versions.find((v) => v.recommended)
@@ -114,6 +117,7 @@ describe('CatalogService passthroughs', () => {
       { read: async () => null, write: async () => {} },
       { text: async () => null },
       'https://example.test/catalog.json',
+      { read: async () => [], write: async () => {} },
     )
     expect(await service.listInstalled(false)).toEqual(['chrome', 'vscode'])
   })
