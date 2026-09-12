@@ -1,23 +1,27 @@
 import { useState } from 'react'
 import { HistoryTab } from './HistoryTab'
+import { UpdatesTab } from './UpdatesTab'
 import s from './Manage.module.css'
 
-type TabId = 'history'
+type TabId = 'updates' | 'history'
 
 interface Tab {
   id: TabId
   name: string
 }
 
-// As outras abas — instalados, atualizações e inicialização — entram aqui.
-const TABS: readonly Tab[] = [{ id: 'history', name: 'HISTÓRICO' }]
+// As abas de instalados e inicialização entram aqui.
+const TABS: readonly Tab[] = [
+  { id: 'updates', name: 'ATUALIZAÇÕES' },
+  { id: 'history', name: 'HISTÓRICO' },
+]
 
 interface Props {
   onBack: () => void
 }
 
 export function Manage({ onBack }: Props) {
-  const [tab, setTab] = useState<TabId>('history')
+  const [tab, setTab] = useState<TabId>('updates')
 
   return (
     <div className={s.screen}>
@@ -43,7 +47,10 @@ export function Manage({ onBack }: Props) {
         </div>
       </header>
 
-      <div className={s.body}>{tab === 'history' && <HistoryTab />}</div>
+      <div className={s.body}>
+        {tab === 'updates' && <UpdatesTab />}
+        {tab === 'history' && <HistoryTab />}
+      </div>
     </div>
   )
 }

@@ -1,4 +1,5 @@
-import { compareVersions, PROGRAM_BY_ID, type PackageVersion } from '@pulse/domain'
+import { CATALOG, PROGRAM_BY_ID, type PackageVersion, type Upgrade } from '@pulse/domain'
+import { compareVersions } from '@pulse/utils'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
 import type { AutostartEntry, AutostartReader } from '../../ports/autostart-reader'
@@ -12,6 +13,20 @@ export class CatalogService {
 
   listInstalled(fresh: boolean): Promise<string[]> {
     return this.packageReader.listInstalled(fresh)
+  }
+
+  // O winget devolve o identificador dele. Casar com o catálogo é o que deixa
+  // a tela mostrar ícone e nome do Pulse em vez de "Google.Chrome".
+  async listUpgrades(): Promise<Upgrade[]> {
+    const found = await this.packageReader.listUpgrades()
+    const byWinget = new Map(
+      CATALOG.filter((p) => p.winget).map((p) => [p.winget?.toLowerCase(), p.id]),
+    )
+
+    return found.map((one) => {
+      const programId = byWinget.get(one.wingetId.toLowerCase())
+      return programId ? { ...one, programId } : { ...one }
+    })
   }
 
   listAutostart(): Promise<AutostartEntry[]> {

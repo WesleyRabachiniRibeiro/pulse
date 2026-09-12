@@ -1,19 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
 import { settingsSummary } from '@pulse/domain'
+import { BUNDLES, CATALOG, formatMb, PROGRAM_BY_ID } from '@pulse/domain'
+import { type Request } from '@pulse/domain'
 import {
   bundleIsActive,
-  BUNDLES,
-  CATALOG,
   estimatedMinutes,
   filterCatalog,
-  formatMb,
   groupByCategory,
-  PROGRAM_BY_ID,
+  requestsToAppend,
   totalSizeMb,
-} from '@pulse/domain'
-import { type Request } from '@pulse/domain'
-import { requestsToAppend } from '@pulse/utils'
+} from '@pulse/utils'
 import { appendToQueue, startInstallation, useRun } from '@/features/installation'
 import { useAutostart } from '../store/useAutostart'
 import { useDrives, useWatchDrives } from '../store/useDrives'

@@ -63,7 +63,7 @@ export function composeMain(): MainComponents {
   const clipboardWriter = new ElectronClipboardWriter()
   const queueRepository = new InMemoryQueueRepository()
 
-  const packageRepository = new WingetPackageRepository(powershellRunner)
+  const packageRepository = new WingetPackageRepository(powershellRunner, processRunner)
   const diskSpaceProbe = new WindowsDiskSpaceProbe(powershellRunner)
   const steamAdapter = new SteamAdapter(powershellRunner)
   const browserDefaultSetter = new BrowserDefaultSetterAdapter(powershellRunner, processRunner)

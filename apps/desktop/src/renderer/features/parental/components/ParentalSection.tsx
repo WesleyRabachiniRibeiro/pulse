@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { CATALOG, groupByCategory, type PinPurpose } from '@pulse/domain'
+import { CATALOG, type PinPurpose } from '@pulse/domain'
+import { groupByCategory } from '@pulse/utils'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import {
   changeParentalPin,

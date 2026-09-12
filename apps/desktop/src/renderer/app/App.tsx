@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { formatMb, totalSizeMb } from '@pulse/domain'
+import { formatMb } from '@pulse/domain'
+import { totalSizeMb } from '@pulse/utils'
 import { TitleBar } from '@/shared/ui/TitleBar/TitleBar'
 import { StepRail } from '@/shared/ui/StepRail/StepRail'
 import { Home } from '@/features/home'

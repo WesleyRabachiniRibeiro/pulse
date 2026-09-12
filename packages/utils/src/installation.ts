@@ -1,4 +1,4 @@
-import { PROGRAM_BY_ID } from '@pulse/catalog-data'
+import { minutesFor, sizeOf } from './catalog'
 import { equalsIgnoreCase } from '@pulse/domain'
 import { STEPS, stepsAreEmpty } from '@pulse/domain'
 import type { Item, ItemStage, ItemStatus, Request, Run, Settings } from '@pulse/domain'
@@ -107,8 +107,10 @@ export function elapsedSeconds(run: Run, now: number = Date.now()): number {
   return secondsSince(run.startedAt, end)
 }
 
+// Programa fora do catálogo pesa um chute, para ele não sumir da barra de
+// progresso como se não custasse nada.
 function weight(item: Item): number {
-  return PROGRAM_BY_ID.get(item.id)?.mb ?? 100
+  return sizeOf(item.id, 100)
 }
 
 export function itemPercent(item: Item): number {
@@ -155,7 +157,7 @@ export function remainingMb(items: readonly Item[]): number {
 }
 
 export function remainingMinutes(items: readonly Item[]): number {
-  return Math.max(1, Math.round(remainingMb(items) / 90))
+  return minutesFor(remainingMb(items), 1)
 }
 
 export type SummaryGroupKind = 'ready' | 'restart' | 'attention' | 'out'

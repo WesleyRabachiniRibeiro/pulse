@@ -20,7 +20,8 @@ function fakeProcessRunner(text: string): ProcessRunner {
 }
 
 function fakePackageReader(ids: string[] = []): CatalogPackageReader {
-  return { listInstalled: async () => ids }
+  return { listUpgrades: async () => [],
+    listInstalled: async () => ids }
 }
 
 function fakeAutostartReader(): AutostartReader {

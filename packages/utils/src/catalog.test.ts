@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { filterCatalog, installedIds, bundleIsActive, totalSizeMb, compareVersions } from './catalog'
 import { BUNDLES } from '@pulse/catalog-data'
-import type { PackageVersion } from './catalog'
+import type { PackageVersion } from '@pulse/domain'
 
 function version(overrides: Partial<PackageVersion>): PackageVersion {
   return { winget: 'Example.Package', name: 'Example', version: '1.0', recommended: false, ...overrides }

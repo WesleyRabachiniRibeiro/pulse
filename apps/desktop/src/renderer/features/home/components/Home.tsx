@@ -1,4 +1,5 @@
-import { CATALOG, formatMb, totalSizeMb } from '@pulse/domain'
+import { CATALOG, formatMb } from '@pulse/domain'
+import { totalSizeMb } from '@pulse/utils'
 import { useTourStore } from '@/features/tour'
 import logo from '@/shared/assets/logo.png'
 import s from './Home.module.css'

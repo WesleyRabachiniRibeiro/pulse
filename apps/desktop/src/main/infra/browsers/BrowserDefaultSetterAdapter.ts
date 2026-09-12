@@ -1,4 +1,5 @@
-import { browserFileName, browserImportRoute, entryMatchesProgram, type Program } from '@pulse/domain'
+import { browserFileName, browserImportRoute, type Program } from '@pulse/domain'
+import { entryMatchesProgram } from '@pulse/utils'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type {

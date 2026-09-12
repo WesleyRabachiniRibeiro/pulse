@@ -1,7 +1,10 @@
-import { nameMatchesProgram, PROGRAM_BY_ID, installedIds } from '@pulse/domain'
+import { CATALOG, PROGRAM_BY_ID, type Upgrade } from '@pulse/domain'
+import { installedIds, nameMatchesProgram } from '@pulse/utils'
+import { readUpgrades } from '@pulse/utils'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
 import type { PackageRepository } from '../../ports/package-repository'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
+import type { ProcessRunner } from '../../ports/process-runner'
 
 const SCRIPT_TIMEOUT_MS = 25_000
 const REUSE_MS = 120_000
@@ -33,7 +36,10 @@ export class WingetPackageRepository implements PackageRepository, CatalogPackag
   private cached: { at: number; ids: string[] } | null = null
   private inFlight: { generation: number; reading: Promise<string[]> } | null = null
 
-  constructor(private readonly powershell: PowerShellRunner) {}
+  constructor(
+    private readonly powershell: PowerShellRunner,
+    private readonly processRunner: ProcessRunner,
+  ) {}
 
   // Sempre lê "fresco" (sem a janela de reuso de listInstalled), só dedupe
   // por chamadas concorrentes — a fila usa isInstalled() em polling durante a
@@ -42,6 +48,20 @@ export class WingetPackageRepository implements PackageRepository, CatalogPackag
   async isInstalled(id: string): Promise<boolean> {
     const ids = await this.readInstalled().catch((): string[] => [])
     return ids.includes(id)
+  }
+
+  // `winget upgrade` não aceita --output json: a saída estruturada existe só
+  // para consulta de catálogo, não para esta. Por isso a leitura é de texto, e
+  // a heurística mora em readUpgrades.
+  async listUpgrades(): Promise<readonly Upgrade[]> {
+    const { text } = await this.processRunner.runOnce('winget', [
+      'upgrade',
+      '--accept-source-agreements',
+      '--disable-interactivity',
+    ])
+
+    const known = CATALOG.map((program) => program.winget).filter((id): id is string => Boolean(id))
+    return readUpgrades(text, known)
   }
 
   async listInstalled(fresh = false): Promise<string[]> {

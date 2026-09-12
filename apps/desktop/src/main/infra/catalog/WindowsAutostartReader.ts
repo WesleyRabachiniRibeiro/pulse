@@ -1,4 +1,5 @@
-import { entryMatchesProgram, PROGRAM_BY_ID } from '@pulse/domain'
+import { PROGRAM_BY_ID } from '@pulse/domain'
+import { entryMatchesProgram } from '@pulse/utils'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
 import type { AutostartEntry, AutostartReader } from '../../ports/autostart-reader'
 
