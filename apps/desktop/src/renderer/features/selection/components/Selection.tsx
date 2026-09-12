@@ -22,6 +22,7 @@ import { useSelection } from '../store/useSelection'
 import { useTourStore } from '@/features/tour'
 import { AppSettings } from './AppSettings'
 import { AppCard, AppCardSkeleton } from './AppCard'
+import { PinDialog, checkParentalPin, useParental } from '@/features/parental'
 import s from './Selection.module.css'
 
 interface Props {
@@ -39,6 +40,26 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const [inSettings, setInSettings] = useState<string | null>(null)
   const selected = useSelection((st) => st.selected)
   const toggle = useSelection((st) => st.toggle)
+  const parental = useParental()
+  const [askingFor, setAskingFor] = useState<string | null>(null)
+
+  // Marcar um bloqueado pede o PIN. Desmarcar não pede: tirar da fila nunca
+  // precisa de permissão.
+  const blocks = (id: string): boolean =>
+    parental.on && parental.hasPin && parental.blocked.includes(id) && !selected.has(id)
+
+  function toggleGuarded(id: string) {
+    if (blocks(id)) setAskingFor(id)
+    else toggle(id)
+  }
+
+  async function answerPin(pin: string): Promise<boolean> {
+    const ok = await checkParentalPin(pin)
+    if (!ok) return false
+    if (askingFor) toggle(askingFor)
+    setAskingFor(null)
+    return true
+  }
   const applyBundle = useSelection((st) => st.applyBundle)
   const drivesByApp = useSelection((st) => st.drives)
   const setDrive = useSelection((st) => st.setDrive)
@@ -194,7 +215,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
                         installed={installed.has(p.id)}
                         chosenDrive={drivesByApp[p.id] ?? null}
                         settingsSummary={settingsSummary(settingsByApp[p.id])}
-                        onToggle={toggle}
+                        onToggle={toggleGuarded}
                         onOpenSettings={setInSettings}
                       />
                     ))
@@ -244,6 +265,13 @@ export function Selection({ drive, onGoToInstallation }: Props) {
           </button>
         </div>
       </footer>
+      {askingFor && (
+        <PinDialog
+          purpose="install"
+          onConfirm={answerPin}
+          onCancel={() => setAskingFor(null)}
+        />
+      )}
     </div>
   )
 }

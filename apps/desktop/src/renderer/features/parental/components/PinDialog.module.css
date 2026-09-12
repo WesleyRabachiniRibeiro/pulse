@@ -1,0 +1,136 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg-page) 78%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-xl);
+  padding: 26px 26px 20px;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--tx-5);
+}
+
+.description {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--tx-2);
+  margin: 8px 0 20px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.fieldName {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tx-6);
+}
+
+.input {
+  width: 100%;
+  background: var(--bg-field);
+  border: 1px solid var(--border-field);
+  border-radius: var(--r-md);
+  padding: 11px 14px;
+  color: var(--tx);
+  font-family: var(--mono);
+  font-size: 19px;
+  letter-spacing: 0.5em;
+  text-align: center;
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--focus);
+}
+
+.input::placeholder {
+  color: var(--tx-6);
+  letter-spacing: 0.5em;
+}
+
+.status {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--tx-4);
+  margin: 14px 0 0;
+  min-height: 1.5em;
+}
+
+.status[role='alert'] {
+  color: var(--blocker);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.ghost,
+.confirm {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  border-radius: var(--r-md);
+  padding: 10px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--border-field);
+  color: var(--tx-3);
+}
+
+.ghost:hover {
+  color: var(--tx);
+}
+
+.confirm {
+  background: var(--grad-button);
+  color: #0b0818;
+  font-weight: 600;
+}
+
+.confirm:disabled {
+  background: var(--bg-subtle);
+  color: var(--tx-6);
+  cursor: default;
+}
+
+.ghost:focus-visible,
+.confirm:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

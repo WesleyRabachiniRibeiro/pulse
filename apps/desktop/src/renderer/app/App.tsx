@@ -14,8 +14,10 @@ import { Selection, useSelection, useWatchAutostart, useWatchInstalled } from '@
 import { Installation, useRun, useWatchInstallation } from '@/features/installation'
 import { Summary } from '@/features/summary'
 import { Splash } from '@/features/splash'
+import { Config } from '@/features/config'
 import { useWatchUpdate } from '@/features/updates'
 import { Tour, useOpenOnFirstVisit, useTourStore } from '@/features/tour'
+import { useWatchParental } from '@/features/parental'
 import {
   savePreference,
   useLoadPreferences,
@@ -51,11 +53,13 @@ export function App() {
 
 function Shell({ savedDrive }: { savedDrive: string | null }) {
   const [step, setStep] = useState(0)
+  const [configOpen, setConfigOpen] = useState(false)
   const [drive, setDrive] = useState<string | null>(savedDrive)
   const selected = useSelection((st) => st.selected)
   const verifiedDrive = usePreflightDrive()
 
   useWatchInstallation()
+  useWatchParental()
   const run = useRun()
 
   const pastPreflight = step >= 2
@@ -93,7 +97,14 @@ function Shell({ savedDrive }: { savedDrive: string | null }) {
   return (
     <div className={s.page}>
       <div className={s.window}>
-        <TitleBar version={VERSION} onHome={() => setStep(0)} />
+        <TitleBar
+          version={VERSION}
+          onHome={() => {
+            setConfigOpen(false)
+            setStep(0)
+          }}
+          onConfig={() => setConfigOpen(true)}
+        />
 
         <div className={s.inner}>
           <StepRail
@@ -107,20 +118,21 @@ function Shell({ savedDrive }: { savedDrive: string | null }) {
           />
 
           <div className={s.content}>
-            {step === 0 && <Home onStart={() => setStep(1)} />}
-            {step === 1 && (
+            {configOpen && <Config onBack={() => setConfigOpen(false)} />}
+            {!configOpen && step === 0 && <Home onStart={() => setStep(1)} />}
+            {!configOpen && step === 1 && (
               <Welcome
                 queueOn={run && !run.finishedAt ? run.drive : null}
                 onNext={() => setStep(2)}
               />
             )}
-            {step === 2 && drive && (
+            {!configOpen && step === 2 && drive && (
               <Selection drive={drive} onGoToInstallation={() => setStep(3)} />
             )}
-            {step === 3 && (
+            {!configOpen && step === 3 && (
               <Installation onChooseMore={() => setStep(2)} onSeeSummary={() => setStep(4)} />
             )}
-            {step === 4 && (
+            {!configOpen && step === 4 && (
               <Summary onChooseMore={() => setStep(2)} onSeeInstallation={() => setStep(3)} />
             )}
           </div>

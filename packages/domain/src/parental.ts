@@ -46,10 +46,18 @@ export function toggleBlocked(parental: Parental, id: string): Parental {
   return withBlocked(parental, [...wall])
 }
 
-export type PinPurpose = 'create' | 'turnOff' | 'install' | 'uninstall' | 'list' | 'change'
+export type PinPurpose =
+  | 'create'
+  | 'turnOn'
+  | 'turnOff'
+  | 'install'
+  | 'uninstall'
+  | 'list'
+  | 'change'
 
 export const PIN_TITLE: Record<PinPurpose, string> = {
   create: 'Crie o seu PIN',
+  turnOn: 'Ligar o controle dos pais',
   turnOff: 'Desligar o controle dos pais',
   install: 'Instalar um programa bloqueado',
   uninstall: 'Tirar um programa deste PC',
@@ -59,6 +67,7 @@ export const PIN_TITLE: Record<PinPurpose, string> = {
 
 export const PIN_DESC: Record<PinPurpose, string> = {
   create: `São ${PIN_LENGTH} números. É ele que vai destravar tudo daqui para a frente, então escolha um que você lembre e a criança não adivinhe.`,
+  turnOn: 'Confirme o PIN que você já cadastrou. Ele continua o mesmo.',
   turnOff: 'Sem o controle ligado, tudo do catálogo volta a poder ser instalado.',
   install: 'Este programa está na sua lista de bloqueados.',
   uninstall: 'Com o controle ligado, tirar programa do PC pede o PIN.',
