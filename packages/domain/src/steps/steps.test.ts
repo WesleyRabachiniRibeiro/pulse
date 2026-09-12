@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { CATALOG } from '@pulse/catalog-data'
-import { STEPS, STEP_BY_ID, stepsAreEmpty, stepsFor, stepsSummary, type Steps } from './index'
+import {
+  listStepFor,
+  listValue,
+  STEPS,
+  STEP_BY_ID,
+  stepsAreEmpty,
+  stepsFor,
+  stepsSummary,
+  withListValue,
+  type Steps,
+} from './index'
 
 describe('registro de steps', () => {
   it('todo step do registro é alcançável pelo id', () => {
@@ -63,5 +73,46 @@ describe('registro de steps', () => {
   it('o schema recusa valor fora do formato do step', () => {
     expect(STEP_BY_ID.get('vscodeExtensions')?.schema.safeParse(['ok']).success).toBe(true)
     expect(STEP_BY_ID.get('vscodeExtensions')?.schema.safeParse('nao').success).toBe(false)
+  })
+})
+
+describe('step de lista', () => {
+  it('cada tipo que marca opções aponta para o seu step', () => {
+    expect(listStepFor('vscode')?.id).toBe('vscodeExtensions')
+    expect(listStepFor('tibia')?.id).toBe('tibiaPages')
+    expect(listStepFor('riot')?.id).toBe('riotProducts')
+    expect(listStepFor('vs')?.id).toBe('vsWorkloads')
+  })
+
+  it('tipo sem lista para marcar não tem step de lista', () => {
+    expect(listStepFor('git')).toBeUndefined()
+    expect(listStepFor('steam')).toBeUndefined()
+    expect(listStepFor('browser')).toBeUndefined()
+    expect(listStepFor(undefined)).toBeUndefined()
+  })
+
+  it('todo step de lista tem opções e texto de busca', () => {
+    for (const kind of ['vscode', 'tibia', 'riot', 'vs'] as const) {
+      const step = listStepFor(kind)
+      expect(step?.options?.length, `${kind} sem opções`).toBeGreaterThan(0)
+      expect(step?.searchPlaceholder, `${kind} sem texto de busca`).toBeTruthy()
+    }
+  })
+
+  it('ler e escrever o valor passa pelo id do step, não pelo nome do campo', () => {
+    const step = listStepFor('tibia')
+    if (!step) throw new Error('esperava o step do Tibia')
+
+    expect(listValue(undefined, step)).toEqual([])
+    expect(listValue({}, step)).toEqual([])
+
+    const written = withListValue({ vscodeExtensions: ['x'] }, step, ['a', 'b'])
+    expect(written.tibiaPages).toEqual(['a', 'b'])
+    expect(written.vscodeExtensions).toEqual(['x'])
+    expect(listValue(written, step)).toEqual(['a', 'b'])
+  })
+
+  it('sem step, ler devolve lista vazia em vez de estourar', () => {
+    expect(listValue({ tibiaPages: ['a'] }, undefined)).toEqual([])
   })
 })

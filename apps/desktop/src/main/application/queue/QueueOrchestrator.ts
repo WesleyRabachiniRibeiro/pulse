@@ -309,7 +309,7 @@ export class QueueOrchestrator {
   }
 
   private workloadOverride(settings: Settings | undefined, destination?: string): string | undefined {
-    const workloads = settings?.workloads ?? []
+    const workloads = settings?.steps?.vsWorkloads ?? []
     if (workloads.length === 0) return undefined
 
     const parts = ['--quiet', '--norestart', '--wait', '--includeRecommended']
@@ -563,7 +563,7 @@ export class QueueOrchestrator {
 
     if (browsers.length === 0) return null
 
-    const marked = browsers.filter((i) => i.settings?.makeDefault)
+    const marked = browsers.filter((i) => i.settings?.steps?.browserDefault?.makeDefault)
     return (marked.length > 0 ? marked : browsers).at(-1) ?? null
   }
 
@@ -579,7 +579,7 @@ export class QueueOrchestrator {
     const addresses: string[] = []
 
     for (const item of run.items) {
-      if (item.status !== 'done' || !item.settings?.openAfter) continue
+      if (item.status !== 'done' || !item.settings?.steps?.browserDefault?.openAfter) continue
       if (this.openedAfterRun.has(item.id)) continue
       const program = PROGRAM_BY_ID.get(item.id)
       if (!program) continue

@@ -1,5 +1,6 @@
 import { PROGRAM_BY_ID } from '@pulse/catalog-data'
 import { equalsIgnoreCase } from '@pulse/domain'
+import { STEPS, stepsAreEmpty } from '@pulse/domain'
 import type { Item, ItemStage, ItemStatus, Request, Run, Settings } from '@pulse/domain'
 import { secondsBetween, secondsSince } from './time'
 
@@ -52,37 +53,33 @@ export function itemDuration(item: Item): number | null {
 }
 
 export function hasSettings(item: Item): boolean {
-  const settings = item.settings
-  if (!settings) return false
-  return Boolean(
-    settings.extensions?.length ||
-      settings.games?.length ||
-      settings.tibia?.length ||
-      settings.riot?.length ||
-      settings.workloads?.length ||
-      settings.makeDefault ||
-      settings.openAfter ||
-      settings.git,
-  )
+  return !stepsAreEmpty(item.settings?.steps)
 }
 
+// A assinatura existe para saber se a pessoa mudou de ideia sobre um item que
+// já está na fila. Ela percorre o registro em vez de listar campo por campo,
+// então um step novo passa a contar sozinho.
 function signature(settings: Settings | undefined): string {
   if (!settings) return ''
 
-  const extensions = [...(settings.extensions ?? [])].sort().join(',')
-  const games = (settings.games ?? [])
-    .map((g) => g.appid)
-    .sort()
-    .join(',')
-  const tibia = [...(settings.tibia ?? [])].sort().join(',')
-  const riot = [...(settings.riot ?? [])].sort().join(',')
-  const workloads = [...(settings.workloads ?? [])].sort().join(',')
-  const browser = `${settings.makeDefault ?? false}|${settings.openAfter ?? false}`
-  const git = settings.git
-    ? `${settings.git.name}|${settings.git.email}|${settings.git.branch}|${settings.git.saveLogin ?? false}`
-    : ''
+  const bag = (settings.steps ?? {}) as Record<string, unknown>
+  const parts = STEPS.map((step) => `${step.id}:${stable(bag[step.id])}`)
+  parts.push(`autostart:${settings.autostart ?? ''}`)
 
-  return `${extensions}#${games}#${tibia}#${riot}#${workloads}#${browser}#${git}`
+  return parts.join('#')
+}
+
+function stable(value: unknown): string {
+  if (value === undefined || value === null) return ''
+  if (Array.isArray(value)) return [...value].map(stable).sort().join(',')
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${stable(v)}`)
+      .join('|')
+  }
+  return String(value)
 }
 
 export function requestChanged(request: Request, existing: Item): boolean {

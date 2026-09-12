@@ -7,22 +7,14 @@ import {
   type SettingsKind,
   type SettingsOption,
 } from '@pulse/catalog-data'
-import { steamGameSchema } from './steam'
-import { gitSchema } from './git'
+import { stepsAreEmpty, stepsSchema, stepsSummary } from './steps'
 
 export type { SettingsOption } from '@pulse/catalog-data'
 
 export const settingsSchema = z.object({
   packageId: z.string().optional(),
   autostart: z.boolean().optional(),
-  extensions: z.array(z.string()).optional(),
-  games: z.array(steamGameSchema).optional(),
-  git: gitSchema.optional(),
-  tibia: z.array(z.string()).optional(),
-  riot: z.array(z.string()).optional(),
-  workloads: z.array(z.string()).optional(),
-  makeDefault: z.boolean().optional(),
-  openAfter: z.boolean().optional(),
+  steps: stepsSchema.optional(),
 })
 export type Settings = z.infer<typeof settingsSchema>
 
@@ -40,41 +32,17 @@ export function categoriesOf(options: readonly SettingsOption[]): string[] {
   return ['Tudo', ...seen]
 }
 
+// Ligar e desligar a inicialização são as duas um pedido, então o que conta
+// como "sem ajuste" é o campo não ter sido tocado, não o valor ser falso.
 export function settingsAreEmpty(settings: Settings | undefined): boolean {
   if (!settings) return true
-  const noBrowser = !settings.makeDefault && !settings.openAfter
-  const noLists =
-    !settings.extensions?.length &&
-    !settings.games?.length &&
-    !settings.tibia?.length &&
-    !settings.riot?.length &&
-    !settings.workloads?.length
-  const noGit =
-    !settings.git || (!settings.git.name && !settings.git.email && !settings.git.saveLogin)
-  const noAutostart = settings.autostart === undefined
-  return noLists && noGit && noAutostart && noBrowser && !settings.packageId
+  return stepsAreEmpty(settings.steps) && settings.autostart === undefined && !settings.packageId
 }
 
 export function settingsSummary(settings: Settings | undefined): string | null {
   if (!settings) return null
 
-  const parts: string[] = []
-  const extensions = settings.extensions?.length ?? 0
-  const games = settings.games ?? []
-
-  if (extensions) parts.push(`${extensions} ${extensions === 1 ? 'extensão' : 'extensões'}`)
-  if (games.length > 0 && games.length <= 2) parts.push(games.map((g) => g.name).join(' e '))
-  else if (games.length > 2) parts.push(`${games.length} jogos`)
-  const tibia = settings.tibia?.length ?? 0
-  if (tibia) parts.push(`${tibia} ${tibia === 1 ? 'cliente' : 'clientes'}`)
-  const riot = settings.riot?.length ?? 0
-  if (riot) parts.push(`${riot} ${riot === 1 ? 'jogo da Riot' : 'jogos da Riot'}`)
-  const workloads = settings.workloads?.length ?? 0
-  if (workloads) parts.push(`${workloads} ${workloads === 1 ? 'linguagem' : 'linguagens'}`)
-  if (settings.git?.name || settings.git?.email) parts.push('Git configurado')
-  if (settings.git?.saveLogin) parts.push('login do GitHub guardado')
-  if (settings.makeDefault) parts.push('navegador padrão')
-  if (settings.openAfter) parts.push('abre no fim')
+  const parts = [...stepsSummary(settings.steps)]
   if (settings.autostart === true) parts.push('abre com o Windows')
   if (settings.autostart === false) parts.push('não abre sozinho')
 

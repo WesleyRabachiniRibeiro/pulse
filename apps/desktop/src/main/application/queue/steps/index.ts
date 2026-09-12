@@ -16,12 +16,12 @@ interface StepEntry {
 // A ordem é a que a pessoa vê acontecer, e ela importa: o Git antes da Steam
 // porque a Steam pode ficar minutos esperando alguém confirmar na janela dela.
 const ORDER: readonly StepEntry[] = [
-  { id: 'vscodeExtensions', valueOf: (s) => s.extensions, run: vscodeExtensions },
-  { id: 'gitConfig', valueOf: (s) => s.git, run: gitConfig },
+  { id: 'vscodeExtensions', valueOf: (s) => s.steps?.vscodeExtensions, run: vscodeExtensions },
+  { id: 'gitConfig', valueOf: (s) => s.steps?.gitConfig, run: gitConfig },
   { id: 'autostart', valueOf: (s) => s.autostart, run: autostart },
-  { id: 'steamGames', valueOf: (s) => s.games, run: steamGames },
-  { id: 'tibiaPages', valueOf: (s) => s.tibia, run: tibiaPages },
-  { id: 'riotProducts', valueOf: (s) => s.riot, run: riotProducts },
+  { id: 'steamGames', valueOf: (s) => s.steps?.steamGames, run: steamGames },
+  { id: 'tibiaPages', valueOf: (s) => s.steps?.tibiaPages, run: tibiaPages },
+  { id: 'riotProducts', valueOf: (s) => s.steps?.riotProducts, run: riotProducts },
 ]
 
 export const STEP_IDS: readonly string[] = ORDER.map((entry) => entry.id)

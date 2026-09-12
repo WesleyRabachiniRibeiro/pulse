@@ -5,8 +5,10 @@ import {
   DEFAULT_GIT,
   formatGb,
   formatMb,
-  optionsFor,
+  listStepFor,
+  listValue,
   settingsAreEmpty,
+  withListValue,
   type GitConfig,
   type Settings,
 } from '@pulse/domain'
@@ -111,7 +113,8 @@ export function AppSettings({
     }
   }, [kind])
   const installsItself = program.source !== 'pages'
-  const options = kind ? optionsFor(kind) : []
+  const listStep = listStepFor(kind)
+  const options = listStep?.options ?? []
   const categories = useMemo(() => categoriesOf(options), [options])
 
   const term = normalize(search.trim())
@@ -120,17 +123,13 @@ export function AppSettings({
       (filter === 'Tudo' || o.category === filter) && (!term || normalize(o.name).includes(term)),
   )
 
-  const picksClients = kind === 'tibia'
-  const picksGames = kind === 'riot'
-  const picksWorkloads = kind === 'vs'
-  const checked: readonly string[] =
-    (picksClients
-      ? settings.tibia
-      : picksGames
-        ? settings.riot
-        : picksWorkloads
-          ? settings.workloads
-          : settings.extensions) ?? []
+  const steps = settings.steps ?? {}
+  const browser = steps.browserDefault ?? {}
+  const checked = listValue(steps, listStep)
+
+  function patchSteps(patch: Partial<NonNullable<Settings['steps']>>) {
+    onChangeSettings(program.id, { ...settings, steps: { ...steps, ...patch } })
+  }
 
   const autostartShown: 'on' | 'off' | null =
     settings.autostart === undefined ? currentAutostart : settings.autostart ? 'on' : 'off'
@@ -139,33 +138,25 @@ export function AppSettings({
     const value = wanted === currentAutostart ? undefined : wanted === 'on'
     onChangeSettings(program.id, { ...settings, autostart: value })
   }
-  const git: GitConfig = settings.git ?? machineGit ?? DEFAULT_GIT
+  const git: GitConfig = steps.gitConfig ?? machineGit ?? DEFAULT_GIT
   const canApply = installed && !settingsAreEmpty(settings)
 
   function toggleOption(id: string) {
+    if (!listStep) return
     const next = checked.includes(id) ? checked.filter((x) => x !== id) : [...checked, id]
-    onChangeSettings(
-      program.id,
-      picksClients
-        ? { ...settings, tibia: next }
-        : picksGames
-          ? { ...settings, riot: next }
-          : picksWorkloads
-            ? { ...settings, workloads: next }
-            : { ...settings, extensions: next },
-    )
+    onChangeSettings(program.id, { ...settings, steps: withListValue(steps, listStep, next) })
   }
 
   function toggleGame(game: SteamGame) {
-    const current = settings.games ?? []
+    const current = steps.steamGames ?? []
     const next = current.some((g) => g.appid === game.appid)
       ? current.filter((g) => g.appid !== game.appid)
       : [...current, game]
-    onChangeSettings(program.id, { ...settings, games: next })
+    patchSteps({ steamGames: next })
   }
 
   function changeGit(field: keyof GitConfig, value: string) {
-    onChangeSettings(program.id, { ...settings, git: { ...git, [field]: value } })
+    patchSteps({ gitConfig: { ...git, [field]: value } })
   }
 
   function remove() {
@@ -300,7 +291,7 @@ export function AppSettings({
           <section className={s.section} data-tour="aj-kind">
             <div className={s.label}>{TITLE.steam}</div>
             <p className={s.description}>{DESCRIPTION.steam}</p>
-            <SteamGames chosen={settings.games ?? []} onToggle={toggleGame} />
+            <SteamGames chosen={steps.steamGames ?? []} onToggle={toggleGame} />
           </section>
         )}
 
@@ -315,15 +306,7 @@ export function AppSettings({
                 className={s.searchInput}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={
-                  picksClients
-                    ? 'Buscar um Tibia…'
-                    : picksGames
-                      ? 'Buscar um jogo…'
-                      : picksWorkloads
-                        ? 'Buscar uma linguagem…'
-                        : 'Buscar extensão…'
-                }
+                placeholder={listStep?.searchPlaceholder ?? 'Buscar…'}
                 aria-label="Buscar"
               />
               <span className={s.count}>
@@ -382,14 +365,14 @@ export function AppSettings({
               <button
                 type="button"
                 role="checkbox"
-                aria-checked={settings.makeDefault === true}
+                aria-checked={browser.makeDefault === true}
                 className={s.option}
                 onClick={() =>
-                  onChangeSettings(program.id, { ...settings, makeDefault: !settings.makeDefault })
+                  patchSteps({ browserDefault: { ...browser, makeDefault: !browser.makeDefault } })
                 }
               >
                 <span className={s.box} aria-hidden>
-                  {settings.makeDefault ? '✓' : ''}
+                  {browser.makeDefault ? '✓' : ''}
                 </span>
                 <span className={s.optionBody}>
                   <span className={s.optionName}>Deixar como navegador padrão</span>
@@ -403,14 +386,14 @@ export function AppSettings({
               <button
                 type="button"
                 role="checkbox"
-                aria-checked={settings.openAfter === true}
+                aria-checked={browser.openAfter === true}
                 className={s.option}
                 onClick={() =>
-                  onChangeSettings(program.id, { ...settings, openAfter: !settings.openAfter })
+                  patchSteps({ browserDefault: { ...browser, openAfter: !browser.openAfter } })
                 }
               >
                 <span className={s.box} aria-hidden>
-                  {settings.openAfter ? '✓' : ''}
+                  {browser.openAfter ? '✓' : ''}
                 </span>
                 <span className={s.optionBody}>
                   <span className={s.optionName}>Abrir no fim para importar meus dados</span>
@@ -479,10 +462,7 @@ export function AppSettings({
                 aria-checked={git.saveLogin === true}
                 className={s.option}
                 onClick={() =>
-                  onChangeSettings(program.id, {
-                    ...settings,
-                    git: { ...git, saveLogin: !git.saveLogin },
-                  })
+                  patchSteps({ gitConfig: { ...git, saveLogin: !git.saveLogin } })
                 }
               >
                 <span className={s.box} aria-hidden>

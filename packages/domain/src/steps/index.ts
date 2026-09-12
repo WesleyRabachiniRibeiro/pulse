@@ -48,6 +48,27 @@ export const STEPS_BY_KIND: Readonly<Record<SettingsKind, readonly StepId[]>> = 
   browser: ['browserDefault'],
 }
 
+// O step de lista é o único de cada tipo que oferece opções para marcar. A
+// tela pergunta por ele em vez de saber que 'tibia' guarda em tibiaPages.
+export function listStepFor(kind: SettingsKind | undefined): AnyStep | undefined {
+  if (!kind) return undefined
+  for (const id of STEPS_BY_KIND[kind] ?? []) {
+    const step = STEP_BY_ID.get(id)
+    if (step?.options) return step
+  }
+  return undefined
+}
+
+export function listValue(steps: Steps | undefined, step: AnyStep | undefined): readonly string[] {
+  if (!step) return []
+  const value = (steps as Record<string, unknown> | undefined)?.[step.id]
+  return Array.isArray(value) ? (value as string[]) : []
+}
+
+export function withListValue(steps: Steps | undefined, step: AnyStep, value: readonly string[]): Steps {
+  return { ...steps, [step.id]: [...value] } as Steps
+}
+
 interface StepCarrier {
   id: string
   steps?: readonly string[]

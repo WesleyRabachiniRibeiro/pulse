@@ -8,6 +8,7 @@ export interface StepDescriptor<T> {
   schema: z.ZodType<T>
   options?: readonly SettingsOption[]
   optionsFor?: (programId: string) => readonly SettingsOption[]
+  searchPlaceholder?: string
   isEmpty: (value: T) => boolean
   summary: (value: T) => string[]
 }
@@ -21,6 +22,7 @@ export interface AnyStep {
   schema: z.ZodType<unknown>
   options?: readonly SettingsOption[]
   optionsFor?: (programId: string) => readonly SettingsOption[]
+  searchPlaceholder?: string
   isEmpty: (value: never) => boolean
   summary: (value: never) => string[]
 }

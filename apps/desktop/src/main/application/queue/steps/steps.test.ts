@@ -83,7 +83,7 @@ describe('runSteps', () => {
     const run = vi.spyOn(ports.processRunner, 'run')
     const { ctx } = fakeContext(ports, vscode)
 
-    const result = await runSteps({ extensions: ['a', 'b'] }, ctx)
+    const result = await runSteps({ steps: { vscodeExtensions: ['a', 'b'] } }, ctx)
 
     expect(result.extensions).toBe(2)
     expect(result.extensionsRequested).toBe(2)
@@ -95,7 +95,7 @@ describe('runSteps', () => {
     ports.processRunner.locateVsCode = async () => null
     const { ctx, notes } = fakeContext(ports, vscode)
 
-    const result = await runSteps({ extensions: ['a'] }, ctx)
+    const result = await runSteps({ steps: { vscodeExtensions: ['a'] } }, ctx)
 
     expect(result.extensions).toBe(0)
     expect(result.extensionsRequested).toBe(1)
@@ -107,7 +107,7 @@ describe('runSteps', () => {
     ports.processRunner.run = async (_exe, args) => args[1] !== 'ruim'
     const { ctx } = fakeContext(ports, vscode)
 
-    const result = await runSteps({ extensions: ['boa', 'ruim', 'outra'] }, ctx)
+    const result = await runSteps({ steps: { vscodeExtensions: ['boa', 'ruim', 'outra'] } }, ctx)
 
     expect(result.extensions).toBe(2)
     expect(result.extensionsRequested).toBe(3)
@@ -119,7 +119,7 @@ describe('runSteps', () => {
     const { ctx } = fakeContext(ports, vscode)
 
     const result = await runSteps(
-      { git: { name: 'Wesley', email: 'w@x.com', branch: 'main', saveLogin: true } },
+      { steps: { gitConfig: { name: 'Wesley', email: 'w@x.com', branch: 'main', saveLogin: true } } },
       ctx,
     )
 
@@ -164,7 +164,7 @@ describe('runSteps', () => {
       ports.steamGameRequester.isSignedIn = async () => false
       const { ctx } = fakeContext(ports, vscode)
 
-      const running = runSteps({ games: [{ appid: '1', name: 'Dota' }] }, ctx)
+      const running = runSteps({ steps: { steamGames: [{ appid: '1', name: 'Dota' }] } }, ctx)
       await vi.advanceTimersByTimeAsync(16 * 60_000)
       const result = await running
 
@@ -181,7 +181,7 @@ describe('runSteps', () => {
       const ports = fakePorts()
       const { ctx } = fakeContext(ports, vscode)
 
-      const running = runSteps({ games: [{ appid: '1', name: 'Dota' }] }, ctx)
+      const running = runSteps({ steps: { steamGames: [{ appid: '1', name: 'Dota' }] } }, ctx)
       await vi.advanceTimersByTimeAsync(5_000)
       const result = await running
 
@@ -196,8 +196,7 @@ describe('runSteps', () => {
     const { ctx } = fakeContext(ports, vscode)
 
     const settings: Settings = {
-      extensions: ['a'],
-      git: { name: 'W', email: '', branch: 'main' },
+      steps: { vscodeExtensions: ['a'], gitConfig: { name: 'W', email: '', branch: 'main' } },
       autostart: true,
     }
     const result = await runSteps(settings, ctx)
