@@ -1,4 +1,4 @@
-import { LuCircleHelp, LuSettings } from 'react-icons/lu'
+import { LuCircleHelp, LuSettings, LuLayoutList } from 'react-icons/lu'
 import { bridge } from '@/shared/lib/bridge'
 import { useTourStore } from '@/features/tour'
 import { UpdatePill } from '@/features/updates'
@@ -9,9 +9,10 @@ interface Props {
   version: string
   onHome: () => void
   onConfig: () => void
+  onManage: () => void
 }
 
-export function TitleBar({ version, onHome, onConfig }: Props) {
+export function TitleBar({ version, onHome, onConfig, onManage }: Props) {
   return (
     <div className={s.bar}>
       <button type="button" className={s.identity} onClick={onHome} title="Voltar ao início">
@@ -23,6 +24,14 @@ export function TitleBar({ version, onHome, onConfig }: Props) {
       <div className={s.controls}>
         <UpdatePill />
 
+        <button
+          className={s.control}
+          onClick={onManage}
+          aria-label="Gerenciamento"
+          title="Gerenciamento"
+        >
+          <LuLayoutList size={15} />
+        </button>
         <button
           className={s.control}
           onClick={onConfig}
