@@ -20,6 +20,8 @@ import { JsonEditorSettingsStore } from './infra/editor/JsonEditorSettingsStore'
 import { NodePinSealer } from './infra/parental/NodePinSealer'
 import { PreferencesParentalStore } from './infra/parental/PreferencesParentalStore'
 import { RegistryWindowsTweaks } from './infra/windows/RegistryWindowsTweaks'
+import { ElectronFileDialog } from './infra/dialogs/ElectronFileDialog'
+import { NodeRemoteFetch } from './infra/net/NodeRemoteFetch'
 import { ElectronUpdateChecker } from './infra/updates/ElectronUpdateChecker'
 import { ElectronNotificationPresenter, nameAppForWindows } from './infra/electron/ElectronNotificationPresenter'
 
@@ -28,6 +30,7 @@ import { CatalogService } from './application/catalog/CatalogService'
 import { ReadGitConfig } from './application/git/ReadGitConfig'
 import { PreferencesService } from './application/preferences/PreferencesService'
 import { ParentalService } from './application/parental/ParentalService'
+import { ProfileService } from './application/profile/ProfileService'
 import { SteamService } from './application/steam/SteamService'
 import { SystemService } from './application/system/SystemService'
 import { UpdateService } from './application/updates/UpdateService'
@@ -37,6 +40,7 @@ import { registerCatalog } from './ipc/catalog'
 import { registerSteam } from './ipc/steam'
 import { registerPreferences } from './ipc/preferences'
 import { registerParental } from './ipc/parental'
+import { registerProfile } from './ipc/profile'
 import { registerSystem } from './ipc/system'
 import { registerUpdates } from './ipc/updates'
 
@@ -100,6 +104,8 @@ export function composeMain(): MainComponents {
   )
   const readGitConfig = new ReadGitConfig(toolchain)
   registerPreferences(preferencesService, readGitConfig)
+
+  registerProfile(new ProfileService(new ElectronFileDialog(), new NodeRemoteFetch()))
 
   const systemService = new SystemService(
     new WindowsPowerController(processRunner),

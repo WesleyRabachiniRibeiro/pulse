@@ -13,6 +13,9 @@ import {
   updateStateSchema,
   tweakInputSchema,
   tweakStateSchema,
+  profileSchema,
+  EXPORT_FORMATS,
+  IMPORT_MODES,
 } from '@pulse/domain'
 
 // O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
@@ -28,6 +31,20 @@ export const pinResultSchema = z.object({
   view: parentalViewSchema.optional(),
 })
 export type PinResult = z.infer<typeof pinResultSchema>
+
+export const exportResultSchema = z.object({
+  status: z.enum(['saved', 'canceled', 'failed']),
+  path: z.string().optional(),
+})
+export type ExportResult = z.infer<typeof exportResultSchema>
+
+export const importResultSchema = z.object({
+  status: z.enum(['imported', 'canceled', 'failed', 'invalid']),
+  profile: profileSchema.optional(),
+  count: z.number().optional(),
+  missing: z.array(z.string()).optional(),
+})
+export type ImportResult = z.infer<typeof importResultSchema>
 
 export const freshInputSchema = z.object({
   fresh: z.boolean().optional(),
@@ -108,6 +125,26 @@ export const ipcContracts = {
   'system:setTweak': {
     input: tweakInputSchema,
     output: z.array(tweakStateSchema),
+  },
+  'profile:export': {
+    input: z.object({
+      format: z.enum(EXPORT_FORMATS),
+      profile: profileSchema,
+      drive: z.string().optional(),
+    }),
+    output: exportResultSchema,
+  },
+  'profile:import': {
+    input: z.object({ mode: z.enum(IMPORT_MODES), current: profileSchema }),
+    output: importResultSchema,
+  },
+  'profile:importLink': {
+    input: z.object({
+      url: z.string(),
+      mode: z.enum(IMPORT_MODES),
+      current: profileSchema,
+    }),
+    output: importResultSchema,
   },
   'prefs:read': {
     input: z.void(),
