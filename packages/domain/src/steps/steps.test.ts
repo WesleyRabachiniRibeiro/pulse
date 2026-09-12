@@ -3,6 +3,7 @@ import { CATALOG } from '@pulse/catalog-data'
 import {
   listStepFor,
   listValue,
+  stepForKind,
   STEPS,
   STEP_BY_ID,
   stepsAreEmpty,
@@ -114,5 +115,30 @@ describe('step de lista', () => {
 
   it('sem step, ler devolve lista vazia em vez de estourar', () => {
     expect(listValue({ tibiaPages: ['a'] }, undefined)).toEqual([])
+  })
+})
+
+describe('texto que a tela mostra', () => {
+  const KINDS = ['vscode', 'steam', 'git', 'tibia', 'riot', 'vs', 'browser'] as const
+
+  it('todo tipo de ajuste do catálogo resolve para um step', () => {
+    for (const kind of KINDS) {
+      expect(stepForKind(kind)?.id, `${kind} ficou sem step`).toBeTruthy()
+    }
+    expect(stepForKind(undefined)).toBeUndefined()
+  })
+
+  // A tela lê título e descrição do descritor. Um step sem eles desenha um
+  // cabeçalho vazio, e ninguém percebe até abrir aquela tela.
+  it('todo step tem título e descrição para a tela mostrar', () => {
+    for (const step of STEPS) {
+      expect(step.title.trim(), `${step.id} sem título`).not.toBe('')
+      expect(step.description.trim(), `${step.id} sem descrição`).not.toBe('')
+    }
+  })
+
+  it('os títulos são únicos, para duas seções não parecerem a mesma', () => {
+    const titles = STEPS.map((s) => s.title)
+    expect(new Set(titles).size).toBe(titles.length)
   })
 })

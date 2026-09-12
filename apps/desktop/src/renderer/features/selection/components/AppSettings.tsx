@@ -7,6 +7,7 @@ import {
   formatMb,
   listStepFor,
   listValue,
+  stepForKind,
   settingsAreEmpty,
   withListValue,
   type GitConfig,
@@ -41,31 +42,6 @@ interface Props {
   onBack: () => void
 }
 
-const TITLE: Record<string, string> = {
-  vscode: 'EXTENSÕES PARA INSTALAR JUNTO',
-  steam: 'JOGOS PARA BAIXAR DEPOIS',
-  git: 'COMO ASSINAR SEUS COMMITS',
-  tibia: 'QUAIS TIBIAS VOCÊ QUER',
-  riot: 'JOGOS PARA INSTALAR JUNTO',
-  vs: 'LINGUAGENS PARA INSTALAR',
-  browser: 'QUANDO A INSTALAÇÃO TERMINAR',
-}
-
-const DESCRIPTION: Record<string, string> = {
-  vscode:
-    'Marcadas aqui, elas entram sozinhas assim que o VS Code terminar de instalar. Dá para mudar de ideia depois, dentro do próprio editor.',
-  steam:
-    'A Steam só baixa com a sua conta conectada. Na hora de instalar, o app espera você entrar e depois abre o pedido de cada jogo, que você confirma na janela dela.',
-  git: 'É o nome e o email que aparecem em cada commit seu. Os campos já vêm com o que está cadastrado nesta máquina, lido na hora. Mude só o que quiser mudar: o que você não tocar continua como está.',
-  browser:
-    'O Windows não deixa um programa se tornar o navegador padrão sozinho, e faz bem. O Pulse pede ao próprio navegador, que ou se define, ou abre a tela do Windows para você confirmar. No fim o resumo diz qual dos dois aconteceu.',
-  vs:
-    'O Visual Studio não instala linguagens soltas, instala cargas de trabalho. Marque as que você usa e elas entram junto, na mesma instalação. C e C++ vêm na mesma carga, porque compartilham o compilador.',
-  riot:
-    'Entram logo depois do cliente da Riot, um de cada vez, no mesmo disco que você escolheu. O League of Legends já vem com o cliente, e o Teamfight Tactics vem dentro dele.',
-  tibia:
-    'Cada Tibia tem o seu próprio cliente, baixado do site de quem faz o servidor. O Pulse abre a página oficial dos que você marcar, uma de cada vez, e você baixa e instala de lá. Ele não baixa esses arquivos sozinho porque não há como conferir se veio o que devia.',
-}
 
 function normalize(text: string): string {
   return text
@@ -113,6 +89,7 @@ export function AppSettings({
     }
   }, [kind])
   const installsItself = program.source !== 'pages'
+  const step = stepForKind(kind)
   const listStep = listStepFor(kind)
   const options = listStep?.options ?? []
   const categories = useMemo(() => categoriesOf(options), [options])
@@ -289,16 +266,16 @@ export function AppSettings({
 
         {kind === 'steam' && (
           <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE.steam}</div>
-            <p className={s.description}>{DESCRIPTION.steam}</p>
+            <div className={s.label}>{step?.title}</div>
+            <p className={s.description}>{step?.description}</p>
             <SteamGames chosen={steps.steamGames ?? []} onToggle={toggleGame} />
           </section>
         )}
 
         {(kind === 'vscode' || kind === 'tibia' || kind === 'riot' || kind === 'vs') && (
           <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE[kind]}</div>
-            <p className={s.description}>{DESCRIPTION[kind]}</p>
+            <div className={s.label}>{step?.title}</div>
+            <p className={s.description}>{step?.description}</p>
 
             <div className={s.search}>
               <LuSearch className={s.magnifier} size={15} aria-hidden />
@@ -358,8 +335,8 @@ export function AppSettings({
 
         {kind === 'browser' && (
           <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE.browser}</div>
-            <p className={s.description}>{DESCRIPTION.browser}</p>
+            <div className={s.label}>{step?.title}</div>
+            <p className={s.description}>{step?.description}</p>
 
             <div className={s.options}>
               <button
@@ -417,8 +394,8 @@ export function AppSettings({
 
         {kind === 'git' && (
           <section className={s.section} data-tour="aj-kind">
-            <div className={s.label}>{TITLE.git}</div>
-            <p className={s.description}>{DESCRIPTION.git}</p>
+            <div className={s.label}>{step?.title}</div>
+            <p className={s.description}>{step?.description}</p>
 
             <div className={s.fields}>
               <label className={s.fieldBlock}>
