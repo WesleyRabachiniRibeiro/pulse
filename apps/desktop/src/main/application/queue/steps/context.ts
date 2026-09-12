@@ -4,6 +4,7 @@ import type { PackageInstaller } from '../../../ports/package-installer'
 import type { AutostartRegistry } from '../../../ports/autostart-registry'
 import type { SteamGameRequester } from '../../../ports/steam-game-requester'
 import type { EditorSettingsStore } from '../../../ports/editor-settings-store'
+import type { Toolchain } from '../../../ports/toolchain'
 
 export type StepResult = Partial<NonNullable<Item['result']>>
 
@@ -13,6 +14,7 @@ export interface StepPorts {
   autostartRegistry: AutostartRegistry
   steamGameRequester: SteamGameRequester
   editorSettingsStore: EditorSettingsStore
+  toolchain: Toolchain
 }
 
 export interface StepContext {

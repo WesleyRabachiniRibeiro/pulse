@@ -7,7 +7,11 @@ export interface ProcessRunner {
   // Invocação genérica de um executável real (não script) por array de
   // argumentos, sem shell — para chamadas pontuais como `git config --get`,
   // `winget search` ou `shutdown /r`. Não interpola nada em string alguma.
-  runOnce(exe: string, args: readonly string[]): Promise<SpawnResult>
+  runOnce(exe: string, args: readonly string[], env?: NodeJS.ProcessEnv): Promise<SpawnResult>
+
+  // O ambiente vem de fora porque quem sabe qual PATH a ferramenta precisa é o
+  // Toolchain, e quem sabe subir processo é este adapter.
+  run(exe: string, args: readonly string[], env?: NodeJS.ProcessEnv): Promise<boolean>
 
   runWinget(
     id: string,
@@ -17,8 +21,6 @@ export interface ProcessRunner {
   ): Promise<SpawnResult>
 
   killWinget(id?: string): void
-
-  run(exe: string, args: readonly string[]): Promise<boolean>
 
   // Sobe o processo destacado e retorna sem esperar ele terminar — usado para
   // abrir um navegador de verdade (não uma URI), diferente de run()/runOnce().
@@ -38,9 +40,4 @@ export interface ProcessRunner {
 
   isElevated(): Promise<boolean>
 
-  locateVsCode(): Promise<string | null>
-
-  locateGit(): Promise<string | null>
-
-  forgetPathCache(): void
 }

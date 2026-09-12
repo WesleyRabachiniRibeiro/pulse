@@ -9,14 +9,14 @@ export const gitConfig = runnerFor<GitConfig>(async (config, ctx) => {
 
   ctx.say('Configurando o Git')
 
-  const gitExe = await ctx.ports.processRunner.locateGit()
+  const gitExe = await ctx.ports.toolchain.locate('git')
   if (!gitExe) {
     ctx.note(`${ctx.program.name}: não encontrei o git, a configuração ficou para depois`, 'error')
     return result
   }
 
   for (const [key, value] of pairs) {
-    const ok = await ctx.ports.processRunner.run(gitExe, ['config', '--global', key, value])
+    const ok = await ctx.ports.toolchain.run(gitExe, ['config', '--global', key, value])
 
     if (key === 'credential.helper') {
       result.gitLogin = ok

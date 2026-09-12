@@ -22,6 +22,7 @@ import type { AutostartRegistry } from '../../ports/autostart-registry'
 import type { QueueRepository } from '../../ports/queue-repository'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
 import type { EditorSettingsStore } from '../../ports/editor-settings-store'
+import type { Toolchain } from '../../ports/toolchain'
 import type {
   InstallProgress,
   InstallSpec,
@@ -87,6 +88,7 @@ export class QueueOrchestrator {
     private readonly queueRepository: QueueRepository,
     private readonly clipboard: ClipboardWriter,
     private readonly editorSettingsStore: EditorSettingsStore,
+    private readonly toolchain: Toolchain,
   ) {}
 
   subscribe(listener: Listener): () => void {
@@ -363,6 +365,7 @@ export class QueueOrchestrator {
         autostartRegistry: this.autostartRegistry,
         steamGameRequester: this.steamGameRequester,
         editorSettingsStore: this.editorSettingsStore,
+        toolchain: this.toolchain,
       },
       say: (detail) => {
         target.status = 'configuring'
@@ -528,7 +531,7 @@ export class QueueOrchestrator {
       const wasThere = outcome.kind === 'already-installed'
       const reboot = outcome.kind === 'ok' && outcome.needsReboot
 
-      this.processRunner.forgetPathCache()
+      this.toolchain.forgetPath()
 
       this.note(`${program.name}: ${wasThere ? 'já estava instalado' : 'instalado com sucesso'}`, 'ok')
 

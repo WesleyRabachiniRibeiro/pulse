@@ -10,9 +10,13 @@ export class WindowsProcessRunner implements ProcessRunner {
 
   constructor(private readonly powershell: PowerShellRunner) {}
 
-  async runOnce(exe: string, args: readonly string[]): Promise<SpawnResult> {
+  async runOnce(
+    exe: string,
+    args: readonly string[],
+    env?: NodeJS.ProcessEnv,
+  ): Promise<SpawnResult> {
     return new Promise((resolve) => {
-      const child = spawn(exe, [...args], { windowsHide: true })
+      const child = spawn(exe, [...args], { windowsHide: true, ...(env ? { env } : {}) })
 
       let text = ''
       const consume = (raw: Buffer): void => {
@@ -96,8 +100,7 @@ export class WindowsProcessRunner implements ProcessRunner {
     return env
   }
 
-  async run(exe: string, args: readonly string[]): Promise<boolean> {
-    const env = await this.toolEnv()
+  async run(exe: string, args: readonly string[], env?: NodeJS.ProcessEnv): Promise<boolean> {
     const isScript = /\.(cmd|bat)$/i.test(exe)
 
     return new Promise((resolve) => {

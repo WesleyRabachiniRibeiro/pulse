@@ -16,9 +16,6 @@ function fakeProcessRunner(text: string): ProcessRunner {
     runElevated: async () => ({ code: 0, text: '' }),
     runAsInteractiveUser: async () => ({ code: 0, text: '' }),
     isElevated: async () => false,
-    locateVsCode: async () => null,
-    locateGit: async () => null,
-    forgetPathCache: () => {},
   }
 }
 

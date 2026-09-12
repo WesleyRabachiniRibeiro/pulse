@@ -11,16 +11,13 @@ function fakePorts(overrides: Partial<StepPorts> = {}): StepPorts {
       runWinget: async () => ({ code: 0, text: '' }),
       killWinget: () => {},
       run: async () => true,
-      launchDetached: async () => {},
+        launchDetached: async () => {},
       runCommandLine: async () => true,
       openUri: async () => true,
       runElevated: async () => ({ code: 0, text: '' }),
       runAsInteractiveUser: async () => ({ code: 0, text: '' }),
       isElevated: async () => false,
-      locateVsCode: async () => 'code.cmd',
-      locateGit: async () => 'git.exe',
-      forgetPathCache: () => {},
-    },
+      },
     packageInstaller: {
       install: async () => ({ kind: 'ok', needsReboot: false }),
       installElevated: async () => ({ kind: 'ok', needsReboot: false }),
@@ -29,6 +26,12 @@ function fakePorts(overrides: Partial<StepPorts> = {}): StepPorts {
     },
     autostartRegistry: { setAutostart: async () => 'on' },
     editorSettingsStore: { apply: async () => 'written' },
+    toolchain: {
+      locate: async (tool) => (tool === 'vscode' ? 'code.cmd' : 'git.exe'),
+      run: async () => true,
+      read: async () => '',
+      forgetPath: () => {},
+    },
     steamGameRequester: {
       isSignedIn: async () => true,
       hasManifest: async () => true,
@@ -70,7 +73,7 @@ const vscode = PROGRAM_BY_ID.get('vscode') as Program
 describe('runSteps', () => {
   it('não roda nada quando o ajuste não foi pedido', async () => {
     const ports = fakePorts()
-    const run = vi.spyOn(ports.processRunner, 'run')
+    const run = vi.spyOn(ports.toolchain, 'run')
     const { ctx } = fakeContext(ports, vscode)
 
     const result = await runSteps({}, ctx)
@@ -81,7 +84,7 @@ describe('runSteps', () => {
 
   it('instala as extensões pedidas e conta quantas entraram', async () => {
     const ports = fakePorts()
-    const run = vi.spyOn(ports.processRunner, 'run')
+    const run = vi.spyOn(ports.toolchain, 'run')
     const { ctx } = fakeContext(ports, vscode)
 
     const result = await runSteps({ steps: { vscodeExtensions: ['a', 'b'] } }, ctx)
@@ -93,7 +96,7 @@ describe('runSteps', () => {
 
   it('sem o VS Code no PATH, avisa e não conta extensão alguma', async () => {
     const ports = fakePorts()
-    ports.processRunner.locateVsCode = async () => null
+    ports.toolchain.locate = async () => null
     const { ctx, notes } = fakeContext(ports, vscode)
 
     const result = await runSteps({ steps: { vscodeExtensions: ['a'] } }, ctx)
@@ -105,7 +108,7 @@ describe('runSteps', () => {
 
   it('uma extensão que falha não derruba as outras', async () => {
     const ports = fakePorts()
-    ports.processRunner.run = async (_exe, args) => args[1] !== 'ruim'
+    ports.toolchain.run = async (_exe: string, args: readonly string[]) => args[1] !== 'ruim'
     const { ctx } = fakeContext(ports, vscode)
 
     const result = await runSteps({ steps: { vscodeExtensions: ['boa', 'ruim', 'outra'] } }, ctx)
@@ -116,7 +119,7 @@ describe('runSteps', () => {
 
   it('grava o git e separa o login do resto', async () => {
     const ports = fakePorts()
-    const run = vi.spyOn(ports.processRunner, 'run')
+    const run = vi.spyOn(ports.toolchain, 'run')
     const { ctx } = fakeContext(ports, vscode)
 
     const result = await runSteps(

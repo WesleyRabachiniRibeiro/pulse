@@ -23,9 +23,6 @@ function fakeProcessRunner(overrides: Partial<ProcessRunner> = {}): ProcessRunne
     runElevated: async () => ({ code: 0, text: '' }),
     runAsInteractiveUser: async () => ({ code: 0, text: '' }),
     isElevated: async () => false,
-    locateVsCode: async () => null,
-    locateGit: async () => null,
-    forgetPathCache: () => {},
     ...overrides,
   }
 }
@@ -90,6 +87,7 @@ function makeOrchestrator(
     new InMemoryQueueRepository(),
     fakeClipboard(),
     { apply: async () => 'written' },
+    { locate: async () => null, run: async () => true, read: async () => '', forgetPath: () => {} },
   )
 }
 

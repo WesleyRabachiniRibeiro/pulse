@@ -1,6 +1,7 @@
 import { NodePowerShellRunner } from './infra/powershell/NodePowerShellRunner'
 import { WindowsProcessRunner } from './infra/process/WindowsProcessRunner'
 import { WingetPackageInstaller } from './infra/winget/WingetPackageInstaller'
+import { WindowsToolchain } from './infra/toolchain/WindowsToolchain'
 import { WindowsAutostartRegistry } from './infra/autostart/WindowsAutostartRegistry'
 import { ElectronClipboardWriter } from './infra/electron/ElectronClipboardWriter'
 import { InMemoryQueueRepository } from './infra/queue/InMemoryQueueRepository'
@@ -43,7 +44,9 @@ export function composeMain(): MainComponents {
   nameAppForWindows()
 
   const powershellRunner = new NodePowerShellRunner()
+
   const processRunner = new WindowsProcessRunner(powershellRunner)
+  const toolchain = new WindowsToolchain(powershellRunner, processRunner)
   const autostartRegistry = new WindowsAutostartRegistry(powershellRunner)
   const clipboardWriter = new ElectronClipboardWriter()
   const queueRepository = new InMemoryQueueRepository()
@@ -64,6 +67,7 @@ export function composeMain(): MainComponents {
     queueRepository,
     clipboardWriter,
     new JsonEditorSettingsStore(),
+    toolchain,
   )
 
   registerInstallation(queueOrchestrator)
@@ -84,7 +88,7 @@ export function composeMain(): MainComponents {
   registerSteam(new SteamService(steamAdapter))
 
   const preferencesService = new PreferencesService(new JsonPreferencesStore())
-  const readGitConfig = new ReadGitConfig(processRunner)
+  const readGitConfig = new ReadGitConfig(toolchain)
   registerPreferences(preferencesService, readGitConfig)
 
   const systemService = new SystemService(new WindowsPowerController(processRunner))
