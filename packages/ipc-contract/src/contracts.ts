@@ -13,6 +13,20 @@ import {
   updateStateSchema,
 } from '@pulse/domain'
 
+// O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
+export const parentalViewSchema = z.object({
+  on: z.boolean(),
+  hasPin: z.boolean(),
+  blocked: z.array(z.string()),
+})
+export type ParentalView = z.infer<typeof parentalViewSchema>
+
+export const pinResultSchema = z.object({
+  ok: z.boolean(),
+  view: parentalViewSchema.optional(),
+})
+export type PinResult = z.infer<typeof pinResultSchema>
+
 export const freshInputSchema = z.object({
   fresh: z.boolean().optional(),
 })
@@ -60,6 +74,30 @@ export const ipcContracts = {
   'catalog:installed': {
     input: freshInputSchema,
     output: z.array(z.string()),
+  },
+  'parental:read': {
+    input: z.void(),
+    output: parentalViewSchema,
+  },
+  'parental:turnOn': {
+    input: z.object({ pin: z.string() }),
+    output: pinResultSchema,
+  },
+  'parental:turnOff': {
+    input: z.object({ pin: z.string() }),
+    output: pinResultSchema,
+  },
+  'parental:change': {
+    input: z.object({ current: z.string(), next: z.string() }),
+    output: pinResultSchema,
+  },
+  'parental:check': {
+    input: z.object({ pin: z.string() }),
+    output: z.boolean(),
+  },
+  'parental:setBlocked': {
+    input: z.object({ ids: z.array(z.string()) }),
+    output: parentalViewSchema,
   },
   'prefs:read': {
     input: z.void(),

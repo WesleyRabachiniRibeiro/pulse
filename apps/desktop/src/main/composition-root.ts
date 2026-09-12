@@ -17,6 +17,8 @@ import { SteamAdapter } from './infra/steam/SteamAdapter'
 import { BrowserDefaultSetterAdapter } from './infra/browsers/BrowserDefaultSetterAdapter'
 import { JsonPreferencesStore } from './infra/preferences/JsonPreferencesStore'
 import { JsonEditorSettingsStore } from './infra/editor/JsonEditorSettingsStore'
+import { NodePinSealer } from './infra/parental/NodePinSealer'
+import { PreferencesParentalStore } from './infra/parental/PreferencesParentalStore'
 import { ElectronUpdateChecker } from './infra/updates/ElectronUpdateChecker'
 import { ElectronNotificationPresenter, nameAppForWindows } from './infra/electron/ElectronNotificationPresenter'
 
@@ -24,6 +26,7 @@ import { RunSystemVerification } from './application/preflight/RunSystemVerifica
 import { CatalogService } from './application/catalog/CatalogService'
 import { ReadGitConfig } from './application/git/ReadGitConfig'
 import { PreferencesService } from './application/preferences/PreferencesService'
+import { ParentalService } from './application/parental/ParentalService'
 import { SteamService } from './application/steam/SteamService'
 import { SystemService } from './application/system/SystemService'
 import { UpdateService } from './application/updates/UpdateService'
@@ -32,6 +35,7 @@ import { registerPreflight } from './ipc/preflight'
 import { registerCatalog } from './ipc/catalog'
 import { registerSteam } from './ipc/steam'
 import { registerPreferences } from './ipc/preferences'
+import { registerParental } from './ipc/parental'
 import { registerSystem } from './ipc/system'
 import { registerUpdates } from './ipc/updates'
 
@@ -87,7 +91,12 @@ export function composeMain(): MainComponents {
 
   registerSteam(new SteamService(steamAdapter))
 
-  const preferencesService = new PreferencesService(new JsonPreferencesStore())
+  const preferencesStore = new JsonPreferencesStore()
+  const preferencesService = new PreferencesService(preferencesStore)
+
+  registerParental(
+    new ParentalService(new PreferencesParentalStore(preferencesStore), new NodePinSealer()),
+  )
   const readGitConfig = new ReadGitConfig(toolchain)
   registerPreferences(preferencesService, readGitConfig)
 
