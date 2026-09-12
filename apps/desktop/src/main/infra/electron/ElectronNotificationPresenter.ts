@@ -1,6 +1,6 @@
 import { app, BrowserWindow, nativeImage, Notification } from 'electron'
 import { join } from 'node:path'
-import { PROGRAM_BY_ID, type Item, type Run } from '@pulse/domain'
+import type { Catalog, Item, Run } from '@pulse/domain'
 import { anyoneWaiting, tally } from '@pulse/utils'
 import type { NotificationPresenter } from '../../ports/notification-presenter'
 
@@ -13,8 +13,8 @@ function iconPath(fileName: string): string {
 
 type Alert = 'failed' | 'waiting' | null
 
-function nameOf(item: Item): string {
-  return PROGRAM_BY_ID.get(item.id)?.name ?? item.id
+function nameOf(catalog: Catalog, item: Item): string {
+  return catalog.byId.get(item.id)?.name ?? item.id
 }
 
 export function nameAppForWindows(): void {
@@ -22,6 +22,8 @@ export function nameAppForWindows(): void {
 }
 
 export class ElectronNotificationPresenter implements NotificationPresenter {
+  constructor(private readonly catalog: Catalog) {}
+
   private readonly announced = new Set<string>()
   private watching: string | null = null
   private lastBadge: Alert = null
@@ -50,7 +52,7 @@ export class ElectronNotificationPresenter implements NotificationPresenter {
       if (this.announced.has(key)) continue
       this.announced.add(key)
       window.flashFrame(true)
-      this.toast(window, nameOf(item) + ' não foi instalado', item.error ?? 'A instalação falhou.')
+      this.toast(window, nameOf(this.catalog, item) + ' não foi instalado', item.error ?? 'A instalação falhou.')
     }
 
     for (const item of run.items) {

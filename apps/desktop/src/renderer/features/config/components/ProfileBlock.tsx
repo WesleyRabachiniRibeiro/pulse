@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { EXPORT_FORMATS, FORMAT_FILE, PROGRAM_BY_ID, type ExportFormat, type ImportMode } from '@pulse/domain'
+import { EXPORT_FORMATS, FORMAT_FILE, type ExportFormat, type ImportMode } from '@pulse/domain'
 import { applyProfile, selectionAsProfile, useSelection } from '@/features/selection'
+import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Config.module.css'
 
@@ -14,6 +15,7 @@ const FORMAT_HINT: Record<ExportFormat, string> = {
 type Note = { kind: 'ok' | 'bad'; text: string } | null
 
 export function ProfileBlock() {
+  const catalog = useCatalog()
   const selected = useSelection((st) => st.selected)
   const [mode, setMode] = useState<ImportMode>('merge')
   const [url, setUrl] = useState('')
@@ -63,7 +65,7 @@ export function ProfileBlock() {
     applyProfile(result.profile)
 
     const missing = result.missing ?? []
-    const names = missing.map((id) => PROGRAM_BY_ID.get(id)?.name ?? id)
+    const names = missing.map((id) => catalog.byId.get(id)?.name ?? id)
     setNote({
       kind: 'ok',
       text:

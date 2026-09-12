@@ -1,3 +1,4 @@
+import { SEED_CATALOG } from '@pulse/domain'
 import { describe, expect, it } from 'vitest'
 import type { Run } from '@pulse/domain'
 import { QueueOrchestrator } from './QueueOrchestrator'
@@ -77,6 +78,7 @@ function makeOrchestrator(
   processRunner: ProcessRunner = fakeProcessRunner(),
 ): QueueOrchestrator {
   return new QueueOrchestrator(
+    SEED_CATALOG,
     processRunner,
     packageInstaller,
     fakePackageRepository(),

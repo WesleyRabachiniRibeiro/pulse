@@ -1,4 +1,4 @@
-import { PROGRAM_BY_ID } from '@pulse/domain'
+import type { Catalog } from '@pulse/domain'
 import { entryMatchesProgram } from '@pulse/utils'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
 import type { AutostartEntry, AutostartReader } from '../../ports/autostart-reader'
@@ -15,7 +15,10 @@ interface RawEntry {
 export class WindowsAutostartReader implements AutostartReader {
   private cached: { at: number; entries: AutostartEntry[] } | null = null
 
-  constructor(private readonly powershell: PowerShellRunner) {}
+  constructor(
+    private readonly catalog: Catalog,
+    private readonly powershell: PowerShellRunner,
+  ) {}
 
   async list(): Promise<AutostartEntry[]> {
     if (this.cached && Date.now() - this.cached.at < REUSE_MS) return this.cached.entries
@@ -25,7 +28,7 @@ export class WindowsAutostartReader implements AutostartReader {
       .catch(() => ({ entries: [] }))
 
     const found = new Map<string, 'on' | 'off'>()
-    for (const program of PROGRAM_BY_ID.values()) {
+    for (const program of this.catalog.programs) {
       for (const entry of raw.entries) {
         if (!entry?.name) continue
         if (!entryMatchesProgram(entry.name, entry.value ?? '', program)) continue

@@ -72,6 +72,7 @@ export function composeMain(): MainComponents {
   const browserDefaultSetter = new BrowserDefaultSetterAdapter(powershellRunner, processRunner)
 
   const queueOrchestrator = new QueueOrchestrator(
+    SEED_CATALOG,
     processRunner,
     new WingetPackageInstaller(processRunner),
     packageRepository,
@@ -94,8 +95,9 @@ export function composeMain(): MainComponents {
   registerPreflight(preflightService)
 
   const catalogService = new CatalogService(
+    SEED_CATALOG,
     packageRepository,
-    new WindowsAutostartReader(powershellRunner),
+    new WindowsAutostartReader(SEED_CATALOG, powershellRunner),
     processRunner,
     new WindowsStartupEntries(SEED_CATALOG, powershellRunner),
     new WindowsRegistryReader(powershellRunner),
@@ -131,7 +133,7 @@ export function composeMain(): MainComponents {
   registerHistory(historyService)
   queueOrchestrator.subscribe((run) => void historyService.onRunChanged(run))
 
-  const notificationPresenter = new ElectronNotificationPresenter()
+  const notificationPresenter = new ElectronNotificationPresenter(SEED_CATALOG)
   queueOrchestrator.subscribe((run) => notificationPresenter.present(run))
   queueOrchestrator.subscribe(() => updateService.onQueueChanged())
 

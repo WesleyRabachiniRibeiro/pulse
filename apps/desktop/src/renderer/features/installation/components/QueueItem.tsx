@@ -1,9 +1,9 @@
-import { PROGRAM_BY_ID } from '@pulse/domain'
 import { type Item, type ItemStatus } from '@pulse/domain'
 import { canCancel, driveLabel, isActive, isWaiting, needsPermission } from '@pulse/utils'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { ClampedText } from '@/shared/ui/ClampedText/ClampedText'
 import { Stages } from './Stages'
+import { useCatalog } from '@/features/catalog'
 import s from './QueueItem.module.css'
 
 const TAG: Record<ItemStatus, string> = {
@@ -26,7 +26,8 @@ interface Props {
 }
 
 export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Props) {
-  const program = PROGRAM_BY_ID.get(item.id)
+  const catalog = useCatalog()
+  const program = catalog.byId.get(item.id)
   const name = program?.name ?? item.id
   const canRetry = item.status === 'failed' || item.status === 'canceled'
 

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
-import { PROGRAM_BY_ID, type InstalledFilter, type InstalledNode, type InstalledTree } from '@pulse/domain'
+import { type InstalledFilter, type InstalledNode, type InstalledTree } from '@pulse/domain'
 import { countNodes, filterInstalled } from '@pulse/utils'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
+import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
 
@@ -13,7 +14,8 @@ const FILTERS: readonly { id: InstalledFilter; name: string }[] = [
 ]
 
 function Row({ node, depth = 0 }: { node: InstalledNode; depth?: number }) {
-  const program = node.programId ? PROGRAM_BY_ID.get(node.programId) : undefined
+  const catalog = useCatalog()
+  const program = node.programId ? catalog.byId.get(node.programId) : undefined
 
   return (
     <div className={s.entry} data-depth={depth}>

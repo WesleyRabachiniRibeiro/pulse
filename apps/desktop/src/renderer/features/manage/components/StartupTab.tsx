@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { PROGRAM_BY_ID, type StartupEntry } from '@pulse/domain'
+import { type StartupEntry } from '@pulse/domain'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
+import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
 
 export function StartupTab() {
+  const catalog = useCatalog()
   const [entries, setEntries] = useState<readonly StartupEntry[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -50,7 +52,7 @@ export function StartupTab() {
       </div>
 
       {entries.map((entry) => {
-        const program = entry.programId ? PROGRAM_BY_ID.get(entry.programId) : undefined
+        const program = entry.programId ? catalog.byId.get(entry.programId) : undefined
 
         return (
           <button

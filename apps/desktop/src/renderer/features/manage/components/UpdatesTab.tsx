@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { PROGRAM_BY_ID, type Upgrade } from '@pulse/domain'
+import { type Upgrade } from '@pulse/domain'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
+import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
 import s from './Manage.module.css'
 
 export function UpdatesTab() {
+  const catalog = useCatalog()
   const [upgrades, setUpgrades] = useState<readonly Upgrade[] | null>(null)
   const [failed, setFailed] = useState(false)
 
@@ -46,7 +48,7 @@ export function UpdatesTab() {
       </div>
 
       {upgrades.map((one) => {
-        const program = one.programId ? PROGRAM_BY_ID.get(one.programId) : undefined
+        const program = one.programId ? catalog.byId.get(one.programId) : undefined
 
         return (
           <article key={one.wingetId} className={s.upgrade}>

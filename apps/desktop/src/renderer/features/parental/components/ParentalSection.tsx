@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CATALOG, type PinPurpose } from '@pulse/domain'
+import { type PinPurpose } from '@pulse/domain'
 import { groupByCategory } from '@pulse/utils'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import {
@@ -21,7 +21,7 @@ export function ParentalSection() {
   const [editing, setEditing] = useState(false)
 
   const locked = on && hasPin
-  const groups = groupByCategory(catalog, CATALOG)
+  const groups = groupByCategory(catalog, catalog.programs)
 
   // 'list' só confere o PIN: mexer na lista não liga nem desliga o controle.
   function answer(purpose: PinPurpose, pin: string, next?: string): Promise<boolean> {

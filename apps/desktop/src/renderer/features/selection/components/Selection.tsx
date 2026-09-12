@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
 import { settingsSummary } from '@pulse/domain'
-import { BUNDLES, CATALOG, formatMb, PROGRAM_BY_ID } from '@pulse/domain'
+import { formatMb } from '@pulse/domain'
 import { type Request } from '@pulse/domain'
 import {
   bundleIsActive,
@@ -86,7 +86,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
   const hasQueue = run !== null
   const checked: Request[] = useMemo(
     () =>
-      CATALOG.filter((p) => {
+      catalog.programs.filter((p) => {
         if (installed.has(p.id)) return Boolean(settingsByApp[p.id])
         if (p.source === 'pages') return selected.has(p.id) || Boolean(settingsByApp[p.id])
         return selected.has(p.id)
@@ -127,7 +127,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
     }
   }
 
-  const programInSettings = inSettings ? PROGRAM_BY_ID.get(inSettings) : undefined
+  const programInSettings = inSettings ? catalog.byId.get(inSettings) : undefined
   if (programInSettings) {
     return (
       <AppSettings
@@ -161,7 +161,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
             aria-label="Buscar programas"
           />
           <span className={s.count}>
-            {searching ? `${found} resultados` : `${CATALOG.length} programas`}
+            {searching ? `${found} resultados` : `${catalog.programs.length} programas`}
           </span>
           {searching && (
             <button
@@ -177,7 +177,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
 
         <div className={s.bundles} data-tour="combos">
           <span className={s.bundlesLabel}>COMBOS</span>
-          {BUNDLES.map((b) => (
+          {catalog.bundles.map((b) => (
             <button
               key={b.name}
               type="button"
@@ -194,7 +194,7 @@ export function Selection({ drive, onGoToInstallation }: Props) {
       <div className={s.list}>
         {groups.length === 0 ? (
           <p className={s.empty}>
-            Nenhum programa com esse nome. O catálogo tem {CATALOG.length} — tente parte do nome,
+            Nenhum programa com esse nome. O catálogo tem {catalog.programs.length} — tente parte do nome,
             como “chrome” ou “code”.
           </p>
         ) : (

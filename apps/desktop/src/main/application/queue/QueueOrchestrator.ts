@@ -1,5 +1,6 @@
-import { PROGRAM_BY_ID, type Program } from '@pulse/catalog-data'
+import type { Program } from '@pulse/catalog-data'
 import {
+  type Catalog,
   clock,
   formatGb,
   LOG_LIMIT,
@@ -78,6 +79,7 @@ export class QueueOrchestrator {
   private readonly uninstalling = new Map<string, Promise<UninstallResult>>()
 
   constructor(
+    private readonly catalog: Catalog,
     private readonly processRunner: ProcessRunner,
     private readonly packageInstaller: PackageInstaller,
     private readonly packageRepository: PackageRepository,
@@ -203,7 +205,7 @@ export class QueueOrchestrator {
       target.status = 'canceled'
       target.detail = 'Cancelado antes de começar'
       this.emitState()
-      this.note(`${PROGRAM_BY_ID.get(id)?.name ?? id}: tirado da fila`, 'error')
+      this.note(`${this.catalog.byId.get(id)?.name ?? id}: tirado da fila`, 'error')
       return
     }
 
@@ -391,7 +393,7 @@ export class QueueOrchestrator {
 
 
   private async install(target: Item): Promise<void> {
-    const program = PROGRAM_BY_ID.get(target.id)
+    const program = this.catalog.byId.get(target.id)
     if (!program) {
       target.status = 'failed'
       target.error = 'Programa fora do catálogo.'
@@ -564,7 +566,7 @@ export class QueueOrchestrator {
 
   private chooseDefaultBrowser(items: readonly Item[]): Item | null {
     const browsers = items
-      .filter((i) => i.status === 'done' && PROGRAM_BY_ID.get(i.id)?.category === 'browsers')
+      .filter((i) => i.status === 'done' && this.catalog.byId.get(i.id)?.category === 'browsers')
       .sort((a, b) => Date.parse(a.finishedAt ?? '') - Date.parse(b.finishedAt ?? ''))
 
     if (browsers.length === 0) return null
@@ -587,7 +589,7 @@ export class QueueOrchestrator {
     for (const item of run.items) {
       if (item.status !== 'done' || !item.settings?.steps?.browserDefault?.openAfter) continue
       if (this.openedAfterRun.has(item.id)) continue
-      const program = PROGRAM_BY_ID.get(item.id)
+      const program = this.catalog.byId.get(item.id)
       if (!program) continue
       this.openedAfterRun.add(item.id)
       const abriu = await this.browserDefaultSetter.openOnce(program)
@@ -620,7 +622,7 @@ export class QueueOrchestrator {
 
     const winner = this.chooseDefaultBrowser(run.items)
     if (winner && winner.id !== this.defaultBrowser) {
-      const program = PROGRAM_BY_ID.get(winner.id)
+      const program = this.catalog.byId.get(winner.id)
       if (program) {
         this.defaultBrowser = winner.id
         winner.detail = 'Pedindo para ser o navegador padrão'
@@ -711,7 +713,7 @@ export class QueueOrchestrator {
   }
 
   private async runUninstall(id: string): Promise<UninstallResult> {
-    const program = PROGRAM_BY_ID.get(id)
+    const program = this.catalog.byId.get(id)
     if (!program) return { ok: false, verified: false, error: 'Programa fora do catálogo.' }
 
     if (!program.winget) {

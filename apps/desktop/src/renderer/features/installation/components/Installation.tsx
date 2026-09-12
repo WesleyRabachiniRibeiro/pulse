@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { PROGRAM_BY_ID } from '@pulse/domain'
 import { clock, PARALLEL_LIMIT, type Run } from '@pulse/domain'
 import {
   anyoneNeedingPermission,
@@ -110,7 +109,7 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
       {}
       <div className={s.ribbon}>
         {run.items.map((item) => {
-          const program = PROGRAM_BY_ID.get(item.id)
+          const program = catalog.byId.get(item.id)
           return (
             <div
               key={item.id}

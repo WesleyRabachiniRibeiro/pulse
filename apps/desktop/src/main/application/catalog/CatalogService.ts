@@ -1,4 +1,4 @@
-import { CATALOG, PROGRAM_BY_ID, type PackageVersion, type InstalledTree, type StartupEntry, type Upgrade } from '@pulse/domain'
+import { type Catalog, type PackageVersion, type InstalledTree, type StartupEntry, type Upgrade } from '@pulse/domain'
 import { buildInstalled, compareVersions } from '@pulse/utils'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
@@ -8,6 +8,7 @@ import type { RegistryReader } from '../../ports/registry-reader'
 
 export class CatalogService {
   constructor(
+    private readonly catalog: Catalog,
     private readonly packageReader: CatalogPackageReader,
     private readonly autostartReader: AutostartReader,
     private readonly processRunner: ProcessRunner,
@@ -24,7 +25,7 @@ export class CatalogService {
   async listUpgrades(): Promise<Upgrade[]> {
     const found = await this.packageReader.listUpgrades()
     const byWinget = new Map(
-      CATALOG.filter((p) => p.winget).map((p) => [p.winget?.toLowerCase(), p.id]),
+      this.catalog.programs.filter((p) => p.winget).map((p) => [p.winget?.toLowerCase(), p.id]),
     )
 
     return found.map((one) => {
@@ -42,10 +43,10 @@ export class CatalogService {
     ])
 
     const wingetIds = managed
-      .map((id) => PROGRAM_BY_ID.get(id)?.winget)
+      .map((id) => this.catalog.byId.get(id)?.winget)
       .filter((id): id is string => Boolean(id))
 
-    return buildInstalled(entries, CATALOG, wingetIds)
+    return buildInstalled(entries, this.catalog.programs, wingetIds)
   }
 
   listStartup(): Promise<readonly StartupEntry[]> {
@@ -62,7 +63,7 @@ export class CatalogService {
   }
 
   async listVersions(id: string): Promise<PackageVersion[]> {
-    const program = PROGRAM_BY_ID.get(id)
+    const program = this.catalog.byId.get(id)
     if (!program?.family) return []
 
     const { prefix, pattern } = program.family

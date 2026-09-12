@@ -1,3 +1,4 @@
+import { SEED_CATALOG } from '@pulse/domain'
 import { describe, expect, it } from 'vitest'
 import type { ProcessRunner, SpawnResult } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
@@ -47,6 +48,7 @@ function fakeStartup() {
 describe('CatalogService.listVersions', () => {
   it('returns an empty list for a program with no family', async () => {
     const service = new CatalogService(
+      SEED_CATALOG,
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(''),
@@ -58,6 +60,7 @@ describe('CatalogService.listVersions', () => {
 
   it('parses the winget search table and sorts versions descending', async () => {
     const service = new CatalogService(
+      SEED_CATALOG,
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
@@ -77,6 +80,7 @@ describe('CatalogService.listVersions', () => {
 
   it('flags the catalog default winget id as recommended', async () => {
     const service = new CatalogService(
+      SEED_CATALOG,
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
@@ -92,6 +96,7 @@ describe('CatalogService.listVersions', () => {
 describe('CatalogService passthroughs', () => {
   it('delegates listInstalled to the package reader', async () => {
     const service = new CatalogService(
+      SEED_CATALOG,
       fakePackageReader(['chrome', 'vscode']),
       fakeAutostartReader(),
       fakeProcessRunner(''),

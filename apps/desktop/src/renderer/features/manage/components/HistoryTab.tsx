@@ -1,7 +1,8 @@
-import { PROGRAM_BY_ID, RUN_STATE_LABEL, RUN_STATE_ONE } from '@pulse/domain'
+import { RUN_STATE_LABEL, RUN_STATE_ONE } from '@pulse/domain'
 import { clock } from '@pulse/domain'
 import { installedCount, runSeconds, tallyOf } from '@pulse/utils'
 import { useHistory } from '../store/useHistory'
+import { useCatalog } from '@/features/catalog'
 import s from './Manage.module.css'
 
 const WHEN = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -12,6 +13,7 @@ function when(iso: string): string {
 }
 
 export function HistoryTab() {
+  const catalog = useCatalog()
   const { records, clear } = useHistory()
 
   if (records === null) return <p className={s.empty}>Lendo o histórico…</p>
@@ -60,7 +62,7 @@ export function HistoryTab() {
             <p className={s.names}>
               {record.items
                 .filter((item) => item.status === 'done')
-                .map((item) => PROGRAM_BY_ID.get(item.id)?.name ?? item.id)
+                .map((item) => catalog.byId.get(item.id)?.name ?? item.id)
                 .join(', ') || 'nenhum programa entrou'}
             </p>
 
@@ -71,7 +73,7 @@ export function HistoryTab() {
                   .map((item) => (
                     <li key={item.id} className={s.problem}>
                       <span className={s.problemName}>
-                        {PROGRAM_BY_ID.get(item.id)?.name ?? item.id}
+                        {catalog.byId.get(item.id)?.name ?? item.id}
                       </span>
                       <span className={s.problemWhy}>
                         {item.error ?? RUN_STATE_ONE[item.status as 'failed'] ?? item.status}
