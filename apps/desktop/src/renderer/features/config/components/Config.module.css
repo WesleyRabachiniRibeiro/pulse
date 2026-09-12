@@ -151,3 +151,144 @@
   transform: translateX(17px);
   background: var(--grad-txt-a);
 }
+
+.formats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+}
+
+.format {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'name ext'
+    'hint ext';
+  gap: 3px 12px;
+  align-items: center;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-md);
+  padding: 11px 13px;
+  cursor: pointer;
+}
+
+.format:hover:not(:disabled) {
+  border-color: var(--border-field);
+}
+
+.format:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.formatName {
+  grid-area: name;
+  font-size: 13.5px;
+  color: var(--tx);
+}
+
+.formatHint {
+  grid-area: hint;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--tx-4);
+}
+
+.formatExt {
+  grid-area: ext;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--tx-6);
+}
+
+.empty {
+  font-size: 12.5px;
+  color: var(--tx-4);
+  margin: 10px 0 0;
+}
+
+.importTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+
+.importLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--tx-6);
+}
+
+.modes {
+  display: flex;
+  gap: 6px;
+}
+
+.mode {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  background: transparent;
+  border: 1px solid var(--border-field);
+  border-radius: var(--r-sm);
+  padding: 7px 11px;
+  color: var(--tx-5);
+  cursor: pointer;
+}
+
+.mode[aria-pressed='true'] {
+  color: var(--tx);
+  border-color: color-mix(in srgb, var(--grad-a) 55%, transparent);
+  background: color-mix(in srgb, var(--grad-a) 12%, transparent);
+}
+
+.importRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.url {
+  flex: 1;
+  min-width: 200px;
+  background: var(--bg-field);
+  border: 1px solid var(--border-field);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  color: var(--tx);
+  font-size: 13px;
+}
+
+.url:focus-visible {
+  outline: none;
+  border-color: var(--focus);
+}
+
+.url::placeholder {
+  color: var(--tx-6);
+}
+
+.note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ok);
+  margin: 12px 0 0;
+}
+
+.note[data-bad='true'] {
+  color: var(--blocker);
+}
+
+.format:focus-visible,
+.mode:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

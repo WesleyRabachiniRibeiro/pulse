@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { settingsAreEmpty, type Settings } from '@pulse/domain'
+import { settingsAreEmpty, type Profile, type Settings } from '@pulse/domain'
 
 interface SelectionStore {
   selected: ReadonlySet<string>
@@ -45,3 +45,22 @@ export const useSelection = create<SelectionStore>((set) => ({
 
   clear: () => set({ selected: new Set<string>(), drives: {}, settings: {} }),
 }))
+
+// A seleção e o perfil guardam a mesma coisa em formatos diferentes: aqui um
+// Set, no arquivo uma lista. Estas duas fazem a tradução nos dois sentidos.
+export function selectionAsProfile(): Profile {
+  const { selected, drives, settings } = useSelection.getState()
+  return {
+    selected: [...selected],
+    drives: { ...drives },
+    settings: { ...settings },
+  }
+}
+
+export function applyProfile(profile: Profile): void {
+  useSelection.setState({
+    selected: new Set(profile.selected),
+    drives: { ...profile.drives },
+    settings: { ...profile.settings },
+  })
+}

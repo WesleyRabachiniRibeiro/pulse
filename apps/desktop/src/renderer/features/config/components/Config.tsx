@@ -1,12 +1,13 @@
 import { ParentalSection } from '@/features/parental'
 import { WindowsSection } from './WindowsSection'
+import { ProfileBlock } from './ProfileBlock'
 import s from './Config.module.css'
 
 interface Props {
   onBack: () => void
 }
 
-// A casca das configurações. O perfil e a portabilidade entram aqui depois.
+
 export function Config({ onBack }: Props) {
   return (
     <div className={s.screen}>
@@ -18,6 +19,7 @@ export function Config({ onBack }: Props) {
       </header>
 
       <div className={s.body}>
+        <ProfileBlock />
         <WindowsSection />
         <ParentalSection />
       </div>
