@@ -21,6 +21,8 @@ import {
   startupEntrySchema,
   startupInputSchema,
   installedTreeSchema,
+  catalogPayloadSchema,
+  catalogStateSchema,
 } from '@pulse/domain'
 
 // O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
@@ -151,6 +153,18 @@ export const ipcContracts = {
     }),
     output: importResultSchema,
   },
+  'catalog:state': {
+    input: z.void(),
+    output: catalogStateSchema,
+  },
+  'catalog:payload': {
+    input: z.void(),
+    output: catalogPayloadSchema,
+  },
+  'catalog:retry': {
+    input: z.void(),
+    output: catalogStateSchema,
+  },
   'catalog:tree': {
     input: z.void(),
     output: installedTreeSchema,
@@ -270,6 +284,7 @@ export type IpcOutput<C extends IpcChannel> = z.infer<IpcContracts[C]['output']>
 export const ipcChannels = Object.keys(ipcContracts) as IpcChannel[]
 
 export const ipcEvents = {
+  'catalog:event': catalogStateSchema,
   'installation:event': runSchema,
   'preflight:event': preflightPartialSchema,
   'update:event': updateStateSchema,

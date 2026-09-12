@@ -30,6 +30,41 @@ export function catalogOf(
 
 export const SEED_CATALOG: Catalog = catalogOf(CATALOG, CATEGORIES, BUNDLES)
 
+export const CATALOG_VERSION = 1
+
+export const programSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  winget: z.string().optional(),
+  source: z.enum(['msstore', 'pages']).optional(),
+  version: z.string(),
+  mb: z.number(),
+  category: z.string(),
+  hints: z.array(z.string()),
+  notice: z.string().optional(),
+  settingsKind: z.enum(['vscode', 'steam', 'git', 'tibia', 'riot', 'vs', 'browser']).optional(),
+  steps: z.array(z.string()).optional(),
+  family: z.object({ prefix: z.string(), pattern: z.string() }).optional(),
+})
+
+export const catalogPayloadSchema = z.object({
+  pulse: z.number(),
+  categories: z.array(z.object({ id: z.string(), name: z.string() })),
+  programs: z.array(programSchema),
+  bundles: z.array(z.object({ name: z.string(), ids: z.array(z.string()) })),
+})
+export type CatalogPayload = z.infer<typeof catalogPayloadSchema>
+
+export const catalogSourceSchema = z.enum(['seed', 'cache', 'network'])
+export type CatalogSource = z.infer<typeof catalogSourceSchema>
+
+export const catalogStateSchema = z.object({
+  source: catalogSourceSchema,
+  checkedAt: z.string().nullable(),
+  loading: z.boolean(),
+})
+export type CatalogState = z.infer<typeof catalogStateSchema>
+
 export const packageVersionSchema = z.object({
   winget: z.string(),
   name: z.string(),

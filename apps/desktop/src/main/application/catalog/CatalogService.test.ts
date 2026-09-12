@@ -1,4 +1,4 @@
-import { SEED_CATALOG } from '@pulse/domain'
+import { LiveCatalog } from './LiveCatalog'
 import { describe, expect, it } from 'vitest'
 import type { ProcessRunner, SpawnResult } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
@@ -48,24 +48,30 @@ function fakeStartup() {
 describe('CatalogService.listVersions', () => {
   it('returns an empty list for a program with no family', async () => {
     const service = new CatalogService(
-      SEED_CATALOG,
+      new LiveCatalog(),
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(''),
       fakeStartup(),
       fakeRegistry(),
+      { read: async () => null, write: async () => {} },
+      { text: async () => null },
+      'https://example.test/catalog.json',
     )
     expect(await service.listVersions('chrome')).toEqual([])
   })
 
   it('parses the winget search table and sorts versions descending', async () => {
     const service = new CatalogService(
-      SEED_CATALOG,
+      new LiveCatalog(),
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
       fakeStartup(),
       fakeRegistry(),
+      { read: async () => null, write: async () => {} },
+      { text: async () => null },
+      'https://example.test/catalog.json',
     )
     const versions = await service.listVersions('node')
     // OpenJS.NodeJS.LTS ganha por ser tratado como "sempre a mais nova"; entre
@@ -80,12 +86,15 @@ describe('CatalogService.listVersions', () => {
 
   it('flags the catalog default winget id as recommended', async () => {
     const service = new CatalogService(
-      SEED_CATALOG,
+      new LiveCatalog(),
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
       fakeStartup(),
       fakeRegistry(),
+      { read: async () => null, write: async () => {} },
+      { text: async () => null },
+      'https://example.test/catalog.json',
     )
     const versions = await service.listVersions('node')
     const recommended = versions.find((v) => v.recommended)
@@ -96,12 +105,15 @@ describe('CatalogService.listVersions', () => {
 describe('CatalogService passthroughs', () => {
   it('delegates listInstalled to the package reader', async () => {
     const service = new CatalogService(
-      SEED_CATALOG,
+      new LiveCatalog(),
       fakePackageReader(['chrome', 'vscode']),
       fakeAutostartReader(),
       fakeProcessRunner(''),
       fakeStartup(),
       fakeRegistry(),
+      { read: async () => null, write: async () => {} },
+      { text: async () => null },
+      'https://example.test/catalog.json',
     )
     expect(await service.listInstalled(false)).toEqual(['chrome', 'vscode'])
   })

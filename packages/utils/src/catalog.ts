@@ -1,5 +1,12 @@
 import type { Bundle, Category, Program } from '@pulse/catalog-data'
-import { normalizeText, type Catalog, type PackageVersion } from '@pulse/domain'
+import {
+  CATALOG_VERSION,
+  catalogPayloadSchema,
+  normalizeText,
+  type Catalog,
+  type CatalogPayload,
+  type PackageVersion,
+} from '@pulse/domain'
 
 // Estimativa grosseira de banda, em megabytes por minuto. Era um 90 solto em
 // dois lugares, com pisos diferentes, e ninguém saberia mexer nos dois.
@@ -139,4 +146,29 @@ export function bundleIsActive(
   const ids = bundle.ids.filter((id) => !ignore.has(id))
   if (ids.length === 0) return false
   return ids.length === selected.size && ids.every((id) => selected.has(id))
+}
+
+// O schema diz se cada registro tem a forma certa. Estas duas perguntas são
+// sobre o conjunto: id repetido quebraria o índice por id, e padrão de família
+// que não compila estoura na tela de versões. Qualquer uma recusa o arquivo
+// inteiro, porque meio catálogo é pior do que nenhum.
+export function readCatalogPayload(raw: unknown): CatalogPayload | null {
+  const parsed = catalogPayloadSchema.safeParse(raw)
+  if (!parsed.success) return null
+  if (parsed.data.pulse !== CATALOG_VERSION) return null
+
+  const ids = new Set<string>()
+  for (const program of parsed.data.programs) {
+    if (ids.has(program.id)) return null
+    ids.add(program.id)
+
+    if (!program.family) continue
+    try {
+      new RegExp(program.family.pattern)
+    } catch {
+      return null
+    }
+  }
+
+  return parsed.data
 }

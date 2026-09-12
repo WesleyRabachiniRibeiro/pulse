@@ -1,4 +1,3 @@
-import { SEED_CATALOG } from '@pulse/domain'
 import { NodePowerShellRunner } from './infra/powershell/NodePowerShellRunner'
 import { WindowsProcessRunner } from './infra/process/WindowsProcessRunner'
 import { WingetPackageInstaller } from './infra/winget/WingetPackageInstaller'
@@ -16,6 +15,8 @@ import { WingetPackageRepository } from './infra/catalog/WingetPackageRepository
 import { WindowsAutostartReader } from './infra/catalog/WindowsAutostartReader'
 import { WindowsStartupEntries } from './infra/catalog/WindowsStartupEntries'
 import { WindowsRegistryReader } from './infra/catalog/WindowsRegistryReader'
+import { JsonCatalogCache } from './infra/catalog/JsonCatalogCache'
+import { LiveCatalog } from './application/catalog/LiveCatalog'
 import { SteamAdapter } from './infra/steam/SteamAdapter'
 import { BrowserDefaultSetterAdapter } from './infra/browsers/BrowserDefaultSetterAdapter'
 import { JsonPreferencesStore } from './infra/preferences/JsonPreferencesStore'
@@ -55,8 +56,15 @@ export interface MainComponents {
   queueOrchestrator: QueueOrchestrator
 }
 
+// Onde o catálogo publicado mora. Trocar isto troca o que o app oferece, sem
+// recompilar nem republicar o instalador.
+const CATALOG_URL =
+  'https://raw.githubusercontent.com/WesleyRabachiniRibeiro/pulse/main/catalog.json'
+
 export function composeMain(): MainComponents {
   nameAppForWindows()
+
+  const catalog = new LiveCatalog()
 
   const powershellRunner = new NodePowerShellRunner()
 
@@ -66,13 +74,13 @@ export function composeMain(): MainComponents {
   const clipboardWriter = new ElectronClipboardWriter()
   const queueRepository = new InMemoryQueueRepository()
 
-  const packageRepository = new WingetPackageRepository(SEED_CATALOG, powershellRunner, processRunner)
+  const packageRepository = new WingetPackageRepository(catalog, powershellRunner, processRunner)
   const diskSpaceProbe = new WindowsDiskSpaceProbe(powershellRunner)
   const steamAdapter = new SteamAdapter(powershellRunner)
   const browserDefaultSetter = new BrowserDefaultSetterAdapter(powershellRunner, processRunner)
 
   const queueOrchestrator = new QueueOrchestrator(
-    SEED_CATALOG,
+    catalog,
     processRunner,
     new WingetPackageInstaller(processRunner),
     packageRepository,
@@ -95,14 +103,18 @@ export function composeMain(): MainComponents {
   registerPreflight(preflightService)
 
   const catalogService = new CatalogService(
-    SEED_CATALOG,
+    catalog,
     packageRepository,
-    new WindowsAutostartReader(SEED_CATALOG, powershellRunner),
+    new WindowsAutostartReader(catalog, powershellRunner),
     processRunner,
-    new WindowsStartupEntries(SEED_CATALOG, powershellRunner),
+    new WindowsStartupEntries(catalog, powershellRunner),
     new WindowsRegistryReader(powershellRunner),
+    new JsonCatalogCache(),
+    new NodeRemoteFetch(),
+    CATALOG_URL,
   )
-  registerCatalog(catalogService)
+  registerCatalog(catalogService, catalog)
+  void catalogService.load()
 
   registerSteam(new SteamService(steamAdapter))
 
@@ -115,7 +127,7 @@ export function composeMain(): MainComponents {
   const readGitConfig = new ReadGitConfig(toolchain)
   registerPreferences(preferencesService, readGitConfig)
 
-  registerProfile(new ProfileService(SEED_CATALOG, new ElectronFileDialog(), new NodeRemoteFetch()))
+  registerProfile(new ProfileService(catalog, new ElectronFileDialog(), new NodeRemoteFetch()))
 
   const systemService = new SystemService(
     new WindowsPowerController(processRunner),
@@ -133,7 +145,7 @@ export function composeMain(): MainComponents {
   registerHistory(historyService)
   queueOrchestrator.subscribe((run) => void historyService.onRunChanged(run))
 
-  const notificationPresenter = new ElectronNotificationPresenter(SEED_CATALOG)
+  const notificationPresenter = new ElectronNotificationPresenter(catalog)
   queueOrchestrator.subscribe((run) => notificationPresenter.present(run))
   queueOrchestrator.subscribe(() => updateService.onQueueChanged())
 

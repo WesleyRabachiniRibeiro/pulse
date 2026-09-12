@@ -1,20 +1,83 @@
-import { type Catalog, type PackageVersion, type InstalledTree, type StartupEntry, type Upgrade } from '@pulse/domain'
-import { buildInstalled, compareVersions } from '@pulse/utils'
+import { type CatalogState, type PackageVersion, type InstalledTree, type StartupEntry, type Upgrade } from '@pulse/domain'
+import { buildInstalled, compareVersions, readCatalogPayload } from '@pulse/utils'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
 import type { AutostartEntry, AutostartReader } from '../../ports/autostart-reader'
 import type { StartupEntries } from '../../ports/startup-entries'
 import type { RegistryReader } from '../../ports/registry-reader'
+import type { CatalogCache } from '../../ports/catalog-cache'
+import type { RemoteFetch } from '../../ports/remote-fetch'
+import type { LiveCatalog } from './LiveCatalog'
+
+function safeJson(text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
 
 export class CatalogService {
   constructor(
-    private readonly catalog: Catalog,
+    private readonly catalog: LiveCatalog,
     private readonly packageReader: CatalogPackageReader,
     private readonly autostartReader: AutostartReader,
     private readonly processRunner: ProcessRunner,
     private readonly startupEntries: StartupEntries,
     private readonly registryReader: RegistryReader,
+    private readonly cache: CatalogCache,
+    private readonly remote: RemoteFetch,
+    private readonly sourceUrl: string,
   ) {}
+
+  private state: CatalogState = { source: 'seed', checkedAt: null, loading: false }
+  private readonly listeners = new Set<(state: CatalogState) => void>()
+
+  subscribe(listener: (state: CatalogState) => void): () => void {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  currentState(): CatalogState {
+    return { ...this.state }
+  }
+
+  // O cache entra primeiro, para a tela abrir com o catálogo mais recente que
+  // já se conhece em vez de esperar a rede. Depois a rede tenta por cima.
+  async load(): Promise<void> {
+    if (this.state.loading) return
+    this.announce({ ...this.state, loading: true })
+
+    const cached = await this.cache.read()
+    if (cached) {
+      this.catalog.adopt(cached)
+      this.announce({ source: 'cache', checkedAt: this.state.checkedAt, loading: true })
+    }
+
+    const body = await this.remote.text(this.sourceUrl)
+    const fresh = body === null ? null : readCatalogPayload(safeJson(body))
+
+    if (fresh) {
+      this.catalog.adopt(fresh)
+      await this.cache.write(fresh)
+      this.announce({ source: 'network', checkedAt: new Date().toISOString(), loading: false })
+      return
+    }
+
+    // Rede fora, ou resposta que não passa na validação: fica o que já havia.
+    this.announce({ ...this.state, loading: false })
+  }
+
+  retry(): Promise<void> {
+    return this.load()
+  }
+
+  private announce(state: CatalogState): void {
+    this.state = state
+    for (const listener of this.listeners) listener({ ...state })
+  }
 
   listInstalled(fresh: boolean): Promise<string[]> {
     return this.packageReader.listInstalled(fresh)

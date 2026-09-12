@@ -26,7 +26,7 @@ import {
   usePreferences,
   usePreferencesLoaded,
 } from '@/features/preferences'
-import { useCatalog } from '@/features/catalog'
+import { useCatalog, useWatchCatalog } from '@/features/catalog'
 import s from './App.module.css'
 
 const VERSION = __APP_VERSION__
@@ -62,6 +62,7 @@ function Shell({ savedDrive }: { savedDrive: string | null }) {
   const selected = useSelection((st) => st.selected)
   const verifiedDrive = usePreflightDrive()
 
+  useWatchCatalog()
   useWatchInstallation()
   useWatchParental()
   const run = useRun()

@@ -1,1 +1,7 @@
-export { useCatalog, currentCatalog, setCatalog } from './store/useCatalog'
+export {
+  useCatalog,
+  useCatalogState,
+  useWatchCatalog,
+  currentCatalog,
+  retryCatalog,
+} from './store/useCatalog'
