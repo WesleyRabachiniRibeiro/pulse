@@ -19,6 +19,7 @@ import { JsonPreferencesStore } from './infra/preferences/JsonPreferencesStore'
 import { JsonEditorSettingsStore } from './infra/editor/JsonEditorSettingsStore'
 import { NodePinSealer } from './infra/parental/NodePinSealer'
 import { PreferencesParentalStore } from './infra/parental/PreferencesParentalStore'
+import { RegistryWindowsTweaks } from './infra/windows/RegistryWindowsTweaks'
 import { ElectronUpdateChecker } from './infra/updates/ElectronUpdateChecker'
 import { ElectronNotificationPresenter, nameAppForWindows } from './infra/electron/ElectronNotificationPresenter'
 
@@ -100,7 +101,10 @@ export function composeMain(): MainComponents {
   const readGitConfig = new ReadGitConfig(toolchain)
   registerPreferences(preferencesService, readGitConfig)
 
-  const systemService = new SystemService(new WindowsPowerController(processRunner))
+  const systemService = new SystemService(
+    new WindowsPowerController(processRunner),
+    new RegistryWindowsTweaks(processRunner, powershellRunner),
+  )
   registerSystem(systemService)
 
   const updateService = new UpdateService(new ElectronUpdateChecker(), () => {

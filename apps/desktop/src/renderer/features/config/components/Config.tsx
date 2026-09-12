@@ -1,12 +1,12 @@
 import { ParentalSection } from '@/features/parental'
+import { WindowsSection } from './WindowsSection'
 import s from './Config.module.css'
 
 interface Props {
   onBack: () => void
 }
 
-// A casca das configurações. Por enquanto hospeda só o controle dos pais; o
-// perfil e a portabilidade entram aqui depois.
+// A casca das configurações. O perfil e a portabilidade entram aqui depois.
 export function Config({ onBack }: Props) {
   return (
     <div className={s.screen}>
@@ -18,6 +18,7 @@ export function Config({ onBack }: Props) {
       </header>
 
       <div className={s.body}>
+        <WindowsSection />
         <ParentalSection />
       </div>
     </div>

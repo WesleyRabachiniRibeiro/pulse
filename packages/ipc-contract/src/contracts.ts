@@ -11,6 +11,8 @@ import {
   preferencesSchema,
   gitSchema,
   updateStateSchema,
+  tweakInputSchema,
+  tweakStateSchema,
 } from '@pulse/domain'
 
 // O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
@@ -98,6 +100,14 @@ export const ipcContracts = {
   'parental:setBlocked': {
     input: z.object({ ids: z.array(z.string()) }),
     output: parentalViewSchema,
+  },
+  'system:tweaks': {
+    input: z.void(),
+    output: z.array(tweakStateSchema),
+  },
+  'system:setTweak': {
+    input: tweakInputSchema,
+    output: z.array(tweakStateSchema),
   },
   'prefs:read': {
     input: z.void(),
