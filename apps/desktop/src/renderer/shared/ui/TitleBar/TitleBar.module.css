@@ -23,7 +23,7 @@
 }
 
 .identity:hover .name {
-  color: #fff;
+  color: var(--tx-on);
 }
 
 .brand {
@@ -75,5 +75,5 @@
 
 .close:hover {
   background: #c2354a;
-  color: #fff;
+  color: var(--tx-on);
 }

@@ -3,7 +3,6 @@ import { formatMb, SECONDS_UNTIL_RESTART, type Run } from '@pulse/domain'
 import { anyNeedsRestart, driveLabel, elapsedSeconds, groupSummary, tally } from '@pulse/utils'
 import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
-import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { ClampedText } from '@/shared/ui/ClampedText/ClampedText'
 import { useRun } from '@/features/installation'
 import s from './Summary.module.css'
@@ -11,6 +10,7 @@ import s from './Summary.module.css'
 interface Props {
   onChooseMore: () => void
   onSeeInstallation: () => void
+  onGoToManage: () => void
 }
 
 function plural(n: number, one: string, many: string): string {
@@ -31,7 +31,7 @@ function duration(seconds: number): string {
   return `${Math.max(1, Math.round(seconds / 60))} min`
 }
 
-export function Summary({ onChooseMore, onSeeInstallation }: Props) {
+export function Summary({ onChooseMore, onSeeInstallation, onGoToManage }: Props) {
   const catalog = useCatalog()
   const run = useRun()
   const [restarting, setRestarting] = useState(false)
@@ -47,7 +47,7 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
   if (!run) {
     return (
       <div className={s.screen}>
-        <div className={s.eyebrow}>RESUMO</div>
+        <div className={s.step}>PASSO 04</div>
         <h2 className={s.headline}>Ainda não há o que resumir.</h2>
         <p className={s.subtitle}>
           Escolha os programas e instale: o resultado de cada um aparece aqui no fim.
@@ -88,7 +88,7 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
 
   return (
     <div className={s.screen}>
-      <div className={s.eyebrow}>RESUMO</div>
+      <div className={s.step}>PASSO 04</div>
       <h2 className={s.headline}>{headline(run)}</h2>
       <p className={s.subtitle}>
         {done > 0
@@ -96,38 +96,23 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
           : `Nenhum programa entrou no disco ${run.drive}.`}
       </p>
 
-      <dl className={s.score}>
-        <div className={s.scoreItem}>
-          <dt>programas prontos</dt>
-          <dd>
-            {done} de {run.items.length}
-          </dd>
+      {byDrive.length > 1 && (
+        <div className={s.split}>
+          {byDrive.map(([drive, mb]) => (
+            <span key={drive}>
+              disco {drive}: {formatMb(mb)}
+            </span>
+          ))}
         </div>
-        <div className={s.scoreItem}>
-          <dt>tempo total</dt>
-          <dd>{duration(elapsedSeconds(run))}</dd>
-        </div>
-        <div className={s.scoreItem}>
-          <dt>baixado</dt>
-          <dd>{formatMb(installedMb)}</dd>
-        </div>
-        {byDrive.map(([drive, mb]) => (
-          <div key={drive} className={s.scoreItem}>
-            <dt>no disco {drive}</dt>
-            <dd>{formatMb(mb)}</dd>
-          </div>
-        ))}
-      </dl>
+      )}
 
       <div className={s.groups}>
         {groups.map((group) => (
-          <section key={group.kind} className={s.group} data-kind={group.kind}>
+          <section key={group.kind} className={s.group}>
             <header className={s.header}>
               <span className={s.dot} data-kind={group.kind} aria-hidden />
               <h3 className={s.title}>{group.title}</h3>
-              <span className={s.amount}>
-                {group.lines.length} {group.lines.length === 1 ? 'programa' : 'programas'}
-              </span>
+              <span className={s.amount}>{group.lines.length}</span>
             </header>
 
             {group.kind === 'attention' && (
@@ -142,40 +127,35 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
               </p>
             )}
 
-            <div className={s.rows}>
+            <div className={s.card}>
               {group.lines.map((line) => {
                 const program = catalog.byId.get(line.id)
                 const name = program?.name ?? line.id
+                const meta = [
+                  program ? formatMb(program.mb) : null,
+                  line.duration !== null ? `levou ${duration(line.duration)}` : null,
+                  line.drive === run.drive ? null : driveLabel(line.drive, run.drive),
+                ].filter(Boolean)
+
                 return (
                   <div key={line.id} className={s.row} data-kind={group.kind}>
-                    <div className={s.main}>
-                      <AppIcon id={line.id} name={name} size={32} />
+                    <div className={s.line}>
+                      <span className={s.name}>{name}</span>
+                      <span className={s.meta}>{meta.join(' · ')}</span>
+                    </div>
 
-                      <div className={s.identity}>
-                        <div className={s.rowName}>
-                          <span className={s.name}>{name}</span>
-                          {program && <span className={s.version}>{program.version}</span>}
-                          <span className={s.drive} data-general={line.drive === run.drive}>
-                            {driveLabel(line.drive, run.drive)}
-                          </span>
-                        </div>
+                    {line.note && <ClampedText text={line.note} className={s.note} />}
 
-                        <ClampedText text={line.note} className={s.note} />
+                    {(line.driveIgnored || line.extras.length > 0) && (
+                      <div className={s.extras}>
+                        {line.driveIgnored && (
+                          <span className={s.alert}>o instalador ignorou o disco escolhido</span>
+                        )}
+                        {line.extras.map((extra) => (
+                          <span key={extra}>{extra}</span>
+                        ))}
                       </div>
-                    </div>
-
-                    <div className={s.details}>
-                      {program && <span>{formatMb(program.mb)}</span>}
-                      {line.duration !== null && <span>levou {duration(line.duration)}</span>}
-                      {line.driveIgnored && (
-                        <span className={s.alert}>o instalador ignorou o disco escolhido</span>
-                      )}
-                      {line.extras.map((extra) => (
-                        <span key={extra} className={s.extra}>
-                          {extra}
-                        </span>
-                      ))}
-                    </div>
+                    )}
                   </div>
                 )
               })}
@@ -212,8 +192,12 @@ export function Summary({ onChooseMore, onSeeInstallation }: Props) {
         <button
           type="button"
           className={hasRestart ? s.secondary : s.primary}
-          onClick={onChooseMore}
+          onClick={onGoToManage}
         >
+          Ir para Gerenciamento
+        </button>
+
+        <button type="button" className={s.secondary} onClick={onChooseMore}>
           Instalar mais coisas
         </button>
 

@@ -34,7 +34,7 @@ export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Pr
   return (
     <div className={s.card} data-status={item.status}>
       <div className={s.row}>
-        <AppIcon id={item.id} name={name} size={32} />
+        <AppIcon id={item.id} name={name} size={29} />
 
         <div className={s.body}>
           <div className={s.header}>

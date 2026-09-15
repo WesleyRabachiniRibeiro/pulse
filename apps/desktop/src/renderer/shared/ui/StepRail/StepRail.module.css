@@ -44,6 +44,10 @@
   color: var(--grad-txt-a);
 }
 
+.label:not(:first-of-type) {
+  padding-top: 22px;
+}
+
 .label {
   font-family: var(--mono);
   font-size: 10px;
@@ -132,4 +136,50 @@
   font-family: var(--mono);
   font-size: 11px;
   color: var(--tx-5);
+}
+
+.place {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-md);
+  padding: 11px 10px;
+  color: var(--tx-5);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.place:not([data-current='true']):hover {
+  background: var(--bg-card);
+  color: var(--tx-2);
+}
+
+.place[data-current='true'] {
+  background: var(--bg-card);
+  color: var(--tx);
+}
+
+.placeIcon {
+  width: 20px;
+  flex: 0 0 20px;
+  color: var(--tx-6);
+}
+
+.place[data-current='true'] .placeIcon {
+  color: var(--grad-txt-a);
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tx-6);
+  margin-left: auto;
+}
+
+.place[data-current='true'] .badge {
+  color: var(--grad-txt-a);
 }

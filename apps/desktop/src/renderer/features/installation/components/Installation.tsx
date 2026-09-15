@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { clock, PARALLEL_LIMIT, type Run } from '@pulse/domain'
+import { clock, formatMb, PARALLEL_LIMIT, type Run } from '@pulse/domain'
 import {
   anyoneNeedingPermission,
   anyoneWaiting,
@@ -10,6 +10,7 @@ import {
   overallPercent,
   remainingMinutes,
   tally,
+  totalSizeMb,
 } from '@pulse/utils'
 import { useInstallation } from '../hooks/useInstallation'
 import { QueueItem } from './QueueItem'
@@ -69,6 +70,9 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
   const percent = overallPercent(catalog, run.items)
   const { total, done, failed } = tally(run.items)
   const active = run.items.filter(isActive).length
+  const totalMb = totalSizeMb(catalog, run.items.map((i) => i.id))
+  const doneMb = totalSizeMb(catalog, run.items.filter((i) => i.status === 'done').map((i) => i.id))
+  const rest = remainingMinutes(catalog, run.items)
 
   const groups = [
     {
@@ -90,7 +94,7 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
         <div className={s.numbers}>
           <div className={s.pct}>{percent}%</div>
           <div className={s.count}>
-            {done} de {total} programas
+            {formatMb(doneMb)} de {formatMb(totalMb)}
           </div>
         </div>
 
@@ -153,8 +157,10 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
 
         <aside className={s.panel}>
           <div className={s.panelCard}>
-            <div className={s.panelLabel}>TEMPO DECORRIDO</div>
-            <div className={s.time}>{clock(elapsed)}</div>
+            <div className={s.panelLabel}>{running ? 'TEMPO RESTANTE' : 'TEMPO DECORRIDO'}</div>
+            <div className={s.time}>
+              {running ? (rest > 1 ? `~${rest} min` : 'menos de 1 min') : clock(elapsed)}
+            </div>
 
             <div className={s.divider} />
 
@@ -180,8 +186,8 @@ export function Installation({ onChooseMore, onSeeSummary }: Props) {
             </div>
             {running && (
               <div className={s.stat}>
-                <span>falta baixar</span>
-                <span className={s.statValue}>~{remainingMinutes(catalog, run.items)} min</span>
+                <span>decorrido</span>
+                <span className={s.statValue}>{clock(elapsed)}</span>
               </div>
             )}
           </div>
