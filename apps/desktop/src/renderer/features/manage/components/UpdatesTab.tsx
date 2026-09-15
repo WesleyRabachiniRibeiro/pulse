@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { useCatalog } from '@/features/catalog'
+import { bridge } from '@/shared/lib/bridge'
 import { useInventoryLoaded, useUpgrades } from '../store/useInventory'
 import shell from './tabs.module.css'
 
@@ -11,6 +13,16 @@ export function UpdatesTab({ onUpdate }: Props) {
   const catalog = useCatalog()
   const upgrades = useUpgrades()
   const loaded = useInventoryLoaded()
+  const [copied, setCopied] = useState<string | null>(null)
+
+  // Quem não está no catálogo o Pulse não atualiza, mas o comando resolve —
+  // e ele é comprido demais para alguém digitar de memória.
+  async function copyCommand(wingetId: string) {
+    await bridge
+      .invoke('system:copy', { text: `winget upgrade --id ${wingetId}` })
+      .catch(() => undefined)
+    setCopied(wingetId)
+  }
 
   if (!loaded) return <p className={shell.empty}>Perguntando ao winget quem tem versão nova…</p>
 
@@ -42,8 +54,17 @@ export function UpdatesTab({ onUpdate }: Props) {
               <span className={shell.fresh}>{one.available}</span>
             </span>
 
-            {program && (
-              <span className={shell.actions}>
+            <span className={shell.actions}>
+              <button
+                type="button"
+                className={shell.action}
+                onClick={() => void copyCommand(one.wingetId)}
+                title={`Copiar: winget upgrade --id ${one.wingetId}`}
+              >
+                {copied === one.wingetId ? 'COPIADO' : 'COPIAR COMANDO'}
+              </button>
+
+              {program && (
                 <button
                   type="button"
                   className={shell.action}
@@ -52,8 +73,8 @@ export function UpdatesTab({ onUpdate }: Props) {
                 >
                   ATUALIZAR
                 </button>
-              </span>
-            )}
+              )}
+            </span>
           </div>
         )
       })}

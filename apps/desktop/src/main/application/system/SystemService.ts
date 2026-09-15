@@ -1,5 +1,6 @@
 import type { TweakState } from '@pulse/domain'
 import type { PowerController } from '../../ports/power-controller'
+import type { ClipboardWriter } from '../../ports/clipboard-writer'
 import type { IconReader } from '../../ports/icon-reader'
 import type { WindowsSettings } from '../../ports/windows-settings'
 import type { WindowsTweaks } from '../../ports/windows-tweaks'
@@ -10,6 +11,7 @@ export class SystemService {
     private readonly tweaks: WindowsTweaks,
     private readonly settings: WindowsSettings,
     private readonly icons: IconReader,
+    private readonly clipboard: ClipboardWriter,
   ) {}
 
   restart(): Promise<void> {
@@ -22,6 +24,10 @@ export class SystemService {
 
   openFamilySettings(): Promise<void> {
     return this.settings.openFamily()
+  }
+
+  copy(text: string): void {
+    this.clipboard.writeText(text)
   }
 
   readIcon(path: string): Promise<string | null> {
