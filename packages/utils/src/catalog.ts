@@ -2,6 +2,7 @@ import type { Bundle, Category, Program } from '@pulse/catalog-data'
 import {
   CATALOG_VERSION,
   catalogPayloadSchema,
+  MINE_CATEGORY,
   normalizeText,
   type Catalog,
   catalogOf,
@@ -182,5 +183,11 @@ export function withExtras(base: Catalog, extras: readonly Program[]): Catalog {
   const mine = extras.filter((program) => !known.has(program.id))
   if (mine.length === 0) return base
 
-  return catalogOf([...base.programs, ...mine], base.categories, base.bundles)
+  // Sem a categoria, quem foi adotado sumiria de toda tela que agrupa por
+  // categoria, porque elas percorrem a lista de categorias e não a de programas.
+  const categories = mine.some((program) => program.category === MINE_CATEGORY.id)
+    ? [...base.categories, MINE_CATEGORY]
+    : base.categories
+
+  return catalogOf([...base.programs, ...mine], categories, base.bundles)
 }

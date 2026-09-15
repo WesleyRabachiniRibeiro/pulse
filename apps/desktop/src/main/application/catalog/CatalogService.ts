@@ -1,4 +1,13 @@
-import { type CatalogState, type PackageVersion, type InstalledTree, type Program, type StartupEntry, type Upgrade } from '@pulse/domain'
+import {
+  MINE_CATEGORY,
+  normalizeText,
+  type CatalogState,
+  type PackageVersion,
+  type InstalledTree,
+  type Program,
+  type StartupEntry,
+  type Upgrade,
+} from '@pulse/domain'
 import { buildInstalled, compareVersions, readCatalogPayload } from '@pulse/utils'
 import type { ProcessRunner } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
@@ -8,7 +17,27 @@ import type { RegistryReader } from '../../ports/registry-reader'
 import type { CatalogCache } from '../../ports/catalog-cache'
 import type { CatalogExtras } from '../../ports/catalog-extras'
 import type { RemoteFetch } from '../../ports/remote-fetch'
+import type { PackageFinder } from '../../ports/package-finder'
 import type { LiveCatalog } from './LiveCatalog'
+
+export interface AdoptInput {
+  name: string
+  version?: string
+  icon?: string
+}
+
+export type AdoptResult =
+  | { status: 'added'; id: string }
+  | { status: 'exists'; id: string }
+  | { status: 'not-found' }
+  | { status: 'failed' }
+
+// O id do catálogo sai do id do winget, minúsculo e sem os pontos: 'Valve.Steam'
+// vira 'valve-steam'. Assim dois PCs que adotam o mesmo programa chegam ao
+// mesmo id, e o perfil de um funciona no outro.
+function idFor(winget: string): string {
+  return winget.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
 
 function safeJson(text: string): unknown {
   try {
@@ -30,6 +59,7 @@ export class CatalogService {
     private readonly remote: RemoteFetch,
     private readonly sourceUrl: string,
     private readonly extras: CatalogExtras,
+    private readonly finder: PackageFinder,
   ) {}
 
   private state: CatalogState = { source: 'seed', checkedAt: null, loading: false }
@@ -90,6 +120,36 @@ export class CatalogService {
     this.catalog.setExtras(next)
     this.announce({ ...this.state })
     return true
+  }
+
+  // Adotar é o caminho de quem vê um programa do PC fora do catálogo: o nome
+  // vai ao winget, e só entra o que ele souber instalar. Sem isso o programa
+  // ficaria no catálogo sem como ser instalado em outra máquina.
+  async adoptProgram(input: AdoptInput): Promise<AdoptResult> {
+    const found = await this.finder.search(input.name)
+    if (!found) return { status: 'not-found' }
+
+    // A comparação é pelo id do winget, não pelo id derivado: o Steam publicado
+    // se chama 'steam' e o derivado seria 'valve-steam', então comparar ids
+    // deixaria passar um segundo Steam competindo com o do catálogo.
+    const already = this.catalog.programs.find((one) => one.winget === found.winget)
+    if (already) return { status: 'exists', id: already.id }
+
+    const id = idFor(found.winget)
+
+    const program: Program = {
+      id,
+      name: found.name,
+      winget: found.winget,
+      version: input.version ?? found.version,
+      mb: 0,
+      category: MINE_CATEGORY.id,
+      hints: [normalizeText(found.name)],
+      ...(input.icon ? { icon: input.icon } : {}),
+    }
+
+    const ok = await this.addProgram(program)
+    return ok ? { status: 'added', id } : { status: 'failed' }
   }
 
   async removeProgram(id: string): Promise<void> {

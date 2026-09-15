@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { withExtras, filterCatalog, installedIds, bundleIsActive, totalSizeMb, compareVersions } from './catalog'
+import {
+  withExtras,
+  filterCatalog,
+  groupByCategory,
+  installedIds,
+  bundleIsActive,
+  totalSizeMb,
+  compareVersions,
+} from './catalog'
 import { BUNDLES } from '@pulse/catalog-data'
 import { SEED_CATALOG, type Program } from '@pulse/domain'
 import type { PackageVersion } from '@pulse/domain'
@@ -99,5 +107,24 @@ describe('meus programas', () => {
 
   it('sem nada adicionado, o catálogo é o mesmo objeto', () => {
     expect(withExtras(SEED_CATALOG, [])).toBe(SEED_CATALOG)
+  })
+
+  // As telas percorrem as categorias, não os programas. Sem a categoria, o
+  // adotado entraria no catálogo e mesmo assim não apareceria em lugar nenhum.
+  it('adotado ganha a categoria MEUS PROGRAMAS, e ela aparece agrupada', () => {
+    const adotado: Program = { ...meu, category: 'mine' }
+    const found = withExtras(SEED_CATALOG, [adotado])
+
+    expect(found.categories.map((c) => c.id)).toContain('mine')
+
+    const groups = groupByCategory(found, found.programs)
+    const mine = groups.find((g) => g.category.id === 'mine')
+    expect(mine?.programs.map((p) => p.id)).toEqual(['meu-app'])
+  })
+
+  it('adotado em categoria publicada não inventa categoria nova', () => {
+    const found = withExtras(SEED_CATALOG, [meu])
+    expect(found.categories.map((c) => c.id)).not.toContain('mine')
+    expect(found.categories).toEqual(SEED_CATALOG.categories)
   })
 })

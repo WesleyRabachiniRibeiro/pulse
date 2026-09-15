@@ -16,9 +16,7 @@ function wire(programs: readonly Program[]): IpcOutput<'catalog:mine'> {
 export function registerCatalog(catalogService: CatalogService, catalog: LiveCatalog): void {
   register('catalog:state', () => catalogService.currentState())
   register('catalog:mine', () => wire(catalogService.myPrograms()))
-  register('catalog:add', async (input) => ({
-    ok: await catalogService.addProgram(input as unknown as Program),
-  }))
+  register('catalog:add', (input) => catalogService.adoptProgram(input))
   register('catalog:remove', async (input) => {
     await catalogService.removeProgram(input.id)
     return wire(catalogService.myPrograms())

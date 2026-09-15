@@ -60,6 +60,7 @@ function make(
     remote,
     'https://example.test/catalog.json',
     { read: async () => over.extras ?? [], write: async () => {} },
+    { search: async () => null },
   )
 
   service.subscribe((state) => states.push(state))
