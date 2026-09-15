@@ -1,5 +1,6 @@
 import { BrowserWindow, dialog } from 'electron'
 import { writeFile, readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import type {
   FileDialog,
   OpenedFile,
@@ -10,7 +11,9 @@ import type {
 export class ElectronFileDialog implements FileDialog {
   async save(request: SaveRequest): Promise<{ outcome: SaveOutcome; path?: string }> {
     const { canceled, filePath } = await dialog.showSaveDialog(this.parent(), {
-      defaultPath: `${request.suggestedName}.${request.extension}`,
+      defaultPath: request.startIn
+        ? join(request.startIn, `${request.suggestedName}.${request.extension}`)
+        : `${request.suggestedName}.${request.extension}`,
       filters: [{ name: request.filterName, extensions: [request.extension] }],
     })
 
@@ -24,10 +27,15 @@ export class ElectronFileDialog implements FileDialog {
     }
   }
 
-  async openText(filterName: string, extensions: readonly string[]): Promise<OpenedFile | null> {
+  async openText(
+    filterName: string,
+    extensions: readonly string[],
+    startIn?: string,
+  ): Promise<OpenedFile | null> {
     const { canceled, filePaths } = await dialog.showOpenDialog(this.parent(), {
       properties: ['openFile'],
       filters: [{ name: filterName, extensions: [...extensions] }],
+      ...(startIn ? { defaultPath: startIn } : {}),
     })
 
     const path = filePaths[0]
@@ -35,6 +43,14 @@ export class ElectronFileDialog implements FileDialog {
 
     const contents = await readFile(path, 'utf8').catch(() => null)
     return contents === null ? null : { path, contents }
+  }
+
+  async pickFolder(): Promise<string | null> {
+    const { canceled, filePaths } = await dialog.showOpenDialog(this.parent(), {
+      properties: ['openDirectory', 'createDirectory'],
+    })
+
+    return canceled ? null : (filePaths[0] ?? null)
   }
 
   // Sem janela pai o diálogo abre solto e some atrás do app.

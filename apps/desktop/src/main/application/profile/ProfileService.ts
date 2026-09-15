@@ -8,6 +8,7 @@ import {
 } from '@pulse/domain'
 import { cleanProfile, fileFor, missingFrom, profileOf } from '@pulse/utils'
 import type { FileDialog } from '../../ports/file-dialog'
+import type { SyncFolder, SyncFolders } from '../../ports/sync-folders'
 import type { RemoteFetch } from '../../ports/remote-fetch'
 
 export interface ExportResult {
@@ -27,22 +28,38 @@ export class ProfileService {
     private readonly catalog: Catalog,
     private readonly dialog: FileDialog,
     private readonly remote: RemoteFetch,
+    private readonly folders: SyncFolders,
+    private readonly startIn: () => Promise<string | undefined>,
   ) {}
+
+  listFolders(): Promise<readonly SyncFolder[]> {
+    return this.folders.list()
+  }
+
+  pickFolder(): Promise<string | null> {
+    return this.dialog.pickFolder()
+  }
 
   async export(format: ExportFormat, profile: Profile, drive?: string): Promise<ExportResult> {
     const file = FORMAT_FILE[format]
+    const folder = await this.startIn()
     const { outcome, path } = await this.dialog.save({
       suggestedName: this.suggestedName(format),
       filterName: file.name,
       extension: file.extension,
       contents: fileFor(this.catalog, format, profile, drive),
+      ...(folder ? { startIn: folder } : {}),
     })
 
     return outcome === 'saved' ? { status: 'saved', ...(path ? { path } : {}) } : { status: outcome }
   }
 
   async import(mode: ImportMode, current: Profile): Promise<ImportResult> {
-    const opened = await this.dialog.openText(FORMAT_FILE.pulse.name, ['json'])
+    const opened = await this.dialog.openText(
+      FORMAT_FILE.pulse.name,
+      ['json'],
+      await this.startIn(),
+    )
     if (!opened) return { status: 'canceled' }
 
     return this.adopt(opened.contents, mode, current)

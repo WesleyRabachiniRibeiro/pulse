@@ -7,4 +7,6 @@ export function registerProfile(service: ProfileService): void {
   register('profile:importLink', (input) =>
     service.importLink(input.url, input.mode, input.current),
   )
+  register('profile:folders', async () => [...(await service.listFolders())])
+  register('profile:pickFolder', () => service.pickFolder())
 }

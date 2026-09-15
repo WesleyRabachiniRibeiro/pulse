@@ -7,6 +7,7 @@ export const preferencesSchema = z.object({
   tourSeen: z.boolean().optional(),
   parental: parentalSchema.optional(),
   defaults: defaultsSchema.optional(),
+  profileFolder: z.string().optional(),
 })
 export type Preferences = z.infer<typeof preferencesSchema>
 

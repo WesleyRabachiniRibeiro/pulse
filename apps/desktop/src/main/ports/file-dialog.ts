@@ -3,6 +3,9 @@ export interface SaveRequest {
   filterName: string
   extension: string
   contents: string
+  // Onde a janela abre. Sem isso ela começa na última pasta do Windows, que
+  // não é a que a pessoa escolheu para guardar os perfis.
+  startIn?: string
 }
 
 export type SaveOutcome = 'saved' | 'canceled' | 'failed'
@@ -16,5 +19,10 @@ export interface OpenedFile {
 // para ler um que a pessoa escolheu.
 export interface FileDialog {
   save(request: SaveRequest): Promise<{ outcome: SaveOutcome; path?: string }>
-  openText(filterName: string, extensions: readonly string[]): Promise<OpenedFile | null>
+  openText(
+    filterName: string,
+    extensions: readonly string[],
+    startIn?: string,
+  ): Promise<OpenedFile | null>
+  pickFolder(): Promise<string | null>
 }

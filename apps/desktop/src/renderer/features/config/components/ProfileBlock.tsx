@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LuLink } from 'react-icons/lu'
 import {
   EXPORT_FORMATS,
@@ -10,6 +10,7 @@ import {
 import { totalSizeMb } from '@pulse/utils'
 import { applyProfile, selectionAsProfile, useSelection } from '@/features/selection'
 import { useCatalog } from '@/features/catalog'
+import { savePreference, usePreferences } from '@/features/preferences'
 import { bridge } from '@/shared/lib/bridge'
 import s from './ProfileBlock.module.css'
 
@@ -39,6 +40,7 @@ interface Answer {
 
 export function ProfileBlock() {
   const catalog = useCatalog()
+  const prefs = usePreferences()
   const selected = useSelection((st) => st.selected)
   const settings = useSelection((st) => st.settings)
 
@@ -49,6 +51,25 @@ export function ProfileBlock() {
   const [link, setLink] = useState('')
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
+  const [folders, setFolders] = useState<readonly { path: string; label: string }[]>([])
+
+  useEffect(() => {
+    let alive = true
+    void bridge
+      .invoke('profile:folders', undefined)
+      .then((found) => {
+        if (alive) setFolders(found)
+      })
+      .catch(() => undefined)
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  async function chooseFolder() {
+    const chosen = await bridge.invoke('profile:pickFolder', undefined).catch(() => null)
+    if (chosen) void savePreference({ profileFolder: chosen })
+  }
 
   const many = selected.size
   const exceptions = Object.keys(settings).length
@@ -262,6 +283,55 @@ export function ProfileBlock() {
               onClick={() => begin('link')}
             >
               Importar
+            </button>
+          </div>
+        </div>
+
+        <div className={s.card}>
+          <div className={s.cardName}>Pasta sincronizada</div>
+          <div className={s.hint}>
+            {prefs.profileFolder
+              ? `Salvar e abrir começam em ${prefs.profileFolder}.`
+              : 'Sem pasta escolhida, a janela abre onde o Windows parou da última vez.'}
+          </div>
+
+          <div className={s.picks}>
+            <button
+              type="button"
+              className={s.pick}
+              aria-pressed={!prefs.profileFolder}
+              onClick={() => void savePreference({ profileFolder: undefined })}
+            >
+              <span className={s.dot} aria-hidden />
+              <span className={s.pickTexts}>
+                <span className={s.pickName}>Nenhuma</span>
+                <span className={s.pickHint}>só salvar quando eu pedir</span>
+              </span>
+            </button>
+
+            {folders.map((one) => (
+              <button
+                key={one.path}
+                type="button"
+                className={s.pick}
+                aria-pressed={prefs.profileFolder === one.path}
+                onClick={() => void savePreference({ profileFolder: one.path })}
+                title={one.path}
+              >
+                <span className={s.dot} aria-hidden />
+                <span className={s.pickTexts}>
+                  <span className={s.pickName}>{one.label}</span>
+                  <span className={s.pickHint}>detectado neste PC</span>
+                </span>
+              </button>
+            ))}
+
+            <button type="button" className={s.pick} onClick={() => void chooseFolder()}>
+              <span className={s.dot} aria-hidden />
+              <span className={s.pickTexts}>
+                <span className={s.pickName}>Pendrive ou outra pasta</span>
+                <span className={s.pickHint}>você escolhe na hora</span>
+              </span>
             </button>
           </div>
         </div>

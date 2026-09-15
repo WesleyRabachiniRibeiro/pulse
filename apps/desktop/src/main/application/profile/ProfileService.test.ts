@@ -11,7 +11,13 @@ const mine: Profile = {
   settings: {},
 }
 
-function make(over: { dialog?: Partial<FileDialog>; remote?: Partial<RemoteFetch> } = {}) {
+function make(
+  over: {
+    dialog?: Partial<FileDialog>
+    remote?: Partial<RemoteFetch>
+    folder?: string
+  } = {},
+) {
   const saved: SaveRequest[] = []
 
   const dialog: FileDialog = {
@@ -20,12 +26,17 @@ function make(over: { dialog?: Partial<FileDialog>; remote?: Partial<RemoteFetch
       return { outcome: 'saved', path: `C:\\${request.suggestedName}.${request.extension}` }
     },
     openText: async () => null,
+    pickFolder: async () => null,
     ...over.dialog,
   }
 
   const remote: RemoteFetch = { text: async () => null, ...over.remote }
 
-  return { saved, service: new ProfileService(SEED_CATALOG, dialog, remote) }
+  const service = new ProfileService(SEED_CATALOG, dialog, remote, { list: async () => [] }, async () =>
+    over.folder,
+  )
+
+  return { saved, service }
 }
 
 describe('exportar', () => {
@@ -123,5 +134,37 @@ describe('importar de link', () => {
 
     expect(result.status).toBe('imported')
     expect(result.count).toBe(2)
+  })
+})
+
+describe('pasta sincronizada', () => {
+  // Sem a pasta, a janela abre onde o Windows quiser; com ela, o perfil cai
+  // sempre no mesmo lugar sem a pessoa navegar.
+  it('a pasta escolhida vira o ponto de partida do salvar', async () => {
+    const { saved, service } = make({ folder: 'D:\Sync' })
+    await service.export('pulse', mine)
+    expect(saved[0]?.startIn).toBe('D:\Sync')
+  })
+
+  it('sem pasta escolhida, a janela não recebe ponto de partida', async () => {
+    const { saved, service } = make()
+    await service.export('pulse', mine)
+    expect(saved[0]?.startIn).toBeUndefined()
+  })
+
+  it('abrir também começa na pasta', async () => {
+    let seen: string | undefined = 'nao-perguntado'
+    const { service } = make({
+      folder: 'D:\Sync',
+      dialog: {
+        openText: async (_name, _ext, startIn) => {
+          seen = startIn
+          return null
+        },
+      },
+    })
+
+    await service.import('merge', mine)
+    expect(seen).toBe('D:\Sync')
   })
 })
