@@ -9,6 +9,7 @@ export type CategoryId =
   | 'creative'
   | 'security'
   | 'dev'
+  | 'runtimes'
   | 'mine'
 
 export interface Category {

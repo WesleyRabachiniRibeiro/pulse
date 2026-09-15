@@ -9,6 +9,7 @@ export const CATEGORIES: readonly Category[] = [
   { id: 'creative', name: 'CRIAÇÃO' },
   { id: 'security', name: 'SEGURANÇA' },
   { id: 'dev', name: 'DESENVOLVIMENTO' },
+  { id: 'runtimes', name: 'REQUISITOS' },
 ]
 
 // Esta é a semente: o que o app oferece antes de conseguir falar com a rede, e o
@@ -52,6 +53,7 @@ export const CATALOG: readonly Program[] = [
   { id: 'linkedin', name: 'LinkedIn', winget: '9WZDNCRFJ4Q7', source: 'msstore', version: 'da Store', mb: 24, category: 'media', hints: ['linkedin'] },
   { id: 'vlc', name: 'VLC', winget: 'VideoLAN.VLC', version: '3.0.23', mb: 42, category: 'media', hints: ['vlc media player', 'vlc'] },
   { id: 'signal', name: 'Signal', winget: 'OpenWhisperSystems.Signal', version: '8.26.0', mb: 190, category: 'media', hints: ['signal'] },
+  { id: 'whatsapp', name: 'WhatsApp', winget: '9NKSQGP7F2NH', source: 'msstore', version: '2.2', mb: 180, category: 'media', hints: ['whatsapp'] },
 
   { id: 'libreoffice', name: 'LibreOffice', winget: 'TheDocumentFoundation.LibreOffice', version: '26.8.0', mb: 380, category: 'office', hints: ['libreoffice'] },
   { id: 'zoom', name: 'Zoom', winget: 'Zoom.Zoom', version: '7.1.46825', mb: 60, category: 'office', hints: ['zoom'] },
@@ -66,6 +68,7 @@ export const CATALOG: readonly Program[] = [
   { id: 'qbittorrent', name: 'qBittorrent', winget: 'qBittorrent.qBittorrent', version: '5.2.3', mb: 40, category: 'utilities', hints: ['qbittorrent'] },
   { id: 'winrar', name: 'WinRAR', winget: 'RARLab.WinRAR', version: '7.23', mb: 12, category: 'utilities', hints: ['winrar'] },
   { id: 'protonvpn', name: 'Proton VPN', winget: 'Proton.ProtonVPN', version: '5.1.8', mb: 381, category: 'utilities', hints: ['proton vpn'] },
+  { id: 'afterburner', name: 'MSI Afterburner', winget: 'Guru3D.Afterburner', version: '4.6.6', mb: 55, category: 'utilities', hints: ['msi afterburner'] },
 
   { id: 'gimp', name: 'GIMP', winget: 'GIMP.GIMP', version: '3.2.4', mb: 320, category: 'creative', hints: ['gimp'] },
   { id: 'inkscape', name: 'Inkscape', winget: 'Inkscape.Inkscape', version: '1.4.4', mb: 300, category: 'creative', hints: ['inkscape'] },
@@ -117,6 +120,8 @@ export const CATALOG: readonly Program[] = [
   { id: 'awscli', name: 'AWS CLI', winget: 'Amazon.AWSCLI', version: '2.36.40', mb: 90, category: 'dev', hints: ['aws command line interface'] },
   { id: 'azurecli', name: 'Azure CLI', winget: 'Microsoft.AzureCLI', version: '2.90.0', mb: 130, category: 'dev', hints: ['microsoft azure cli'] },
   { id: 'wsl', name: 'WSL', winget: 'Microsoft.WSL', version: '2.7.13', mb: 130, category: 'dev', hints: ['windows subsystem for linux'] },
+
+  { id: 'vcredist', name: 'Visual C++ Redistributable', winget: 'Microsoft.VCRedist.2015+.x64', version: '14.51.36247.0', mb: 14, category: 'runtimes', hints: ['visual c++ redistributable'], family: { prefix: 'Microsoft.VCRedist', pattern: '^Microsoft\\.VCRedist\\.[0-9+]+\\.(x64|x86|arm64)$' } },
 ]
 
 export const PROGRAM_BY_ID: ReadonlyMap<string, Program> = new Map(CATALOG.map((p) => [p.id, p]))
@@ -136,7 +141,7 @@ export const BUNDLES: readonly Bundle[] = [
   },
   {
     name: 'Tudo',
-    ids: ['chrome', 'firefox', 'brave', 'operagx', 'steam', 'epic', 'minecraft', 'riot', 'battlenet', 'roblox', 'gog', 'hytale', 'eaapp', 'ubisoft', 'tibia', 'radminvpn', 'discord', 'spotify', 'telegram', 'teamspeak', 'teams', 'stremio', 'obs', 'acrobat', 'adobecc', 'linkedin', 'vscode', 'intellij', 'gitbash', 'jdk', 'claude', 'claudecode', 'docker', 'node', 'python', 'vs', 'vim', 'codex', 'go', 'postman', 'insomnia', 'blender', 'libreoffice', 'zoom', 'thunderbird', 'anki', 'notion', 'vlc', 'signal', 'sevenzip', 'sharex', 'qbittorrent', 'gimp', 'inkscape', 'krita', 'figma', 'audacity', 'bitwarden', 'malwarebytes', 'wireshark', 'rockstar', 'itch', 'corsair', 'pycharm', 'webstorm', 'rider', 'androidstudio', 'sublimetext', 'neovim', 'notepadpp', 'cursor', 'zed', 'dotnet', 'rust', 'postgresql', 'mysql', 'mongodb', 'dbeaver', 'redisinsight', 'terraform', 'kubectl', 'edge', 'office', 'slack', 'winrar', 'protonvpn', 'amazongames', 'logitechghub', 'putty', 'powershell', 'ohmyposh', 'awscli', 'azurecli', 'wsl'],
+    ids: ['chrome', 'firefox', 'brave', 'operagx', 'steam', 'epic', 'minecraft', 'riot', 'battlenet', 'roblox', 'gog', 'hytale', 'eaapp', 'ubisoft', 'tibia', 'radminvpn', 'discord', 'spotify', 'telegram', 'teamspeak', 'teams', 'stremio', 'obs', 'acrobat', 'adobecc', 'linkedin', 'vscode', 'intellij', 'gitbash', 'jdk', 'claude', 'claudecode', 'docker', 'node', 'python', 'vs', 'vim', 'codex', 'go', 'postman', 'insomnia', 'blender', 'libreoffice', 'zoom', 'thunderbird', 'anki', 'notion', 'vlc', 'signal', 'sevenzip', 'sharex', 'qbittorrent', 'gimp', 'inkscape', 'krita', 'figma', 'audacity', 'bitwarden', 'malwarebytes', 'wireshark', 'rockstar', 'itch', 'corsair', 'pycharm', 'webstorm', 'rider', 'androidstudio', 'sublimetext', 'neovim', 'notepadpp', 'cursor', 'zed', 'dotnet', 'rust', 'postgresql', 'mysql', 'mongodb', 'dbeaver', 'redisinsight', 'terraform', 'kubectl', 'edge', 'office', 'slack', 'winrar', 'protonvpn', 'amazongames', 'logitechghub', 'putty', 'powershell', 'ohmyposh', 'awscli', 'azurecli', 'wsl', 'whatsapp', 'afterburner', 'vcredist'],
   },
   { name: 'Tudo', ids: CATALOG.map((p) => p.id) },
 ]

@@ -32,6 +32,10 @@
     {
       "id": "dev",
       "name": "DESENVOLVIMENTO"
+    },
+    {
+      "id": "runtimes",
+      "name": "REQUISITOS"
     }
   ],
   "programs": [
@@ -1119,6 +1123,44 @@
       "hints": [
         "windows subsystem for linux"
       ]
+    },
+    {
+      "id": "whatsapp",
+      "name": "WhatsApp",
+      "winget": "9NKSQGP7F2NH",
+      "source": "msstore",
+      "version": "2.2",
+      "mb": 180,
+      "category": "media",
+      "hints": [
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "afterburner",
+      "name": "MSI Afterburner",
+      "winget": "Guru3D.Afterburner",
+      "version": "4.6.6",
+      "mb": 55,
+      "category": "utilities",
+      "hints": [
+        "msi afterburner"
+      ]
+    },
+    {
+      "id": "vcredist",
+      "name": "Visual C++ Redistributable",
+      "winget": "Microsoft.VCRedist.2015+.x64",
+      "version": "14.51.36247.0",
+      "mb": 14,
+      "category": "runtimes",
+      "hints": [
+        "visual c++ redistributable"
+      ],
+      "family": {
+        "prefix": "Microsoft.VCRedist",
+        "pattern": "^Microsoft\\.VCRedist\\.[0-9+]+\\.(x64|x86|arm64)$"
+      }
     }
   ],
   "bundles": [
@@ -1254,7 +1296,10 @@
         "ohmyposh",
         "awscli",
         "azurecli",
-        "wsl"
+        "wsl",
+        "whatsapp",
+        "afterburner",
+        "vcredist"
       ]
     }
   ]
