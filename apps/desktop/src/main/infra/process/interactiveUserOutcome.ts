@@ -1,3 +1,7 @@
+// Com o UAC desligado não existe sessão sem elevação para onde descer, e é
+// esse o caso que vale tentar de outro jeito em vez de desistir.
+export const NO_UNELEVATED_SESSION = -1006
+
 const CREATE_PROCESS_BASE = -2000
 const CREATE_PROCESS_FLOOR = CREATE_PROCESS_BASE - 0xffff
 
@@ -7,7 +11,7 @@ export function runnerFailure(code: number): string | null {
   if (code === -1007) {
     return 'o comando passou do tempo e não terminou'
   }
-  if (code === -1006) {
+  if (code === NO_UNELEVATED_SESSION) {
     return 'o Controle de Conta de Usuário está desligado neste Windows, e sem ele todo processo da sua conta roda como administrador'
   }
   if (code === -1001 || code === -1002) {

@@ -18,7 +18,7 @@ import {
   wingetErrorMessage,
 } from './WingetErrorClassifier'
 import { adminFailure, REFUSED_BY_USER } from '../process/adminOutcome'
-import { runnerFailure } from '../process/interactiveUserOutcome'
+import { NO_UNELEVATED_SESSION, runnerFailure } from '../process/interactiveUserOutcome'
 import { normalizeText } from '@pulse/domain'
 
 const NOT_MANAGED_TEXT = ['nenhum pacote instalado', 'no installed package']
@@ -83,11 +83,19 @@ export class WingetPackageInstaller implements PackageInstaller {
       '--disable-interactivity',
     ]
 
+    const direct = (): Promise<SpawnResult> =>
+      this.processRunner.runWinget(`uninstall:${itemId}`, args, () => {})
+
     // Elevado, o winget recusa desinstalar pacote de escopo de usuário. Como o
     // Pulse roda como administrador, a remoção sai pela sessão da pessoa.
-    const output: SpawnResult = (await this.processRunner.isElevated())
+    let output: SpawnResult = (await this.processRunner.isElevated())
       ? await this.processRunner.runAsInteractiveUser('winget', args)
-      : await this.processRunner.runWinget(`uninstall:${itemId}`, args, () => {})
+      : await direct()
+
+    // Quem desliga o UAC não tem sessão sem elevação, então a descida acima é
+    // impossível nessa máquina. Tentar direto ao menos deixa o winget dizer o
+    // que acontece, em vez de o Pulse recusar sozinho.
+    if (output.code === NO_UNELEVATED_SESSION) output = await direct()
 
     const blocked = runnerFailure(output.code)
     if (blocked) return { kind: 'blocked', reason: blocked }
