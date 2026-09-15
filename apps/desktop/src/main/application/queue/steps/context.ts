@@ -6,6 +6,7 @@ import type { DesktopShortcut } from '../../../ports/desktop-shortcut'
 import type { SteamGameRequester } from '../../../ports/steam-game-requester'
 import type { EditorSettingsStore } from '../../../ports/editor-settings-store'
 import type { Toolchain } from '../../../ports/toolchain'
+import type { SshKeys } from '../../../ports/ssh-keys'
 
 export type StepResult = Partial<NonNullable<Item['result']>>
 
@@ -17,6 +18,7 @@ export interface StepPorts {
   steamGameRequester: SteamGameRequester
   editorSettingsStore: EditorSettingsStore
   toolchain: Toolchain
+  sshKeys: SshKeys
 }
 
 export interface StepContext {

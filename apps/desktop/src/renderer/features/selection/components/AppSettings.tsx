@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_GIT,
+  LINE_ENDINGS,
   formatMb,
   listValue,
   stepForKind,
@@ -270,7 +271,57 @@ export function AppSettings({
               </label>
             </div>
 
+            <div className={s.label}>FIM DE LINHA</div>
+            <p className={s.description}>
+              Windows e Linux marcam o fim da linha de jeitos diferentes, e é isso que faz um
+              arquivo aparecer inteiro modificado num diff sem ninguém ter tocado nele.
+            </p>
+
+            <div className={s.drives}>
+              {LINE_ENDINGS.map((choice) => (
+                <button
+                  key={choice.id}
+                  type="button"
+                  className={s.drive}
+                  aria-pressed={git.lineEnding === choice.id}
+                  onClick={() =>
+                    patchSteps({
+                      gitConfig: {
+                        ...git,
+                        lineEnding: git.lineEnding === choice.id ? undefined : choice.id,
+                      },
+                    })
+                  }
+                >
+                  <span className={s.driveName}>{choice.name}</span>
+                  <span className={s.driveNote}>{choice.hint}</span>
+                </button>
+              ))}
+            </div>
+
             <div className={s.options}>
+              <CheckOption
+                checked={git.pullRebase === true}
+                name="Puxar com rebase, não com merge"
+                hint="evita o commit de merge que aparece sozinho toda vez que você dá git pull"
+                category="PULL"
+                onToggle={() =>
+                  patchSteps({
+                    gitConfig: { ...git, pullRebase: git.pullRebase ? undefined : true },
+                  })
+                }
+              />
+
+              <CheckOption
+                checked={git.sshKey === true}
+                name="Criar uma chave SSH, se você ainda não tiver"
+                hint="ed25519 em ~/.ssh — se já existir uma, o Pulse não encosta nela"
+                category="SSH"
+                onToggle={() =>
+                  patchSteps({ gitConfig: { ...git, sshKey: git.sshKey ? undefined : true } })
+                }
+              />
+
               <CheckOption
                 checked={git.saveLogin === true}
                 name="Guardar o login do GitHub"

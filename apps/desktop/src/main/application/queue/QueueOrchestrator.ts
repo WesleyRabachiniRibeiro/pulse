@@ -25,6 +25,7 @@ import type { QueueRepository } from '../../ports/queue-repository'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
 import type { EditorSettingsStore } from '../../ports/editor-settings-store'
 import type { Toolchain } from '../../ports/toolchain'
+import type { SshKeys } from '../../ports/ssh-keys'
 import type {
   InstallProgress,
   InstallSpec,
@@ -93,6 +94,7 @@ export class QueueOrchestrator {
     private readonly clipboard: ClipboardWriter,
     private readonly editorSettingsStore: EditorSettingsStore,
     private readonly toolchain: Toolchain,
+    private readonly sshKeys: SshKeys,
   ) {}
 
   subscribe(listener: Listener): () => void {
@@ -375,6 +377,7 @@ export class QueueOrchestrator {
         steamGameRequester: this.steamGameRequester,
         editorSettingsStore: this.editorSettingsStore,
         toolchain: this.toolchain,
+        sshKeys: this.sshKeys,
       },
       say: (detail) => {
         target.status = 'configuring'

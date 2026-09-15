@@ -96,6 +96,7 @@ function makeOrchestrator(
     fakeClipboard(),
     { apply: async () => 'written' },
     { locate: async () => null, run: async () => true, read: async () => '', forgetPath: () => {} },
+    { ensure: async () => 'already' },
   )
 }
 

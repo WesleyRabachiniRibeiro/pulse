@@ -44,6 +44,7 @@ export const itemSchema = z.object({
       riotInstalled: z.array(z.string()),
       riotFailed: z.array(z.string()),
       gitLogin: z.boolean(),
+      sshKey: z.enum(['created', 'already', 'failed']).optional(),
       madeDefault: z.enum(['yes', 'asked', 'failed']).optional(),
       importAddress: z.string().optional(),
       importWizard: z.boolean().optional(),

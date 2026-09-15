@@ -26,6 +26,7 @@ function fakePorts(overrides: Partial<StepPorts> = {}): StepPorts {
     },
     autostartRegistry: { setAutostart: async () => 'on' },
     desktopShortcut: { setShortcut: async () => 'created' },
+    sshKeys: { ensure: async () => 'created' },
     editorSettingsStore: { apply: async () => 'written' },
     toolchain: {
       locate: async (tool) => (tool === 'vscode' ? 'code.cmd' : 'git.exe'),
@@ -229,6 +230,39 @@ describe('runSteps', () => {
 
     expect((await runSteps({ desktopShortcut: false }, ctx)).desktopShortcut).toBe('removed')
     expect(asked).toBe(false)
+  })
+
+  it('a chave SSH só é pedida quando alguém marcou', async () => {
+    const ports = fakePorts()
+    const { ctx } = fakeContext(ports, vscode)
+
+    let asked = 0
+    ports.sshKeys.ensure = async () => {
+      asked += 1
+      return 'created'
+    }
+
+    const base = { name: 'W', email: 'w@x.com', branch: 'main' }
+    expect((await runSteps({ steps: { gitConfig: base } }, ctx)).sshKey).toBeUndefined()
+    expect(asked).toBe(0)
+
+    const found = await runSteps({ steps: { gitConfig: { ...base, sshKey: true } } }, ctx)
+    expect(found.sshKey).toBe('created')
+    expect(asked).toBe(1)
+  })
+
+  // Sem nome nem email não há par de configuração, mas a chave ainda é um
+  // pedido válido por conta própria.
+  it('só a chave, sem configuração nenhuma, ainda roda', async () => {
+    const ports = fakePorts()
+    const { ctx } = fakeContext(ports, vscode)
+    ports.sshKeys.ensure = async () => 'already'
+
+    const found = await runSteps(
+      { steps: { gitConfig: { name: '', email: '', branch: '', sshKey: true } } },
+      ctx,
+    )
+    expect(found.sshKey).toBe('already')
   })
 
   it('a ordem declarada é a que a pessoa vê acontecer', () => {
