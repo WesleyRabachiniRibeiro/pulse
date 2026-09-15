@@ -1,7 +1,10 @@
+import { EMPTY_PREFERENCES } from '@pulse/domain'
 import { NodePowerShellRunner } from './infra/powershell/NodePowerShellRunner'
 import { WindowsProcessRunner } from './infra/process/WindowsProcessRunner'
 import { WingetPackageInstaller } from './infra/winget/WingetPackageInstaller'
+import { WingetPackageFinder } from './infra/winget/WingetPackageFinder'
 import { WindowsToolchain } from './infra/toolchain/WindowsToolchain'
+import { NodeSshKeys } from './infra/toolchain/NodeSshKeys'
 import { WindowsAutostartRegistry } from './infra/autostart/WindowsAutostartRegistry'
 import { ElectronClipboardWriter } from './infra/electron/ElectronClipboardWriter'
 import { ElectronIconReader } from './infra/electron/ElectronIconReader'
@@ -31,6 +34,7 @@ import { RegistryWindowsTweaks } from './infra/windows/RegistryWindowsTweaks'
 import { WindowsDesktopShortcut } from './infra/windows/WindowsDesktopShortcut'
 import { WindowsProgramOpener } from './infra/windows/WindowsProgramOpener'
 import { ElectronFileDialog } from './infra/dialogs/ElectronFileDialog'
+import { NodeSyncFolders } from './infra/dialogs/NodeSyncFolders'
 import { NodeRemoteFetch } from './infra/net/NodeRemoteFetch'
 import { JsonHistoryStore } from './infra/history/JsonHistoryStore'
 import { ElectronUpdateChecker } from './infra/updates/ElectronUpdateChecker'
@@ -99,6 +103,7 @@ export function composeMain(): MainComponents {
     clipboardWriter,
     new JsonEditorSettingsStore(),
     toolchain,
+    new NodeSshKeys(processRunner),
   )
 
   const preferencesStore = new JsonPreferencesStore()
@@ -127,6 +132,7 @@ export function composeMain(): MainComponents {
     new NodeRemoteFetch(),
     CATALOG_URL,
     new JsonCatalogExtras(),
+    new WingetPackageFinder(processRunner),
   )
   registerCatalog(catalogService, catalog)
   void catalogService.load()
@@ -140,13 +146,22 @@ export function composeMain(): MainComponents {
   const readGitConfig = new ReadGitConfig(toolchain)
   registerPreferences(preferencesService, readGitConfig)
 
-  registerProfile(new ProfileService(catalog, new ElectronFileDialog(), new NodeRemoteFetch()))
+  registerProfile(
+    new ProfileService(
+      catalog,
+      new ElectronFileDialog(),
+      new NodeRemoteFetch(),
+      new NodeSyncFolders(),
+      async () => (await preferencesService.read().catch(() => EMPTY_PREFERENCES)).profileFolder,
+    ),
+  )
 
   const systemService = new SystemService(
     new WindowsPowerController(processRunner),
     new RegistryWindowsTweaks(processRunner, powershellRunner),
     new ElectronWindowsSettings(),
     new ElectronIconReader(),
+    clipboardWriter,
   )
   registerSystem(systemService)
 

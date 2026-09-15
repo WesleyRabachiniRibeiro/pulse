@@ -142,6 +142,14 @@ export const ipcContracts = {
     }),
     output: exportResultSchema,
   },
+  'profile:folders': {
+    input: z.void(),
+    output: z.array(z.object({ path: z.string(), label: z.string() })),
+  },
+  'profile:pickFolder': {
+    input: z.void(),
+    output: z.string().nullable(),
+  },
   'profile:import': {
     input: z.object({ mode: z.enum(IMPORT_MODES), current: profileSchema }),
     output: importResultSchema,
@@ -167,8 +175,15 @@ export const ipcContracts = {
     output: z.array(programSchema),
   },
   'catalog:add': {
-    input: programSchema,
-    output: z.object({ ok: z.boolean() }),
+    input: z.object({
+      name: z.string(),
+      version: z.string().optional(),
+      icon: z.string().optional(),
+    }),
+    output: z.object({
+      status: z.enum(['added', 'exists', 'not-found', 'failed']),
+      id: z.string().optional(),
+    }),
   },
   'catalog:remove': {
     input: z.object({ id: z.string() }),
@@ -273,6 +288,10 @@ export const ipcContracts = {
   'steam:search': {
     input: steamSearchInputSchema,
     output: z.array(steamGameSchema),
+  },
+  'system:copy': {
+    input: z.object({ text: z.string() }),
+    output: z.void(),
   },
   'system:icon': {
     input: z.object({ path: z.string() }),
