@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -22,9 +22,24 @@ const logos = svgIds('logos')
 const drawn = new Set([...masks, ...logos])
 const ids = CATALOG.map((p) => p.id)
 
+// Exigir ícone de todo programa impediria o catálogo de crescer enquanto o
+// desenho não chega. A lista de espera deixa a falta explícita e revisável, e
+// o teste cobra os dois lados dela.
+const awaiting: string[] = JSON.parse(
+  readFileSync(join(assets, 'icons', 'awaiting.json'), 'utf8'),
+).ids
+
 describe('desenho de cada programa do catálogo', () => {
-  it('todo programa tem ícone', () => {
-    expect(ids.filter((id) => !drawn.has(id))).toEqual([])
+  it('só fica sem ícone quem está na lista de espera', () => {
+    expect(ids.filter((id) => !drawn.has(id)).sort()).toEqual([...awaiting].sort())
+  })
+
+  it('quem ganhou ícone sai da lista de espera', () => {
+    expect(awaiting.filter((id) => drawn.has(id))).toEqual([])
+  })
+
+  it('a lista de espera não guarda programa que saiu do catálogo', () => {
+    expect(awaiting.filter((id) => !ids.includes(id))).toEqual([])
   })
 
   it('todo programa tem cor, que é o que tinge a silhueta', () => {

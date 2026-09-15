@@ -101,4 +101,7 @@ export const TINTS: Record<string, string> = {
   azurecli: '#5BA3E8',
   wsl: '#8FC48F',
   protonvpn: '#6D4AFF',
+  whatsapp: '#25D366',
+  afterburner: '#E11B22',
+  vcredist: '#5C2D91',
 }
