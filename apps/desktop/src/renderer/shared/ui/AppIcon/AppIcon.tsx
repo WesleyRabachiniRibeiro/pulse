@@ -1,19 +1,34 @@
 import type { CSSProperties } from 'react'
+import { useCatalog } from '@/features/catalog'
 import s from './AppIcon.module.css'
 import { TINTS } from './tints'
 
-const FILES = import.meta.glob('../../assets/icons/*.svg', {
+// Duas pastas, porque são duas técnicas. O ícone de 'icons' é uma silhueta
+// desenhada como máscara e tingida com a cor do programa; o de 'logos' tem
+// cores próprias demais para virar silhueta, então vai como imagem.
+const MASKS = import.meta.glob('../../assets/icons/*.svg', {
   eager: true,
   query: '?url',
   import: 'default',
 }) as Record<string, string>
 
-const URL_BY_ID: Record<string, string> = Object.fromEntries(
-  Object.entries(FILES).map(([path, url]) => [
-    path.slice(path.lastIndexOf('/') + 1, -'.svg'.length),
-    url,
-  ]),
-)
+const LOGOS = import.meta.glob('../../assets/logos/*.svg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
+
+function byId(files: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(files).map(([path, url]) => [
+      path.slice(path.lastIndexOf('/') + 1, -'.svg'.length),
+      url,
+    ]),
+  )
+}
+
+const MASK_BY_ID = byId(MASKS)
+const LOGO_BY_ID = byId(LOGOS)
 
 function monogram(name: string): string {
   const words = name.split(/[\s.]+/).filter(Boolean)
@@ -26,16 +41,23 @@ interface Props {
   id: string
   name: string
   size?: number
-  // Quem foi adotado do PC não tem SVG aqui dentro, e traz o próprio ícone.
-  picture?: string
 }
 
-export function AppIcon({ id, name, size = 34, picture }: Props) {
-  const url = URL_BY_ID[id]
+// O ícone é resolvido aqui dentro, e não recebido por quem desenha: quem foi
+// adotado do PC não tem SVG dentro do app e traz o próprio, e deixar isso a
+// cargo de cada chamador fazia o ícone aparecer só na tela que lembrava de
+// passá-lo.
+export function AppIcon({ id, name, size = 34 }: Props) {
+  const catalog = useCatalog()
+  const mask = MASK_BY_ID[id]
   const tint = TINTS[id] ?? 'var(--tx-3)'
   const style = { '--tint': tint, '--side': `${size}px` } as CSSProperties
 
-  if (!url && picture) {
+  // O logo colorido ganha da máscara; o ícone que o programa adotado trouxe
+  // do PC só entra quando não existe desenho nenhum aqui dentro.
+  const picture = LOGO_BY_ID[id] ?? (mask ? undefined : catalog.byId.get(id)?.icon)
+
+  if (picture) {
     return (
       <span className={s.tile} data-own="true" style={style} aria-hidden>
         <img className={s.photo} src={picture} alt="" />
@@ -45,10 +67,10 @@ export function AppIcon({ id, name, size = 34, picture }: Props) {
 
   return (
     <span className={s.tile} style={style} aria-hidden>
-      {url ? (
+      {mask ? (
         <span
           className={s.brand}
-          style={{ maskImage: `url("${url}")`, WebkitMaskImage: `url("${url}")` }}
+          style={{ maskImage: `url("${mask}")`, WebkitMaskImage: `url("${mask}")` }}
         />
       ) : (
         <span className={s.monogram}>{monogram(name)}</span>
