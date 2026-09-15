@@ -29,8 +29,10 @@ describe('installedIds', () => {
     expect(installedIds(SEED_CATALOG, ['Claude Code'])).toEqual(['claudecode'])
   })
 
+  // O nome é inventado de propósito: o exemplo anterior era 'Notepad++', que
+  // deixou de servir no dia em que ele entrou no catálogo.
   it('does not match unrelated program names', () => {
-    expect(installedIds(SEED_CATALOG, ['Notepad++'])).toEqual([])
+    expect(installedIds(SEED_CATALOG, ['Editor de Texto da Vovó'])).toEqual([])
   })
 })
 

@@ -1022,6 +1022,17 @@
       ]
     },
     {
+      "id": "protonvpn",
+      "name": "Proton VPN",
+      "winget": "Proton.ProtonVPN",
+      "version": "5.1.8",
+      "mb": 381,
+      "category": "utilities",
+      "hints": [
+        "proton vpn"
+      ]
+    },
+    {
       "id": "amazongames",
       "name": "Amazon Games",
       "winget": "Amazon.Games",
@@ -1235,6 +1246,7 @@
         "office",
         "slack",
         "winrar",
+        "protonvpn",
         "amazongames",
         "logitechghub",
         "putty",

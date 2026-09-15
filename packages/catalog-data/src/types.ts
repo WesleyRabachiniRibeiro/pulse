@@ -1,6 +1,15 @@
 // 'mine' não vem do catálogo publicado: é onde o Pulse põe os programas que a
 // própria pessoa adotou do PC dela.
-export type CategoryId = 'browsers' | 'games' | 'media' | 'dev' | 'mine'
+export type CategoryId =
+  | 'browsers'
+  | 'games'
+  | 'media'
+  | 'office'
+  | 'utilities'
+  | 'creative'
+  | 'security'
+  | 'dev'
+  | 'mine'
 
 export interface Category {
   id: CategoryId
