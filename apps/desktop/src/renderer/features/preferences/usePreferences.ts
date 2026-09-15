@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
-import type { Preferences } from '@pulse/domain'
+import { EMPTY_DEFAULTS, type Defaults, type Preferences } from '@pulse/domain'
 import { bridge } from '@/shared/lib/bridge'
 
 interface PreferencesStore {
@@ -45,6 +45,10 @@ export async function savePreference(change: Preferences): Promise<void> {
 
 export function usePreferences(): Preferences {
   return usePreferencesStore((s) => s.prefs)
+}
+
+export function useDefaults(): Defaults {
+  return usePreferencesStore((s) => s.prefs.defaults ?? EMPTY_DEFAULTS)
 }
 
 export function usePreferencesLoaded(): boolean {

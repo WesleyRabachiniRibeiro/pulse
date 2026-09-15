@@ -2,6 +2,7 @@ import type { Item, LogLevel, Program } from '@pulse/domain'
 import type { ProcessRunner } from '../../../ports/process-runner'
 import type { PackageInstaller } from '../../../ports/package-installer'
 import type { AutostartRegistry } from '../../../ports/autostart-registry'
+import type { DesktopShortcut } from '../../../ports/desktop-shortcut'
 import type { SteamGameRequester } from '../../../ports/steam-game-requester'
 import type { EditorSettingsStore } from '../../../ports/editor-settings-store'
 import type { Toolchain } from '../../../ports/toolchain'
@@ -12,6 +13,7 @@ export interface StepPorts {
   processRunner: ProcessRunner
   packageInstaller: PackageInstaller
   autostartRegistry: AutostartRegistry
+  desktopShortcut: DesktopShortcut
   steamGameRequester: SteamGameRequester
   editorSettingsStore: EditorSettingsStore
   toolchain: Toolchain

@@ -36,6 +36,7 @@ export const itemSchema = z.object({
       gamesRefused: z.array(z.string()),
       gamesPending: z.array(z.string()),
       autostart: z.enum(['on', 'off', 'no-entry']).optional(),
+      desktopShortcut: z.enum(['created', 'removed', 'already', 'not-found']).optional(),
       editor: z.enum(['written', 'nothing', 'unreadable', 'failed']).optional(),
       packagesInstalled: z.array(z.string()).optional(),
       packagesFailed: z.array(z.string()).optional(),

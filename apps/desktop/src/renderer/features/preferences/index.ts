@@ -1,1 +1,7 @@
-export { useLoadPreferences, usePreferences, usePreferencesLoaded, savePreference } from './usePreferences'
+export {
+  useLoadPreferences,
+  usePreferences,
+  usePreferencesLoaded,
+  useDefaults,
+  savePreference,
+} from './usePreferences'

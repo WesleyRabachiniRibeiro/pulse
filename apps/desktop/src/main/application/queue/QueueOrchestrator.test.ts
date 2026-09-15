@@ -10,6 +10,7 @@ import type { DiskSpaceProbe } from '../../ports/disk-space-probe'
 import type { SteamGameRequester } from '../../ports/steam-game-requester'
 import type { BrowserDefaultSetter } from '../../ports/browser-default-setter'
 import type { AutostartRegistry } from '../../ports/autostart-registry'
+import type { DesktopShortcut } from '../../ports/desktop-shortcut'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
 
 function fakeProcessRunner(overrides: Partial<ProcessRunner> = {}): ProcessRunner {
@@ -69,6 +70,10 @@ function fakeAutostartRegistry(): AutostartRegistry {
   return { setAutostart: async () => 'no-entry' }
 }
 
+function fakeDesktopShortcut(): DesktopShortcut {
+  return { setShortcut: async () => 'not-found' }
+}
+
 function fakeClipboard(): ClipboardWriter {
   return { writeText: () => {} }
 }
@@ -86,6 +91,7 @@ function makeOrchestrator(
     fakeSteamGameRequester(),
     fakeBrowserDefaultSetter(),
     fakeAutostartRegistry(),
+    fakeDesktopShortcut(),
     new InMemoryQueueRepository(),
     fakeClipboard(),
     { apply: async () => 'written' },

@@ -20,6 +20,7 @@ import type { DiskSpaceProbe } from '../../ports/disk-space-probe'
 import type { SteamGameRequester } from '../../ports/steam-game-requester'
 import type { BrowserDefaultSetter } from '../../ports/browser-default-setter'
 import type { AutostartRegistry } from '../../ports/autostart-registry'
+import type { DesktopShortcut } from '../../ports/desktop-shortcut'
 import type { QueueRepository } from '../../ports/queue-repository'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
 import type { EditorSettingsStore } from '../../ports/editor-settings-store'
@@ -87,6 +88,7 @@ export class QueueOrchestrator {
     private readonly steamGameRequester: SteamGameRequester,
     private readonly browserDefaultSetter: BrowserDefaultSetter,
     private readonly autostartRegistry: AutostartRegistry,
+    private readonly desktopShortcut: DesktopShortcut,
     private readonly queueRepository: QueueRepository,
     private readonly clipboard: ClipboardWriter,
     private readonly editorSettingsStore: EditorSettingsStore,
@@ -329,6 +331,7 @@ export class QueueOrchestrator {
       ? undefined
       : this.destinationFor(program, target.drive)
     const override = this.workloadOverride(target.settings, destination)
+    const settings = target.settings
 
     return {
       itemId: target.id,
@@ -338,6 +341,9 @@ export class QueueOrchestrator {
       fromStore: program.source === 'msstore',
       ...(destination ? { destination } : {}),
       ...(override ? { override } : {}),
+      ...(settings?.scope ? { scope: settings.scope } : {}),
+      ...(settings?.locale ? { locale: settings.locale } : {}),
+      ...(settings?.interactive ? { interactive: true } : {}),
     }
   }
 
@@ -365,6 +371,7 @@ export class QueueOrchestrator {
         processRunner: this.processRunner,
         packageInstaller: this.packageInstaller,
         autostartRegistry: this.autostartRegistry,
+        desktopShortcut: this.desktopShortcut,
         steamGameRequester: this.steamGameRequester,
         editorSettingsStore: this.editorSettingsStore,
         toolchain: this.toolchain,

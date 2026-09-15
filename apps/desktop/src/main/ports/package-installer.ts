@@ -11,6 +11,9 @@ export interface InstallSpec {
   fromStore: boolean
   destination?: string
   override?: string
+  scope?: 'user' | 'machine'
+  locale?: string
+  interactive?: boolean
 }
 
 export type InstallFailureKind =

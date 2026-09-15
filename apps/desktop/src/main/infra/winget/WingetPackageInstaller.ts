@@ -113,12 +113,18 @@ function installArgs(spec: InstallSpec): string[] {
     '--exact',
     '--accept-package-agreements',
     '--accept-source-agreements',
-    '--disable-interactivity',
   ]
+
+  if (spec.scope) common.push('--scope', spec.scope)
+  if (spec.locale) common.push('--locale', spec.locale)
+
+  // Mostrar a janela do instalador é o oposto de desligar a interação: as duas
+  // opções do winget não convivem no mesmo comando.
+  common.push(spec.interactive ? '--interactive' : '--disable-interactivity')
 
   if (spec.fromStore) return [...common, '--source', 'msstore']
   if (spec.override) return [...common, '--override', spec.override]
 
-  const base = [...common, '--silent']
+  const base = spec.interactive ? common : [...common, '--silent']
   return spec.destination ? [...base, '--location', spec.destination] : base
 }

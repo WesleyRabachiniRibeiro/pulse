@@ -25,6 +25,7 @@ function fakePorts(overrides: Partial<StepPorts> = {}): StepPorts {
       cancel: () => {},
     },
     autostartRegistry: { setAutostart: async () => 'on' },
+    desktopShortcut: { setShortcut: async () => 'created' },
     editorSettingsStore: { apply: async () => 'written' },
     toolchain: {
       locate: async (tool) => (tool === 'vscode' ? 'code.cmd' : 'git.exe'),
@@ -210,6 +211,26 @@ describe('runSteps', () => {
     expect(result.autostart).toBe('on')
   })
 
+  it('o atalho da área de trabalho só roda quando alguém pediu', async () => {
+    const ports = fakePorts()
+    const { ctx } = fakeContext(ports, vscode)
+
+    let asked: boolean | null = null
+    ports.desktopShortcut.setShortcut = async (_program, on) => {
+      asked = on
+      return on ? 'created' : 'removed'
+    }
+
+    expect((await runSteps({}, ctx)).desktopShortcut).toBeUndefined()
+    expect(asked).toBeNull()
+
+    expect((await runSteps({ desktopShortcut: true }, ctx)).desktopShortcut).toBe('created')
+    expect(asked).toBe(true)
+
+    expect((await runSteps({ desktopShortcut: false }, ctx)).desktopShortcut).toBe('removed')
+    expect(asked).toBe(false)
+  })
+
   it('a ordem declarada é a que a pessoa vê acontecer', () => {
     expect(STEP_IDS).toEqual([
       'vscodeExtensions',
@@ -217,6 +238,7 @@ describe('runSteps', () => {
       'runtimePackages',
       'gitConfig',
       'autostart',
+      'desktopShortcut',
       'steamGames',
       'tibiaPages',
       'riotProducts',

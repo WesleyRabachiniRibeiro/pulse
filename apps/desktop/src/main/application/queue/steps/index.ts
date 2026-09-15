@@ -4,6 +4,7 @@ import { editorTweaks } from './editorTweaks'
 import { runtimePackages } from './runtimePackages'
 import { gitConfig } from './gitConfig'
 import { autostart } from './autostart'
+import { desktopShortcut } from './desktopShortcut'
 import { steamGames } from './steamGames'
 import { tibiaPages } from './tibiaPages'
 import { riotProducts } from './riotProducts'
@@ -23,6 +24,7 @@ const ORDER: readonly StepEntry[] = [
   { id: 'runtimePackages', valueOf: (s) => s.steps?.runtimePackages, run: runtimePackages },
   { id: 'gitConfig', valueOf: (s) => s.steps?.gitConfig, run: gitConfig },
   { id: 'autostart', valueOf: (s) => s.autostart, run: autostart },
+  { id: 'desktopShortcut', valueOf: (s) => s.desktopShortcut, run: desktopShortcut },
   { id: 'steamGames', valueOf: (s) => s.steps?.steamGames, run: steamGames },
   { id: 'tibiaPages', valueOf: (s) => s.steps?.tibiaPages, run: tibiaPages },
   { id: 'riotProducts', valueOf: (s) => s.steps?.riotProducts, run: riotProducts },
