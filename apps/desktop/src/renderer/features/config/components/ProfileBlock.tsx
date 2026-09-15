@@ -1,181 +1,273 @@
 import { useState } from 'react'
-import { EXPORT_FORMATS, FORMAT_FILE, type ExportFormat, type ImportMode } from '@pulse/domain'
+import { LuLink } from 'react-icons/lu'
+import {
+  EXPORT_FORMATS,
+  FORMAT_FILE,
+  formatMb,
+  type ExportFormat,
+  type ImportMode,
+} from '@pulse/domain'
+import { totalSizeMb } from '@pulse/utils'
 import { applyProfile, selectionAsProfile, useSelection } from '@/features/selection'
 import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
-import shell from './Config.module.css'
 import s from './ProfileBlock.module.css'
 
-const FORMAT_HINT: Record<ExportFormat, string> = {
-  pulse: 'volta para o Pulse em outro PC, com discos e ajustes',
-  winget: 'a lista que o winget importa pela linha de comando',
-  script: 'um .ps1 que roda sem o Pulse instalado',
-  csv: 'para conferir a lista numa planilha',
+const FORMATS: Record<ExportFormat, { label: string; hint: string }> = {
+  pulse: { label: 'Perfil do Pulse', hint: '.json — traz de volta tudo, inclusive as exceções' },
+  winget: { label: 'JSON do winget', hint: '.json — o formato que o winget import lê' },
+  script: { label: 'Script de linha de comando', hint: '.ps1 — roda sem o Pulse instalado' },
+  csv: { label: 'Planilha da lista', hint: '.csv — só os nomes, para conferir ou imprimir' },
 }
 
-type Note = { kind: 'ok' | 'bad'; text: string } | null
+// 'ask' não é um modo de importação, é não ter escolhido ainda: a pergunta
+// aparece na hora, com a contagem do que já estava marcado.
+type Choice = ImportMode | 'ask'
+
+const MODES: readonly { id: Choice; label: string }[] = [
+  { id: 'replace', label: 'Substituir' },
+  { id: 'merge', label: 'Somar' },
+  { id: 'ask', label: 'Perguntar na hora' },
+]
+
+interface Answer {
+  status: string
+  profile?: Parameters<typeof applyProfile>[0]
+  count?: number
+  missing?: string[]
+}
 
 export function ProfileBlock() {
   const catalog = useCatalog()
   const selected = useSelection((st) => st.selected)
-  const [mode, setMode] = useState<ImportMode>('merge')
-  const [url, setUrl] = useState('')
+  const settings = useSelection((st) => st.settings)
+
+  const [format, setFormat] = useState<ExportFormat>('pulse')
+  const [mode, setMode] = useState<Choice>('ask')
+  const [asking, setAsking] = useState(false)
+  const [pending, setPending] = useState<'file' | 'link'>('file')
+  const [link, setLink] = useState('')
   const [busy, setBusy] = useState(false)
-  const [note, setNote] = useState<Note>(null)
+  const [note, setNote] = useState<string | null>(null)
 
-  const count = selected.size
+  const many = selected.size
+  const exceptions = Object.keys(settings).length
+  const profileLine = [
+    `${many} ${many === 1 ? 'programa marcado' : 'programas marcados'}`,
+    formatMb(totalSizeMb(catalog, selected)),
+    exceptions === 0
+      ? 'nenhuma exceção'
+      : `${exceptions} ${exceptions === 1 ? 'exceção' : 'exceções'}`,
+  ].join(' · ')
 
-  async function exportAs(format: ExportFormat) {
+  async function exportAs() {
     setBusy(true)
     setNote(null)
 
-    const result = await bridge
+    const answer = await bridge
       .invoke('profile:export', { format, profile: selectionAsProfile() })
-      .catch(() => ({ status: 'failed' as const, path: undefined }))
+      .catch(() => null)
 
     setBusy(false)
-    if (result.status === 'canceled') return
-    setNote(
-      result.status === 'saved'
-        ? { kind: 'ok', text: `Salvo em ${result.path ?? 'disco'}` }
-        : { kind: 'bad', text: 'Não deu para gravar o arquivo.' },
-    )
+    if (!answer || answer.status === 'failed') return setNote('Não deu para salvar o arquivo.')
+    if (answer.status === 'canceled') return
+    setNote(`Salvo em ${answer.path ?? 'disco'}`)
   }
 
   // O que voltou do main já veio limpo contra o catálogo daqui, então é só
   // aplicar. O que ficou de fora vira aviso, e não silêncio.
-  function settle(result: {
-    status: string
-    profile?: Parameters<typeof applyProfile>[0]
-    count?: number
-    missing?: string[]
-  }) {
-    if (result.status === 'canceled') return
+  function settle(answer: Answer | null) {
+    if (!answer || answer.status === 'failed') return setNote('Não deu para ler esse perfil.')
+    if (answer.status === 'canceled') return
 
-    if (result.status !== 'imported' || !result.profile) {
-      setNote({
-        kind: 'bad',
-        text:
-          result.status === 'invalid'
-            ? 'Esse arquivo não é um perfil do Pulse.'
-            : 'Não deu para ler o perfil.',
-      })
-      return
+    if (answer.status !== 'imported' || !answer.profile) {
+      return setNote(
+        'Esse arquivo não é um perfil do Pulse, ou é de uma versão que não conheço.',
+      )
     }
 
-    applyProfile(result.profile)
+    applyProfile(answer.profile)
 
-    const missing = result.missing ?? []
-    const names = missing.map((id) => catalog.byId.get(id)?.name ?? id)
-    setNote({
-      kind: 'ok',
-      text:
-        names.length === 0
-          ? `${result.count} ${result.count === 1 ? 'programa' : 'programas'} na seleção.`
-          : `${result.count} na seleção. Fora do catálogo daqui: ${names.join(', ')}.`,
-    })
+    const count = answer.count ?? 0
+    const names = (answer.missing ?? []).map((id) => catalog.byId.get(id)?.name ?? id)
+
+    setNote(
+      [
+        `${count} ${count === 1 ? 'programa marcado' : 'programas marcados'}`,
+        names.length > 0 ? `fora do catálogo daqui: ${names.join(', ')}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    )
   }
 
-  async function importFile() {
+  async function bring(choice: ImportMode, from: 'file' | 'link') {
+    setAsking(false)
     setBusy(true)
     setNote(null)
-    const result = await bridge
-      .invoke('profile:import', { mode, current: selectionAsProfile() })
-      .catch(() => ({ status: 'failed' }))
+
+    const answer = await (from === 'link'
+      ? bridge.invoke('profile:importLink', {
+          url: link.trim(),
+          mode: choice,
+          current: selectionAsProfile(),
+        })
+      : bridge.invoke('profile:import', { mode: choice, current: selectionAsProfile() })
+    ).catch(() => null)
+
     setBusy(false)
-    settle(result)
+    settle(answer)
   }
 
-  async function importLink() {
-    if (!url.trim()) return
-    setBusy(true)
-    setNote(null)
-    const result = await bridge
-      .invoke('profile:importLink', { url: url.trim(), mode, current: selectionAsProfile() })
-      .catch(() => ({ status: 'failed' }))
-    setBusy(false)
-    settle(result)
+  function begin(from: 'file' | 'link') {
+    setPending(from)
+    if (mode === 'ask') return setAsking(true)
+    void bring(mode, from)
   }
 
   return (
-    <section className={shell.section}>
-      <div className={shell.header}>
-        <span className={shell.name}>LEVAR A SELEÇÃO PARA OUTRO PC</span>
-        <span className={shell.line} aria-hidden />
-        <span className={shell.scope}>ARQUIVO OU LINK</span>
+    <section className={s.section}>
+      <div className={s.header}>
+        <span className={s.name}>PERFIL DESTE PC</span>
+        <span className={s.line} aria-hidden />
+        <span className={s.scope}>ARQUIVO NO SEU PC, NÃO CONTA NA NUVEM</span>
       </div>
 
-      <p className={shell.note}>
-        Guarda o que você escolheu num arquivo, com os discos e os ajustes de cada programa. Serve
-        para repetir a mesma instalação em outra máquina, ou para deixar pronto antes de formatar.
-      </p>
+      <div className={s.cards}>
+        <div className={s.card}>
+          <div className={s.top}>
+            <div className={s.texts}>
+              <div className={s.cardName}>Exportar o perfil</div>
+              <div className={s.hint}>
+                A lista marcada, o disco de cada programa e as exceções de cada um. {profileLine}
+              </div>
+            </div>
 
-      <div className={s.formats}>
-        {EXPORT_FORMATS.map((format) => (
-          <button
-            key={format}
-            type="button"
-            className={s.format}
-            disabled={busy || count === 0}
-            onClick={() => void exportAs(format)}
-          >
-            <span className={s.formatName}>{FORMAT_FILE[format].name}</span>
-            <span className={s.formatHint}>{FORMAT_HINT[format]}</span>
-            <span className={s.formatExt}>.{FORMAT_FILE[format].extension}</span>
-          </button>
-        ))}
-      </div>
-
-      {count === 0 && (
-        <p className={s.empty}>Escolha ao menos um programa na etapa de seleção para exportar.</p>
-      )}
-
-      <div className={s.importTop}>
-        <span className={s.importLabel}>TRAZER DE VOLTA</span>
-        <div className={s.modes}>
-          {(['merge', 'replace'] as const).map((option) => (
             <button
-              key={option}
               type="button"
-              className={s.mode}
-              aria-pressed={mode === option}
-              onClick={() => setMode(option)}
+              className={s.primary}
+              disabled={busy || many === 0}
+              onClick={() => void exportAs()}
             >
-              {option === 'merge' ? 'SOMAR À SELEÇÃO' : 'SUBSTITUIR'}
+              Salvar .{FORMAT_FILE[format].extension}…
             </button>
-          ))}
+          </div>
+
+          <div className={s.picks}>
+            {EXPORT_FORMATS.map((one) => (
+              <button
+                key={one}
+                type="button"
+                className={s.pick}
+                aria-pressed={format === one}
+                onClick={() => setFormat(one)}
+              >
+                <span className={s.dot} aria-hidden />
+                <span className={s.pickTexts}>
+                  <span className={s.pickName}>{FORMATS[one].label}</span>
+                  <span className={s.pickHint}>{FORMATS[one].hint}</span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
+
+        <div className={s.card}>
+          <div className={s.top}>
+            <div className={s.texts}>
+              <div className={s.cardName}>Importar um perfil de arquivo</div>
+              <div className={s.hint}>O que fazer com os programas que você já tinha marcado.</div>
+            </div>
+
+            <div className={s.modes}>
+              {MODES.map((one) => (
+                <button
+                  key={one.id}
+                  type="button"
+                  className={s.mode}
+                  aria-pressed={mode === one.id}
+                  onClick={() => setMode(one.id)}
+                >
+                  {one.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className={s.secondary}
+              disabled={busy}
+              onClick={() => begin('file')}
+            >
+              Escolher arquivo…
+            </button>
+          </div>
+
+          {asking && (
+            <div className={s.ask}>
+              <span className={s.askLine}>
+                O que fazer com os {many} que você já tinha marcado?
+              </span>
+              <button
+                type="button"
+                className={s.secondary}
+                onClick={() => void bring('merge', pending)}
+              >
+                Somar as duas listas
+              </button>
+              <button
+                type="button"
+                className={s.secondary}
+                onClick={() => void bring('replace', pending)}
+              >
+                Substituir pela do arquivo
+              </button>
+              <button
+                type="button"
+                className={s.close}
+                aria-label="Cancelar"
+                onClick={() => setAsking(false)}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className={s.card}>
+          <div className={s.cardName}>Importar de um link</div>
+          <div className={s.hint}>
+            Cole o endereço de um perfil que alguém compartilhou com você.
+          </div>
+
+          <div className={s.linkRow}>
+            <div className={s.field}>
+              <LuLink size={14} className={s.fieldIcon} aria-hidden />
+              <input
+                className={s.input}
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && link.trim()) begin('link')
+                }}
+                placeholder="https://…"
+                aria-label="Endereço do perfil"
+              />
+            </div>
+
+            <button
+              type="button"
+              className={s.secondary}
+              disabled={busy || link.trim().length === 0}
+              onClick={() => begin('link')}
+            >
+              Importar
+            </button>
+          </div>
+        </div>
+
+        {note && <p className={s.note}>{note}</p>}
       </div>
-
-      <div className={s.importRow}>
-        <button type="button" className={s.primary} disabled={busy} onClick={() => void importFile()}>
-          ESCOLHER UM ARQUIVO
-        </button>
-
-        <input
-          className={s.url}
-          value={url}
-          placeholder="ou cole um link para um perfil"
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') void importLink()
-          }}
-        />
-        <button
-          type="button"
-          className={s.ghost}
-          disabled={busy || !url.trim()}
-          onClick={() => void importLink()}
-        >
-          BUSCAR
-        </button>
-      </div>
-
-      {note && (
-        <p className={s.note} data-bad={note.kind === 'bad'} role={note.kind === 'bad' ? 'alert' : undefined}>
-          {note.text}
-        </p>
-      )}
     </section>
   )
 }
