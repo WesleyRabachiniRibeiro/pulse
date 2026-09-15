@@ -39,8 +39,4 @@ export class OpenProgram {
     if (!ok) this.shortcuts = null
     return ok
   }
-
-  forget(): void {
-    this.shortcuts = null
-  }
 }

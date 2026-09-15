@@ -18,14 +18,3 @@ export type PlaceKey = (typeof PLACES)[number]['key']
 // A lista de bloqueados é uma tela cheia que se chega pela Configuração, e
 // por isso não tem parada própria no rail.
 export type Screen = 'home' | TrailKey | PlaceKey | 'blocked'
-
-export const TRAIL_KEYS: readonly TrailKey[] = TRAIL.map((stop) => stop.key)
-export const PLACE_KEYS: readonly PlaceKey[] = PLACES.map((place) => place.key)
-
-export function isTrail(screen: Screen): screen is TrailKey {
-  return (TRAIL_KEYS as readonly string[]).includes(screen)
-}
-
-export function isPlace(screen: Screen): screen is PlaceKey {
-  return (PLACE_KEYS as readonly string[]).includes(screen)
-}

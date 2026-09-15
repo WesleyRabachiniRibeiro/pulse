@@ -91,15 +91,4 @@ describe('abrir um programa instalado', () => {
 
     expect(fake.scans()).toBe(2)
   })
-
-  it('esquecer força uma varredura nova', async () => {
-    const fake = fakeOpener()
-    const service = new OpenProgram(CATALOG, fake.opener)
-
-    await service.openable(['chrome'])
-    service.forget()
-    await service.openable(['chrome'])
-
-    expect(fake.scans()).toBe(2)
-  })
 })
