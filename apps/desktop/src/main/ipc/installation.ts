@@ -9,10 +9,12 @@ import {
 import { register } from './register'
 import type { QueueOrchestrator } from '../application/queue/QueueOrchestrator'
 import type { PreferencesService } from '../application/preferences/PreferencesService'
+import type { OpenProgram } from '../application/programs/OpenProgram'
 
 export function registerInstallation(
   orchestrator: QueueOrchestrator,
   preferencesService: PreferencesService,
+  openProgram: OpenProgram,
 ): void {
   // Os padrões descem para o pedido antes de virar item, para que a fila, o
   // resumo e o histórico mostrem o que de fato vai rodar.
@@ -39,6 +41,8 @@ export function registerInstallation(
   register('installation:cancelItem', (input) => orchestrator.cancelItem(input.id))
   register('installation:retry', (input) => orchestrator.retry(input.id))
   register('installation:grant', (input) => orchestrator.grantPermission(input.id))
+  register('installation:openable', (input) => openProgram.openable(input.ids))
+  register('installation:open', (input) => openProgram.open(input.id))
   register('installation:uninstall', (input) => orchestrator.uninstall(input.id))
 
   orchestrator.subscribe((run) => {

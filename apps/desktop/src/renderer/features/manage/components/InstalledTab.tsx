@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { LuChevronDown, LuChevronRight, LuListX, LuSearch } from 'react-icons/lu'
+import { LuChevronDown, LuChevronRight, LuExternalLink, LuListX, LuSearch } from 'react-icons/lu'
 import { type InstalledFilter, type InstalledNode } from '@pulse/domain'
 import { filterInstalled, selectable } from '@pulse/utils'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { useCatalog } from '@/features/catalog'
 import { uninstallProgram, useUninstalled, useUninstalling } from '@/features/selection'
+import { openProgram, useCanOpen, useOpening, useWatchOpenable } from '@/features/installation'
 import { PinDialog, useParental } from '@/features/parental'
 import { bridge } from '@/shared/lib/bridge'
 import { useFileIcon } from '../store/useFileIcon'
@@ -113,6 +114,8 @@ function Row({ node, picked, onPick }: RowProps) {
   const mine = useMine()
   const { on, hasPin } = useParental()
   const program = node.programId ? catalog.byId.get(node.programId) : undefined
+  const canOpen = useCanOpen(node.programId ?? '')
+  const opening = useOpening(node.programId ?? '')
   const removing = useUninstalling(node.programId ?? '')
   const removed = useUninstalled(node.programId ?? '')
   const nested = node.children.length > 0
@@ -165,6 +168,19 @@ function Row({ node, picked, onPick }: RowProps) {
           <span className={shell.actions}>
             {node.programId && mine.has(node.programId) && <DropButton node={node} />}
 
+            {canOpen && (
+              <button
+                type="button"
+                className={s.icon}
+                disabled={opening}
+                onClick={() => void openProgram(program.id)}
+                aria-label={`Abrir ${program.name}`}
+                title={opening ? 'Abrindo…' : 'Abrir'}
+              >
+                <LuExternalLink size={15} />
+              </button>
+            )}
+
             <button
               type="button"
               className={shell.action}
@@ -211,6 +227,7 @@ export function InstalledTab({ onQueue }: Props) {
   const hidden = useHiddenCount()
   const upgrades = useUpgrades()
   const loaded = useInventoryLoaded()
+  const catalog = useCatalog()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<InstalledFilter>('all')
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
@@ -219,6 +236,11 @@ export function InstalledTab({ onQueue }: Props) {
   const shown = useMemo(
     () => filterInstalled(installed, query, filter),
     [installed, query, filter],
+  )
+
+  useWatchOpenable(
+    catalog.programs.map((one) => one.id),
+    loaded,
   )
 
   const canPick = selectable(shown)

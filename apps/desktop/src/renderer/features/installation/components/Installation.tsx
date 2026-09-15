@@ -15,6 +15,7 @@ import {
 import { useInstallation } from '../hooks/useInstallation'
 import { QueueItem } from './QueueItem'
 import { useCatalog } from '@/features/catalog'
+import { useWatchOpenable } from '../store/useOpenable'
 import s from './Installation.module.css'
 
 interface Props {
@@ -49,6 +50,10 @@ function phase(run: Run): string {
 export function Installation({ onChooseMore, onSeeSummary }: Props) {
   const catalog = useCatalog()
   const { run, running, elapsed, cancel, cancelItem, retry, grant } = useInstallation()
+  useWatchOpenable(
+    catalog.programs.map((one) => one.id),
+    run?.items.filter((item) => item.status === 'done').length ?? 0,
+  )
   const [showLog, setShowLog] = useState(false)
   const logEnd = useRef<HTMLDivElement>(null)
 

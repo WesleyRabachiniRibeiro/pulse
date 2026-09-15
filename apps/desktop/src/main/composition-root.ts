@@ -7,6 +7,7 @@ import { ElectronClipboardWriter } from './infra/electron/ElectronClipboardWrite
 import { ElectronIconReader } from './infra/electron/ElectronIconReader'
 import { InMemoryQueueRepository } from './infra/queue/InMemoryQueueRepository'
 import { QueueOrchestrator } from './application/queue/QueueOrchestrator'
+import { OpenProgram } from './application/programs/OpenProgram'
 import { registerInstallation } from './ipc/installation'
 
 import { WindowsSystemInspector } from './infra/system/WindowsSystemInspector'
@@ -28,6 +29,7 @@ import { NodePinSealer } from './infra/parental/NodePinSealer'
 import { PreferencesParentalStore } from './infra/parental/PreferencesParentalStore'
 import { RegistryWindowsTweaks } from './infra/windows/RegistryWindowsTweaks'
 import { WindowsDesktopShortcut } from './infra/windows/WindowsDesktopShortcut'
+import { WindowsProgramOpener } from './infra/windows/WindowsProgramOpener'
 import { ElectronFileDialog } from './infra/dialogs/ElectronFileDialog'
 import { NodeRemoteFetch } from './infra/net/NodeRemoteFetch'
 import { JsonHistoryStore } from './infra/history/JsonHistoryStore'
@@ -102,7 +104,11 @@ export function composeMain(): MainComponents {
   const preferencesStore = new JsonPreferencesStore()
   const preferencesService = new PreferencesService(preferencesStore)
 
-  registerInstallation(queueOrchestrator, preferencesService)
+  registerInstallation(
+    queueOrchestrator,
+    preferencesService,
+    new OpenProgram(catalog, new WindowsProgramOpener(powershellRunner)),
+  )
 
   const preflightService = new RunSystemVerification(
     new WindowsSystemInspector(powershellRunner),

@@ -250,6 +250,14 @@ export const ipcContracts = {
     input: idInputSchema,
     output: z.void(),
   },
+  'installation:openable': {
+    input: z.object({ ids: z.array(z.string()) }),
+    output: z.array(z.string()),
+  },
+  'installation:open': {
+    input: z.object({ id: z.string() }),
+    output: z.boolean(),
+  },
   'installation:uninstall': {
     input: idInputSchema,
     output: z.object({

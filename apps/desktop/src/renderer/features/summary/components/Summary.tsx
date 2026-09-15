@@ -4,7 +4,13 @@ import { anyNeedsRestart, driveLabel, elapsedSeconds, groupSummary, tally } from
 import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
 import { ClampedText } from '@/shared/ui/ClampedText/ClampedText'
-import { useRun } from '@/features/installation'
+import {
+  openProgram,
+  useCanOpen,
+  useOpening,
+  useRun,
+  useWatchOpenable,
+} from '@/features/installation'
 import s from './Summary.module.css'
 
 interface Props {
@@ -31,9 +37,30 @@ function duration(seconds: number): string {
   return `${Math.max(1, Math.round(seconds / 60))} min`
 }
 
+function OpenButton({ id }: { id: string }) {
+  const canOpen = useCanOpen(id)
+  const opening = useOpening(id)
+  if (!canOpen) return null
+
+  return (
+    <button
+      type="button"
+      className={s.open}
+      disabled={opening}
+      onClick={() => void openProgram(id)}
+    >
+      {opening ? 'ABRINDO…' : 'ABRIR'}
+    </button>
+  )
+}
+
 export function Summary({ onChooseMore, onSeeInstallation, onGoToManage }: Props) {
   const catalog = useCatalog()
   const run = useRun()
+  useWatchOpenable(
+    catalog.programs.map((one) => one.id),
+    run?.finishedAt ?? null,
+  )
   const [restarting, setRestarting] = useState(false)
   const [left, setLeft] = useState(SECONDS_UNTIL_RESTART)
 
@@ -142,6 +169,7 @@ export function Summary({ onChooseMore, onSeeInstallation, onGoToManage }: Props
                     <div className={s.line}>
                       <span className={s.name}>{name}</span>
                       <span className={s.meta}>{meta.join(' · ')}</span>
+                      {group.kind === 'ready' && <OpenButton id={line.id} />}
                     </div>
 
                     {line.note && <ClampedText text={line.note} className={s.note} />}

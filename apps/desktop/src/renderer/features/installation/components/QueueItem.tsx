@@ -4,6 +4,7 @@ import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { ClampedText } from '@/shared/ui/ClampedText/ClampedText'
 import { Stages } from './Stages'
 import { useCatalog } from '@/features/catalog'
+import { openProgram, useCanOpen, useOpening } from '../store/useOpenable'
 import s from './QueueItem.module.css'
 
 const TAG: Record<ItemStatus, string> = {
@@ -30,6 +31,8 @@ export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Pr
   const program = catalog.byId.get(item.id)
   const name = program?.name ?? item.id
   const canRetry = item.status === 'failed' || item.status === 'canceled'
+  const canOpen = useCanOpen(item.id)
+  const opening = useOpening(item.id)
 
   return (
     <div className={s.card} data-status={item.status}>
@@ -113,6 +116,20 @@ export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Pr
           <ClampedText text={item.error ?? 'Ficou de fora da instalação.'} className={s.message} />
           <button type="button" className={s.retry} onClick={() => onRetry(item.id)}>
             Tentar de novo
+          </button>
+        </div>
+      )}
+
+      {item.status === 'done' && canOpen && (
+        <div className={s.problem}>
+          <span className={s.message}>Instalado e pronto para usar.</span>
+          <button
+            type="button"
+            className={s.retry}
+            disabled={opening}
+            onClick={() => void openProgram(item.id)}
+          >
+            {opening ? 'Abrindo…' : 'Abrir'}
           </button>
         </div>
       )}
