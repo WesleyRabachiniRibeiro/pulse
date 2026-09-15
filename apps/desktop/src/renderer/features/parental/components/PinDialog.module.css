@@ -2,135 +2,126 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: color-mix(in srgb, var(--bg-page) 78%, transparent);
-  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 6, 14, 0.72);
 }
 
-.dialog {
-  width: 100%;
-  max-width: 380px;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
+.box {
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  padding: 22px 24px 20px;
   border-radius: var(--r-xl);
-  padding: 26px 26px 20px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  box-shadow: 0 30px 80px -30px #000;
+  animation: ia-rise 0.18s ease both;
 }
 
-.label {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  color: var(--tx-5);
-}
-
-.description {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--tx-2);
-  margin: 8px 0 20px;
-}
-
-.fields {
+.head {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.fieldName {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--tx-6);
-}
-
-.input {
-  width: 100%;
-  background: var(--bg-field);
-  border: 1px solid var(--border-field);
-  border-radius: var(--r-md);
-  padding: 11px 14px;
-  color: var(--tx);
-  font-family: var(--mono);
-  font-size: 19px;
-  letter-spacing: 0.5em;
-  text-align: center;
-}
-
-.input:focus-visible {
-  outline: none;
-  border-color: var(--focus);
-}
-
-.input::placeholder {
-  color: var(--tx-6);
-  letter-spacing: 0.5em;
-}
-
-.status {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--tx-4);
-  margin: 14px 0 0;
-  min-height: 1.5em;
-}
-
-.status[role='alert'] {
-  color: var(--blocker);
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.ghost,
-.confirm {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  border-radius: var(--r-md);
-  padding: 10px 16px;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-
-.ghost {
-  background: transparent;
-  border-color: var(--border-field);
-  color: var(--tx-3);
-}
-
-.ghost:hover {
-  color: var(--tx);
-}
-
-.confirm {
-  background: var(--grad-button);
-  color: #0b0818;
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
   font-weight: 600;
 }
 
-.confirm:disabled {
-  background: var(--bg-subtle);
-  color: var(--tx-6);
-  cursor: default;
+.close {
+  border: 0;
+  background: none;
+  color: var(--tx-5);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
 }
 
-.ghost:focus-visible,
-.confirm:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+.close:hover {
+  color: var(--tx);
+}
+
+.desc {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--tx-5);
+}
+
+.casas {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0 4px;
+  cursor: text;
+}
+
+.casa {
+  width: 46px;
+  height: 54px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-field);
+  background: var(--bg-field);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--tx);
+  transition: border-color 0.15s;
+}
+
+.casa[data-filled='true'] {
+  border-color: var(--grad-txt-a);
+  background: color-mix(in srgb, var(--grad-a) 12%, var(--bg-field));
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.error {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--blocker);
+}
+
+.foot {
+  margin: 16px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--tx-6);
+}
+
+.casa[data-now='true'] {
+  border-color: var(--grad-txt-a);
+}
+
+.casa[data-now='true']::after {
+  content: '';
+  width: 2px;
+  height: 24px;
+  border-radius: 1px;
+  background: var(--grad-txt-a);
+  animation: pulse-caret 1.05s steps(1, end) infinite;
+}
+
+@keyframes pulse-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
 }

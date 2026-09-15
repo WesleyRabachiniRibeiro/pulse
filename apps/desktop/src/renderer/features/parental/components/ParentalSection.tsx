@@ -1,132 +1,210 @@
 import { useState } from 'react'
+import { LuExternalLink } from 'react-icons/lu'
 import { type PinPurpose } from '@pulse/domain'
-import { groupByCategory } from '@pulse/utils'
-import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
+import { bridge } from '@/shared/lib/bridge'
+import { useCatalog } from '@/features/catalog'
 import {
   changeParentalPin,
   checkParentalPin,
-  setParentalBlocked,
   turnOffParental,
   turnOnParental,
   useParental,
 } from '../store/useParental'
 import { PinDialog } from './PinDialog'
-import { useCatalog } from '@/features/catalog'
 import s from './ParentalSection.module.css'
 
-export function ParentalSection() {
+// A troca do PIN é em dois passos: o mesmo diálogo pergunta primeiro o de
+// agora e depois o novo, porque as casinhas só cabem um PIN por vez.
+interface Asking {
+  purpose: PinPurpose
+  step: 'single' | 'current' | 'next'
+  current?: string
+  extra?: string
+}
+
+interface Props {
+  onOpenBlocked: () => void
+}
+
+export function ParentalSection({ onOpenBlocked }: Props) {
   const catalog = useCatalog()
   const { on, hasPin, blocked } = useParental()
-  const [asking, setAsking] = useState<PinPurpose | null>(null)
-  const [editing, setEditing] = useState(false)
+  const [asking, setAsking] = useState<Asking | null>(null)
 
   const locked = on && hasPin
-  const groups = groupByCategory(catalog, catalog.programs)
 
-  // 'list' só confere o PIN: mexer na lista não liga nem desliga o controle.
-  function answer(purpose: PinPurpose, pin: string, next?: string): Promise<boolean> {
-    if (purpose === 'change') return changeParentalPin(pin, next ?? '')
-    if (purpose === 'turnOff') return turnOffParental(pin)
-    if (purpose === 'list') return checkParentalPin(pin)
-    return turnOnParental(pin)
-  }
-
-  async function confirm(pin: string, next?: string): Promise<boolean> {
-    const purpose = asking
-    if (!purpose) return false
-
-    const ok = await answer(purpose, pin, next)
-    if (!ok) return false
+  async function turnOn(pin: string): Promise<string | null> {
+    const ok = await turnOnParental(pin)
+    if (!ok) return hasPin ? 'PIN incorreto.' : 'Não deu para ligar com esse PIN.'
 
     setAsking(null)
-    if (purpose === 'list') setEditing(true)
-    return true
+    return null
   }
 
-  function toggle(id: string) {
-    const next = blocked.includes(id) ? blocked.filter((x) => x !== id) : [...blocked, id]
-    void setParentalBlocked(next)
+  async function turnOff(pin: string): Promise<string | null> {
+    const ok = await turnOffParental(pin)
+    if (!ok) return 'PIN incorreto.'
+
+    setAsking(null)
+    return null
   }
+
+  async function change(pin: string, current?: string): Promise<string | null> {
+    if (!current) {
+      const ok = await checkParentalPin(pin)
+      if (!ok) return 'PIN incorreto.'
+
+      setAsking({
+        purpose: 'change',
+        step: 'next',
+        current: pin,
+        extra: 'Agora o PIN novo. São quatro números.',
+      })
+      return null
+    }
+
+    const ok = await changeParentalPin(current, pin)
+    if (!ok) return 'Não deu para trocar o PIN.'
+
+    setAsking(null)
+    return null
+  }
+
+  async function openList(pin: string): Promise<string | null> {
+    const ok = await checkParentalPin(pin)
+    if (!ok) return 'PIN incorreto.'
+
+    setAsking(null)
+    onOpenBlocked()
+    return null
+  }
+
+  function answer(pin: string): Promise<string | null> {
+    if (!asking) return Promise.resolve(null)
+
+    if (asking.purpose === 'turnOff') return turnOff(pin)
+    if (asking.purpose === 'list') return openList(pin)
+    if (asking.purpose === 'change') return change(pin, asking.current)
+    return turnOn(pin)
+  }
+
+  const blockLine =
+    blocked.length === 0
+      ? 'nada bloqueado ainda'
+      : `${blocked.length} de ${catalog.programs.length} programas bloqueados para a criança`
 
   return (
     <section className={s.section}>
-      <div className={s.label}>CONTROLE DOS PAIS</div>
-      <p className={s.description}>
-        Com ele ligado, os programas que você marcar aqui não podem ser instalados sem o PIN. A
-        lista vale só para este computador, e quem escolhe o que entra nela é você.
-      </p>
-
-      <div className={s.row}>
-        <div className={s.state} data-on={locked}>
-          <span className={s.dot} aria-hidden />
-          <span>{locked ? 'Ligado' : hasPin ? 'Desligado' : 'Sem PIN cadastrado'}</span>
-        </div>
-
-        <div className={s.buttons}>
-          {locked ? (
-            <button type="button" className={s.ghost} onClick={() => setAsking('turnOff')}>
-              DESLIGAR
-            </button>
-          ) : (
-            <button type="button" className={s.primary} onClick={() => setAsking(hasPin ? 'turnOn' : 'create')}>
-              {hasPin ? 'LIGAR' : 'CRIAR PIN'}
-            </button>
-          )}
-
-          {hasPin && (
-            <button type="button" className={s.ghost} onClick={() => setAsking('change')}>
-              TROCAR O PIN
-            </button>
-          )}
-        </div>
+      <div className={s.header}>
+        <span className={s.name}>CONTROLE DOS PAIS</span>
+        <span className={s.line} aria-hidden />
+        <span className={s.state} data-on={locked}>
+          {locked ? 'LIGADO · O PULSE ASSUME QUE É A CRIANÇA' : 'DESLIGADO'}
+        </span>
       </div>
 
-      {hasPin && (
-        <div className={s.list}>
-          <div className={s.listTop}>
-            <span className={s.listCount}>
-              {blocked.length === 0
-                ? 'Nenhum programa bloqueado'
-                : `${blocked.length} ${blocked.length === 1 ? 'programa bloqueado' : 'programas bloqueados'}`}
-            </span>
-            <button
-              type="button"
-              className={s.ghost}
-              onClick={() => (editing ? setEditing(false) : setAsking('list'))}
-            >
-              {editing ? 'PRONTO' : 'MEXER NA LISTA'}
-            </button>
+      <div className={s.panel}>
+        <div className={s.row}>
+          <div className={s.texts}>
+            <div className={s.rowName}>Controle dos pais</div>
+            <div className={s.hint}>
+              Ligado, o Pulse passa a tratar quem está na frente como a criança: o que estiver na
+              sua lista não pode ser instalado, tirar programa do PC pede o PIN, e desligar também.
+            </div>
           </div>
 
-          {editing &&
-            groups.map((group) => (
-              <div key={group.category.id} className={s.group}>
-                <div className={s.groupName}>{group.category.name}</div>
-                <div className={s.programs}>
-                  {group.programs.map((program) => (
-                    <button
-                      key={program.id}
-                      type="button"
-                      role="checkbox"
-                      aria-checked={blocked.includes(program.id)}
-                      className={s.program}
-                      onClick={() => toggle(program.id)}
-                    >
-                      <span className={s.box} aria-hidden>
-                        {blocked.includes(program.id) ? '✓' : ''}
-                      </span>
-                      <AppIcon id={program.id} name={program.name} size={22} />
-                      <span className={s.programName}>{program.name}</span>
-                    </button>
-                  ))}
+          <button
+            type="button"
+            className={s.action}
+            onClick={() =>
+              setAsking({
+                purpose: locked ? 'turnOff' : hasPin ? 'turnOn' : 'create',
+                step: 'single',
+              })
+            }
+          >
+            {locked ? 'Desligar' : hasPin ? 'Ligar' : 'Criar o PIN'}
+          </button>
+        </div>
+
+        {locked && (
+          <>
+            <div className={s.warn}>
+              <span className={s.warnMark} aria-hidden>
+                !
+              </span>
+              <span className={s.warnText}>
+                Isso tranca o Pulse, não o computador. Quem baixar o instalador pelo navegador ou
+                rodar o winget na linha de comando passa por cima. É trava de conveniência. O
+                controle de verdade é a Microsoft Family, no fim desta seção.
+              </span>
+            </div>
+
+            <div className={s.row}>
+              <div className={s.texts}>
+                <div className={s.rowName}>Lista de bloqueados</div>
+                <div className={s.hint}>
+                  Você percorre o catálogo e marca o que ela não pode instalar. Mexer nesta lista
+                  pede o PIN.
+                </div>
+                <div className={s.count}>{blockLine}</div>
+              </div>
+
+              <button
+                type="button"
+                className={s.amber}
+                onClick={() => setAsking({ purpose: 'list', step: 'single' })}
+              >
+                Abrir a lista
+              </button>
+            </div>
+
+            <div className={s.row}>
+              <div className={s.texts}>
+                <div className={s.rowName}>Trocar o PIN</div>
+                <div className={s.hint}>Pede o de agora e depois o novo.</div>
+              </div>
+
+              <button
+                type="button"
+                className={s.quiet}
+                onClick={() => setAsking({ purpose: 'change', step: 'current' })}
+              >
+                Trocar
+              </button>
+            </div>
+
+            <div className={s.row} data-last="true">
+              <div className={s.texts}>
+                <div className={s.rowName}>Microsoft Family</div>
+                <div className={s.hint}>
+                  Limite de tempo de tela, filtro de sites e bloqueio por classificação moram nas
+                  contas do Windows. É lá que o controle de verdade é feito. O Pulse só cuida do
+                  que ele mesmo instala.
                 </div>
               </div>
-            ))}
-        </div>
-      )}
+
+              <button
+                type="button"
+                className={s.primary}
+                onClick={() => void bridge.invoke('system:openFamily', undefined)}
+              >
+                Abrir contas do Windows
+                <LuExternalLink size={13} aria-hidden />
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       {asking && (
-        <PinDialog purpose={asking} onConfirm={confirm} onCancel={() => setAsking(null)} />
+        <PinDialog
+          key={`${asking.purpose}-${asking.step}`}
+          purpose={asking.purpose}
+          {...(asking.extra ? { extra: asking.extra } : {})}
+          onDone={answer}
+          onClose={() => setAsking(null)}
+        />
       )}
     </section>
   )
