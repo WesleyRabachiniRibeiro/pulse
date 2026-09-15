@@ -175,7 +175,10 @@ describe('limites dentro do main', () => {
 })
 
 describe('limites do renderer', () => {
-  const inRenderer = (file: string): boolean => file.startsWith('apps/desktop/src/renderer/')
+  // O teste fica de fora como na application: a regra existe para o código que
+  // embarca no bundle, e teste de renderer roda no node.
+  const inRenderer = (file: string): boolean =>
+    file.startsWith('apps/desktop/src/renderer/') && !TEST.test(file)
 
   it('não importa node nem electron', async () => {
     const broken: string[] = []
