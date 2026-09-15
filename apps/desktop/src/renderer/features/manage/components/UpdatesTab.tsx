@@ -1,83 +1,62 @@
-import { useEffect, useState } from 'react'
-import { type Upgrade } from '@pulse/domain'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
 import { useCatalog } from '@/features/catalog'
-import { bridge } from '@/shared/lib/bridge'
-import s from './Manage.module.css'
+import { useInventoryLoaded, useUpgrades } from '../store/useInventory'
+import shell from './tabs.module.css'
 
-export function UpdatesTab() {
+interface Props {
+  onUpdate: (programId: string) => void
+}
+
+export function UpdatesTab({ onUpdate }: Props) {
   const catalog = useCatalog()
-  const [upgrades, setUpgrades] = useState<readonly Upgrade[] | null>(null)
-  const [failed, setFailed] = useState(false)
+  const upgrades = useUpgrades()
+  const loaded = useInventoryLoaded()
 
-  useEffect(() => {
-    let alive = true
-    void bridge
-      .invoke('catalog:upgrades', undefined)
-      .then((found) => {
-        if (alive) setUpgrades(found)
-      })
-      .catch(() => {
-        if (!alive) return
-        setUpgrades([])
-        setFailed(true)
-      })
-    return () => {
-      alive = false
-    }
-  }, [])
-
-  if (upgrades === null) {
-    return <p className={s.empty}>Perguntando ao winget o que tem atualização…</p>
-  }
-
-  if (failed) {
-    return <p className={s.empty}>Não deu para falar com o winget agora. Tente de novo daqui a pouco.</p>
-  }
+  if (!loaded) return <p className={shell.empty}>Perguntando ao winget quem tem versão nova…</p>
 
   if (upgrades.length === 0) {
-    return <p className={s.empty}>Tudo que o winget conhece está na última versão.</p>
+    return <p className={shell.empty}>Nenhum programa deste PC tem versão nova esperando.</p>
   }
 
   return (
-    <div className={s.list}>
-      <div className={s.listTop}>
-        <span className={s.listCount}>
-          {upgrades.length} {upgrades.length === 1 ? 'atualização' : 'atualizações'}
-        </span>
-      </div>
-
+    <>
       {upgrades.map((one) => {
         const program = one.programId ? catalog.byId.get(one.programId) : undefined
 
         return (
-          <article key={one.wingetId} className={s.upgrade}>
+          <div key={one.wingetId} className={shell.item}>
             {program ? (
               <AppIcon id={program.id} name={program.name} size={28} />
             ) : (
-              <span className={s.noIcon} aria-hidden />
+              <span className={shell.stranger}>—</span>
             )}
 
-            <div className={s.upgradeBody}>
-              <span className={s.upgradeName}>{program?.name ?? one.name}</span>
-              <span className={s.upgradeId}>{one.wingetId}</span>
-            </div>
-
-            <span className={s.versions}>
-              <span className={s.from}>{one.current}</span>
-              <span className={s.arrow} aria-hidden>
-                →
-              </span>
-              <span className={s.to}>{one.available}</span>
+            <span className={shell.body}>
+              <span className={shell.name}>{program?.name ?? one.name}</span>
+              <span className={shell.note}>{one.wingetId}</span>
             </span>
-          </article>
+
+            <span className={shell.versions}>
+              {one.current}
+              <span className={shell.arrow}>→</span>
+              <span className={shell.fresh}>{one.available}</span>
+            </span>
+
+            {program && (
+              <span className={shell.actions}>
+                <button
+                  type="button"
+                  className={shell.action}
+                  data-tone="main"
+                  onClick={() => onUpdate(program.id)}
+                >
+                  ATUALIZAR
+                </button>
+              </span>
+            )}
+          </div>
         )
       })}
-
-      <p className={s.footnote}>
-        O Pulse ainda não atualiza por aqui. A lista é para você saber o que está para trás, e o
-        comando é <code>winget upgrade --id</code> seguido do identificador.
-      </p>
-    </div>
+    </>
   )
 }

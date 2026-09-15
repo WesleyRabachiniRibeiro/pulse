@@ -1,0 +1,181 @@
+.histLine {
+  margin: 0 0 15px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--tx-2);
+  max-width: 58ch;
+}
+
+.runs {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-width: 840px;
+}
+
+.run {
+  border: 1px solid var(--border-card);
+  border-radius: 13px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.runHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.runHead[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--grad-a) 5%, transparent);
+}
+
+.runHead:hover {
+  background: color-mix(in srgb, var(--grad-a) 8%, transparent);
+}
+
+.runCaret {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tx-5);
+}
+
+.runTitles {
+  flex: 1;
+  min-width: 0;
+}
+
+.runWhen {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.runMeta {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--tx-5);
+}
+
+.runPills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.runPill {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  border-radius: 6px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  color: var(--tx-5);
+  background: var(--bg-subtle);
+}
+
+.runPill[data-state='done'] {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+.runPill[data-state='failed'] {
+  color: var(--blocker);
+  background: color-mix(in srgb, var(--blocker) 12%, transparent);
+}
+
+.runPill[data-state='waiting'] {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.runBody {
+  border-top: 1px solid var(--border-wire);
+}
+
+.runItem {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border-wire);
+}
+
+.runItem:last-child {
+  border-bottom: 0;
+}
+
+.runLine {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.runName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runDisk {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--tx-6);
+}
+
+.runTag {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  border-radius: 6px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  color: var(--tx-5);
+  background: var(--bg-subtle);
+}
+
+.runTag[data-state='done'] {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+.runTag[data-state='failed'] {
+  color: var(--blocker);
+  background: color-mix(in srgb, var(--blocker) 12%, transparent);
+}
+
+.runTag[data-state='waiting'] {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.runError {
+  margin: 8px 0 0 38px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #ffdfa8;
+}
+
+.histTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
