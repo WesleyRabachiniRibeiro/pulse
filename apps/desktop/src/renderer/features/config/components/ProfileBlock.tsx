@@ -3,7 +3,8 @@ import { EXPORT_FORMATS, FORMAT_FILE, type ExportFormat, type ImportMode } from 
 import { applyProfile, selectionAsProfile, useSelection } from '@/features/selection'
 import { useCatalog } from '@/features/catalog'
 import { bridge } from '@/shared/lib/bridge'
-import s from './Config.module.css'
+import shell from './Config.module.css'
+import s from './ProfileBlock.module.css'
 
 const FORMAT_HINT: Record<ExportFormat, string> = {
   pulse: 'volta para o Pulse em outro PC, com discos e ajustes',
@@ -97,9 +98,14 @@ export function ProfileBlock() {
   }
 
   return (
-    <section className={s.section}>
-      <div className={s.label}>LEVAR A SELEÇÃO PARA OUTRO PC</div>
-      <p className={s.description}>
+    <section className={shell.section}>
+      <div className={shell.header}>
+        <span className={shell.name}>LEVAR A SELEÇÃO PARA OUTRO PC</span>
+        <span className={shell.line} aria-hidden />
+        <span className={shell.scope}>ARQUIVO OU LINK</span>
+      </div>
+
+      <p className={shell.note}>
         Guarda o que você escolheu num arquivo, com os discos e os ajustes de cada programa. Serve
         para repetir a mesma instalação em outra máquina, ou para deixar pronto antes de formatar.
       </p>
