@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_GIT,
-  formatGb,
   formatMb,
   listValue,
   stepForKind,
@@ -9,6 +8,7 @@ import {
   settingsAreEmpty,
   withListValue,
   type AnyStep,
+  type Defaults,
   type GitConfig,
   type Settings,
 } from '@pulse/domain'
@@ -23,6 +23,7 @@ import {
   useUninstalling,
   useUninstallError,
 } from '../store/useUninstall'
+import { ProgramExceptions } from './ProgramExceptions'
 import s from './AppSettings.module.css'
 import { CheckOption } from './CheckOption'
 import { StepSection } from './StepSection'
@@ -35,6 +36,7 @@ interface Props {
   installed: boolean
   drives: readonly Drive[]
   generalDrive: string
+  defaults: Defaults
   chosenDrive: string | null
   currentAutostart: 'on' | 'off' | null
   settings: Settings
@@ -50,6 +52,7 @@ export function AppSettings({
   installed,
   drives,
   generalDrive,
+  defaults,
   chosenDrive,
   currentAutostart,
   settings,
@@ -94,13 +97,6 @@ export function AppSettings({
     onChangeSettings(program.id, { ...settings, steps: { ...steps, ...patch } })
   }
 
-  const autostartShown: 'on' | 'off' | null =
-    settings.autostart === undefined ? currentAutostart : settings.autostart ? 'on' : 'off'
-
-  function chooseAutostart(wanted: 'on' | 'off') {
-    const value = wanted === currentAutostart ? undefined : wanted === 'on'
-    onChangeSettings(program.id, { ...settings, autostart: value })
-  }
   const git: GitConfig = steps.gitConfig ?? machineGit ?? DEFAULT_GIT
   const canApply = installed && !settingsAreEmpty(settings)
 
@@ -153,44 +149,17 @@ export function AppSettings({
         )}
 
         {installsItself && (
-        <StepSection
-          title="ONDE INSTALAR ESTE PROGRAMA"
-          description={`Vale só para o ${program.name}. Os outros seguem o disco geral, escolhido nas boas-vindas.`}
-          tour="aj-disco"
-        >
-
-          <div className={s.drives}>
-            <button
-              type="button"
-              className={s.drive}
-              aria-pressed={chosenDrive === null}
-              disabled={installed}
-              onClick={() => onChangeDrive(program.id, null)}
-            >
-              <span className={s.driveName}>Geral · {generalDrive}</span>
-              <span className={s.driveNote}>o disco da etapa 1</span>
-            </button>
-
-            {drives.map((d) => (
-              <button
-                key={d.letter}
-                type="button"
-                className={s.drive}
-                aria-pressed={chosenDrive === d.letter}
-                disabled={installed}
-                onClick={() => onChangeDrive(program.id, d.letter === generalDrive ? null : d.letter)}
-              >
-                <span className={s.driveName}>
-                  {d.letter} {d.label || 'Sem nome'}
-                </span>
-                <span className={s.driveNote}>
-                  {formatGb(d.freeBytes)} livres
-                  {d.media !== 'Desconhecido' ? ` · ${d.media}` : ''}
-                </span>
-              </button>
-            ))}
-          </div>
-        </StepSection>
+          <ProgramExceptions
+            settings={settings}
+            defaults={defaults}
+            drives={drives}
+            generalDrive={generalDrive}
+            chosenDrive={chosenDrive}
+            currentAutostart={currentAutostart}
+            installed={installed}
+            onChangeSettings={(next) => onChangeSettings(program.id, next)}
+            onChangeDrive={(letter) => onChangeDrive(program.id, letter)}
+          />
         )}
 
         {program.family && (
@@ -212,37 +181,6 @@ export function AppSettings({
           </StepSection>
         )}
 
-        {installsItself && (
-        <section className={s.section} data-tour="aj-inicio">
-          <div className={s.label}>AO LIGAR O COMPUTADOR</div>
-          <p className={s.description}>
-            {currentAutostart
-              ? 'Já está marcado como está hoje no seu PC. É o mesmo interruptor da aba Inicializar do Gerenciador de Tarefas, então dá para conferir e desfazer por lá.'
-              : 'Este programa não se cadastra para abrir sozinho hoje. Se ele passar a se cadastrar depois de instalado, a sua escolha aqui vale.'}
-          </p>
-
-          <div className={s.drives}>
-            {[
-              { value: 'on' as const, name: 'Abrir com o Windows', note: 'já pronto quando o PC liga' },
-              { value: 'off' as const, name: 'Não abrir com o Windows', note: 'você abre quando quiser' },
-            ].map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={s.drive}
-                aria-pressed={autostartShown === option.value}
-                onClick={() => chooseAutostart(option.value)}
-              >
-                <span className={s.driveName}>{option.name}</span>
-                <span className={s.driveNote}>
-                  {option.note}
-                  {currentAutostart === option.value ? ' · é o que está agora' : ''}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-        )}
 
         {has('steamGames') && (
           <StepSection title={step?.title} description={step?.description} tour="aj-kind">

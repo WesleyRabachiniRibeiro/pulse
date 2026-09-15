@@ -256,3 +256,9 @@ export function filterInstalled(
     return node.children.some((child) => normalizeText(child.name).includes(needle))
   })
 }
+
+// Só o que o Pulse reconhece do catálogo pode ser marcado: sem programId não
+// há o que atualizar nem desinstalar pelo nome que ele conhece.
+export function selectable(nodes: readonly InstalledNode[]): InstalledNode[] {
+  return nodes.filter((node) => node.programId !== undefined)
+}

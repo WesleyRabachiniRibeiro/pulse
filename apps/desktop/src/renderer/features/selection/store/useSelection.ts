@@ -7,6 +7,7 @@ interface SelectionStore {
   settings: Readonly<Record<string, Settings>>
   toggle: (id: string) => void
   applyBundle: (ids: readonly string[]) => void
+  setMany: (ids: readonly string[], on: boolean) => void
   setDrive: (id: string, drive: string | null) => void
   setSettings: (id: string, settings: Settings) => void
   clear: () => void
@@ -26,6 +27,16 @@ export const useSelection = create<SelectionStore>((set) => ({
     }),
 
   applyBundle: (ids) => set({ selected: new Set(ids) }),
+
+  setMany: (ids, on) =>
+    set((state) => {
+      const selected = new Set(state.selected)
+      for (const id of ids) {
+        if (on) selected.add(id)
+        else selected.delete(id)
+      }
+      return { selected }
+    }),
 
   setDrive: (id, drive) =>
     set((state) => {

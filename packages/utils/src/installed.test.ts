@@ -4,6 +4,7 @@ import type { RegistryEntry } from '@pulse/domain'
 import {
   buildInstalled,
   countNodes,
+  selectable,
   filterInstalled,
   hiddenReason,
   iconPath,
@@ -154,5 +155,19 @@ describe('ícone', () => {
     expect(iconPath('"C:\\App\\app.exe",-1')).toBe('C:\\App\\app.exe')
     expect(iconPath(undefined)).toBeNull()
     expect(iconPath('  ')).toBeNull()
+  })
+})
+
+describe('quem pode ser marcado', () => {
+  it('só entra quem o catálogo reconhece', () => {
+    const nodes = [
+      { key: 'a', name: 'Steam', kind: 'app' as const, programId: 'steam', children: [] },
+      { key: 'b', name: 'Coisa qualquer', kind: 'app' as const, children: [] },
+    ]
+    expect(selectable(nodes).map((n) => n.key)).toEqual(['a'])
+  })
+
+  it('lista vazia devolve vazia', () => {
+    expect(selectable([])).toEqual([])
   })
 })
