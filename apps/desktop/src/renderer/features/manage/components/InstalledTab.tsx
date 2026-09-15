@@ -1,5 +1,15 @@
 import { useMemo, useState } from 'react'
-import { LuChevronDown, LuChevronRight, LuExternalLink, LuListX, LuSearch } from 'react-icons/lu'
+import {
+  LuCheck,
+  LuChevronDown,
+  LuChevronRight,
+  LuExternalLink,
+  LuListX,
+  LuPlus,
+  LuRotateCw,
+  LuSearch,
+  LuTriangleAlert,
+} from 'react-icons/lu'
 import { type InstalledFilter, type InstalledNode } from '@pulse/domain'
 import { filterInstalled, selectable } from '@pulse/utils'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
@@ -11,6 +21,7 @@ import { bridge } from '@/shared/lib/bridge'
 import { useFileIcon } from '../store/useFileIcon'
 import {
   dropFromCatalog,
+  reloadInventory,
   useHiddenCount,
   useInstalled,
   useInventoryLoaded,
@@ -49,9 +60,18 @@ function noteOf(node: InstalledNode): string {
 function NodeIcon({ node, size }: { node: InstalledNode; size: number }) {
   const catalog = useCatalog()
   const program = node.programId ? catalog.byId.get(node.programId) : undefined
-  const url = useFileIcon(program ? undefined : node.icon)
+  const url = useFileIcon(program?.icon ? undefined : node.icon)
 
-  if (program) return <AppIcon id={program.id} name={program.name} size={size} />
+  if (program) {
+    return (
+      <AppIcon
+        id={program.id}
+        name={program.name}
+        size={size}
+        {...(program.icon ? { picture: program.icon } : {})}
+      />
+    )
+  }
 
   if (url) {
     return (
@@ -66,6 +86,59 @@ function NodeIcon({ node, size }: { node: InstalledNode; size: number }) {
   }
 
   return <span className={shell.stranger}>—</span>
+}
+
+type AdoptState = 'idle' | 'working' | 'added' | 'missing' | 'failed'
+
+const ADOPT_TITLE: Record<AdoptState, string> = {
+  idle: 'Pôr no seu catálogo, para poder instalar este programa em outro PC',
+  working: 'Procurando este programa no winget…',
+  added: 'Entrou no seu catálogo',
+  missing: 'O winget não conhece este programa, então o Pulse não teria como instalá-lo',
+  failed: 'Não deu para pôr no catálogo. Tente de novo.',
+}
+
+function AdoptButton({ node, icon }: { node: InstalledNode; icon: string | null }) {
+  const [state, setState] = useState<AdoptState>('idle')
+
+  async function adopt() {
+    setState('working')
+
+    const answer = await bridge
+      .invoke('catalog:add', {
+        name: node.name,
+        ...(node.version ? { version: node.version } : {}),
+        ...(icon ? { icon } : {}),
+      })
+      .catch(() => null)
+
+    if (!answer) return setState('failed')
+
+    if (answer.status === 'added' || answer.status === 'exists') {
+      setState('added')
+      void reloadInventory()
+      return
+    }
+
+    setState(answer.status === 'not-found' ? 'missing' : 'failed')
+  }
+
+  return (
+    <button
+      type="button"
+      className={s.icon}
+      data-state={state}
+      disabled={state === 'working' || state === 'added'}
+      onClick={() => void adopt()}
+      aria-label={`Pôr ${node.name} no seu catálogo`}
+      title={ADOPT_TITLE[state]}
+    >
+      {state === 'added' && <LuCheck size={15} />}
+      {state === 'working' && <LuRotateCw size={15} data-busy="true" />}
+      {state === 'missing' && <LuTriangleAlert size={15} />}
+      {(state === 'idle' || state === 'failed') && <LuPlus size={15} />}
+    </button>
+  )
 }
 
 function DropButton({ node }: { node: InstalledNode }) {
@@ -120,6 +193,7 @@ function Row({ node, picked, onPick }: RowProps) {
   const removed = useUninstalled(node.programId ?? '')
   const nested = node.children.length > 0
   const locked = on && hasPin
+  const fileIcon = useFileIcon(program ? undefined : node.icon)
 
   return (
     <>
@@ -163,6 +237,12 @@ function Row({ node, picked, onPick }: RowProps) {
         <span className={s.origin} data-mine={Boolean(node.programId)}>
           {node.programId ? 'PELO PULSE' : 'FORA DO CATÁLOGO'}
         </span>
+
+        {!program && node.kind === 'app' && (
+          <span className={shell.actions}>
+            <AdoptButton node={node} icon={fileIcon} />
+          </span>
+        )}
 
         {program && !removed && (
           <span className={shell.actions}>
@@ -232,6 +312,8 @@ export function InstalledTab({ onQueue }: Props) {
   const [filter, setFilter] = useState<InstalledFilter>('all')
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
   const [asking, setAsking] = useState(false)
+  const [building, setBuilding] = useState(false)
+  const [built, setBuilt] = useState<string | null>(null)
 
   const shown = useMemo(
     () => filterInstalled(installed, query, filter),
@@ -265,6 +347,28 @@ export function InstalledTab({ onQueue }: Props) {
     setPicked(allOn ? new Set() : new Set(canPick.map((node) => node.key)))
   }
 
+  // O perfil montado aqui é só a lista: disco e exceções são escolhas da tela
+  // de seleção, e este caminho existe para quem quer partir do PC que já tem.
+  async function buildProfile() {
+    const ids = (picked.size > 0 ? chosen : selectable(installed))
+      .map((node) => node.programId)
+      .filter((id): id is string => typeof id === 'string')
+
+    if (ids.length === 0) return
+
+    setBuilding(true)
+    const answer = await bridge
+      .invoke('profile:export', {
+        format: 'pulse',
+        profile: { selected: ids, drives: {}, settings: {} },
+      })
+      .catch(() => null)
+    setBuilding(false)
+
+    if (!answer || answer.status === 'canceled') return
+    setBuilt(answer.status === 'saved' ? `Perfil salvo em ${answer.path ?? 'disco'}` : null)
+  }
+
   function removeChosen() {
     for (const node of chosen) if (node.programId) void uninstallProgram(node.programId)
     setPicked(new Set())
@@ -293,6 +397,20 @@ export function InstalledTab({ onQueue }: Props) {
             {shown.length} de {installed.length}
           </span>
         </div>
+
+        <button
+          type="button"
+          className={s.build}
+          disabled={building}
+          onClick={() => void buildProfile()}
+          title="Gera um perfil a partir do que já está neste PC, sem você marcar nada à mão"
+        >
+          {building
+            ? 'MONTANDO…'
+            : picked.size > 0
+              ? `MONTAR PERFIL COM OS ${picked.size} MARCADOS`
+              : 'MONTAR PERFIL COM O QUE JÁ ESTÁ AQUI'}
+        </button>
 
         {FILTERS.map((one) => (
           <button
@@ -381,6 +499,8 @@ export function InstalledTab({ onQueue }: Props) {
           <Row key={node.key} node={node} picked={picked.has(node.key)} onPick={toggle} />
         ))
       )}
+
+      {built && <p className={s.hiddenNote}>{built}</p>}
 
       {hidden > 0 && filter !== 'stranger' && (
         <p className={s.hiddenNote}>
