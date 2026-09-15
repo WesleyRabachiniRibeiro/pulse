@@ -266,6 +266,14 @@ export const ipcContracts = {
     input: steamSearchInputSchema,
     output: z.array(steamGameSchema),
   },
+  'system:icon': {
+    input: z.object({ path: z.string() }),
+    output: z.string().nullable(),
+  },
+  'system:openFamily': {
+    input: z.void(),
+    output: z.void(),
+  },
   'system:restart': {
     input: z.void(),
     output: z.void(),

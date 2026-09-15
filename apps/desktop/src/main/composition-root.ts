@@ -4,12 +4,14 @@ import { WingetPackageInstaller } from './infra/winget/WingetPackageInstaller'
 import { WindowsToolchain } from './infra/toolchain/WindowsToolchain'
 import { WindowsAutostartRegistry } from './infra/autostart/WindowsAutostartRegistry'
 import { ElectronClipboardWriter } from './infra/electron/ElectronClipboardWriter'
+import { ElectronIconReader } from './infra/electron/ElectronIconReader'
 import { InMemoryQueueRepository } from './infra/queue/InMemoryQueueRepository'
 import { QueueOrchestrator } from './application/queue/QueueOrchestrator'
 import { registerInstallation } from './ipc/installation'
 
 import { WindowsSystemInspector } from './infra/system/WindowsSystemInspector'
 import { WindowsDiskSpaceProbe } from './infra/system/WindowsDiskSpaceProbe'
+import { ElectronWindowsSettings } from './infra/system/ElectronWindowsSettings'
 import { WindowsPowerController } from './infra/system/WindowsPowerController'
 import { WingetPackageRepository } from './infra/catalog/WingetPackageRepository'
 import { WindowsAutostartReader } from './infra/catalog/WindowsAutostartReader'
@@ -25,6 +27,7 @@ import { JsonEditorSettingsStore } from './infra/editor/JsonEditorSettingsStore'
 import { NodePinSealer } from './infra/parental/NodePinSealer'
 import { PreferencesParentalStore } from './infra/parental/PreferencesParentalStore'
 import { RegistryWindowsTweaks } from './infra/windows/RegistryWindowsTweaks'
+import { WindowsDesktopShortcut } from './infra/windows/WindowsDesktopShortcut'
 import { ElectronFileDialog } from './infra/dialogs/ElectronFileDialog'
 import { NodeRemoteFetch } from './infra/net/NodeRemoteFetch'
 import { JsonHistoryStore } from './infra/history/JsonHistoryStore'
@@ -89,13 +92,17 @@ export function composeMain(): MainComponents {
     steamAdapter,
     browserDefaultSetter,
     autostartRegistry,
+    new WindowsDesktopShortcut(powershellRunner),
     queueRepository,
     clipboardWriter,
     new JsonEditorSettingsStore(),
     toolchain,
   )
 
-  registerInstallation(queueOrchestrator)
+  const preferencesStore = new JsonPreferencesStore()
+  const preferencesService = new PreferencesService(preferencesStore)
+
+  registerInstallation(queueOrchestrator, preferencesService)
 
   const preflightService = new RunSystemVerification(
     new WindowsSystemInspector(powershellRunner),
@@ -120,8 +127,6 @@ export function composeMain(): MainComponents {
 
   registerSteam(new SteamService(steamAdapter))
 
-  const preferencesStore = new JsonPreferencesStore()
-  const preferencesService = new PreferencesService(preferencesStore)
 
   registerParental(
     new ParentalService(new PreferencesParentalStore(preferencesStore), new NodePinSealer()),
@@ -134,6 +139,8 @@ export function composeMain(): MainComponents {
   const systemService = new SystemService(
     new WindowsPowerController(processRunner),
     new RegistryWindowsTweaks(processRunner, powershellRunner),
+    new ElectronWindowsSettings(),
+    new ElectronIconReader(),
   )
   registerSystem(systemService)
 

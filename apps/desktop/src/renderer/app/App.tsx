@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { formatMb } from '@pulse/domain'
+import { DEFAULT_KEYS, formatMb, programsOverriding } from '@pulse/domain'
 import { totalSizeMb } from '@pulse/utils'
 import { TitleBar } from '@/shared/ui/TitleBar/TitleBar'
 import { StepRail } from '@/shared/ui/StepRail/StepRail'
+import { TRAIL, type Screen } from '@/shared/ui/StepRail/screens'
 import { Home } from '@/features/home'
 import {
   Welcome,
@@ -19,10 +20,11 @@ import { Config } from '@/features/config'
 import { Manage } from '@/features/manage'
 import { useWatchUpdate } from '@/features/updates'
 import { Tour, useOpenOnFirstVisit, useTourStore } from '@/features/tour'
-import { useWatchParental } from '@/features/parental'
+import { BlockedList, useWatchParental } from '@/features/parental'
 import {
   savePreference,
   useLoadPreferences,
+  useDefaults,
   usePreferences,
   usePreferencesLoaded,
 } from '@/features/preferences'
@@ -56,8 +58,7 @@ export function App() {
 
 function Shell({ savedDrive }: { savedDrive: string | null }) {
   const catalog = useCatalog()
-  const [step, setStep] = useState(0)
-  const [overlay, setOverlay] = useState<'config' | 'manage' | null>(null)
+  const [screen, setScreen] = useState<Screen>('home')
   const [drive, setDrive] = useState<string | null>(savedDrive)
   const selected = useSelection((st) => st.selected)
   const verifiedDrive = usePreflightDrive()
@@ -67,81 +68,100 @@ function Shell({ savedDrive }: { savedDrive: string | null }) {
   useWatchParental()
   const run = useRun()
 
-  const pastPreflight = step >= 2
+  const pastPreflight = screen === 'select' || screen === 'run' || screen === 'summary'
 
   useWatchInstalled(run?.finishedAt ?? null, pastPreflight)
   useWatchAutostart(run?.finishedAt ?? null, pastPreflight)
   useOpenOnFirstVisit()
 
+  // O rail marca quantos programas fogem do padrão, contando cada um uma vez
+  // só mesmo que fuja em mais de um campo.
+  const defaults = useDefaults()
+  const settingsByApp = useSelection((st) => st.settings)
+  const overrides = new Set(
+    DEFAULT_KEYS.flatMap((key) => programsOverriding(settingsByApp, defaults, key)),
+  ).size
+
   const totalMb = totalSizeMb(catalog, selected)
   const size = selected.size === 0 ? 'nada escolhido ainda' : `${formatMb(totalMb)} para baixar`
 
-  const available = [1, ...(drive ? [2] : []), ...(run ? [3] : []), ...(run?.finishedAt ? [4] : [])]
+  const available: Screen[] = [
+    'check',
+    ...(drive ? (['select'] as const) : []),
+    ...(run ? (['run'] as const) : []),
+    ...(run?.finishedAt ? (['summary'] as const) : []),
+  ]
 
   useEffect(() => {
     if (verifiedDrive !== undefined) setDrive(verifiedDrive)
   }, [verifiedDrive])
 
   useEffect(() => {
-    if (!drive && step === 2) setStep(1)
-  }, [drive, step])
+    if (!drive && screen === 'select') setScreen('check')
+  }, [drive, screen])
 
   useEffect(() => {
     if (drive && drive !== savedDrive) void savePreference({ drive })
   }, [drive, savedDrive])
 
+  // O tour ainda pede tela por número; a trilha do TRAIL está na mesma ordem.
   const targetScreen = useTourStore((t) => t.targetScreen)
   const availableList = available.join(',')
 
   useEffect(() => {
     if (targetScreen === null) return
-    if (targetScreen === 0 || availableList.split(',').includes(String(targetScreen))) setStep(targetScreen)
+    const wanted: Screen = targetScreen === 0 ? 'home' : (TRAIL[targetScreen - 1]?.key ?? 'home')
+    if (wanted === 'home' || availableList.split(',').includes(wanted)) setScreen(wanted)
     useTourStore.getState().requestScreen(null)
   }, [targetScreen, availableList])
 
   return (
     <div className={s.page}>
       <div className={s.window}>
-        <TitleBar
-          version={VERSION}
-          onHome={() => {
-            setOverlay(null)
-            setStep(0)
-          }}
-          onConfig={() => setOverlay('config')}
-          onManage={() => setOverlay('manage')}
-        />
+        <TitleBar version={VERSION} onHome={() => setScreen('home')} />
 
         <div className={s.inner}>
           <StepRail
-            onHome={() => setStep(0)}
-            atHome={step === 0}
-            current={step}
+            current={screen}
             available={available}
-            onGo={setStep}
+            onGo={setScreen}
             selected={selected.size}
             size={size}
+            overrides={overrides}
+            updates={0}
           />
 
           <div className={s.content}>
-            {overlay === 'config' && <Config onBack={() => setOverlay(null)} />}
-            {overlay === 'manage' && <Manage onBack={() => setOverlay(null)} />}
-            {overlay === null && step === 0 && <Home onStart={() => setStep(1)} />}
-            {overlay === null && step === 1 && (
+            {screen === 'home' && <Home onStart={() => setScreen('check')} onManage={() => setScreen('manage')} />}
+            {screen === 'check' && (
               <Welcome
                 queueOn={run && !run.finishedAt ? run.drive : null}
-                onNext={() => setStep(2)}
+                onNext={() => setScreen('select')}
               />
             )}
-            {overlay === null && step === 2 && drive && (
-              <Selection drive={drive} onGoToInstallation={() => setStep(3)} />
+            {screen === 'select' && drive && (
+              <Selection
+                drive={drive}
+                onGoToInstallation={() => setScreen('run')}
+                onGoToConfig={() => setScreen('config')}
+              />
             )}
-            {overlay === null && step === 3 && (
-              <Installation onChooseMore={() => setStep(2)} onSeeSummary={() => setStep(4)} />
+            {screen === 'run' && (
+              <Installation
+                onChooseMore={() => setScreen('select')}
+                onSeeSummary={() => setScreen('summary')}
+              />
             )}
-            {overlay === null && step === 4 && (
-              <Summary onChooseMore={() => setStep(2)} onSeeInstallation={() => setStep(3)} />
+            {screen === 'summary' && (
+              <Summary
+                onChooseMore={() => setScreen('select')}
+                onSeeInstallation={() => setScreen('run')}
+                onGoToManage={() => setScreen('manage')}
+              />
             )}
+            {screen === 'config' && <Config onOpenBlocked={() => setScreen('blocked')} />}
+            {screen === 'blocked' && <BlockedList onDone={() => setScreen('config')} />}
+            {screen === 'manage' && <Manage onGoToInstallation={() => setScreen('run')} />}
           </div>
         </div>
       </div>
