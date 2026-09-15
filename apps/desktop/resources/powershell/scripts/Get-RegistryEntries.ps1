@@ -18,6 +18,12 @@ $entries = @(
       # programa que a pessoa instalou.
       $system = ($item.SystemComponent -eq 1) -or (-not [string]::IsNullOrWhiteSpace([string]$item.ParentKeyName))
 
+      # QuietUninstallString nem sempre existe; UninstallString é o que a
+      # maioria tem. Os dois vêm no mesmo item, então escolher aqui evita
+      # reler as três chaves inteiras uma vez por entrada.
+      $uninstall = [string]$item.QuietUninstallString
+      if ([string]::IsNullOrWhiteSpace($uninstall)) { $uninstall = [string]$item.UninstallString }
+
       [pscustomobject]@{
         key       = [string]$item.PSChildName
         name      = $name
@@ -26,20 +32,9 @@ $entries = @(
         system    = [bool]$system
         location  = [string]$item.InstallLocation
         icon      = [string]$item.DisplayIcon
-        uninstall = [string]$item.QuietUninstallString
+        uninstall = $uninstall
       }
     }
-  }
-)
-
-# QuietUninstallString nem sempre existe; UninstallString é o que a maioria tem.
-$entries = @(
-  foreach ($entry in $entries) {
-    if ([string]::IsNullOrWhiteSpace($entry.uninstall)) {
-      $found = Get-ItemProperty $keys | Where-Object { $_.PSChildName -eq $entry.key } | Select-Object -First 1
-      if ($found) { $entry.uninstall = [string]$found.UninstallString }
-    }
-    $entry
   }
 )
 
