@@ -62,16 +62,7 @@ function NodeIcon({ node, size }: { node: InstalledNode; size: number }) {
   const program = node.programId ? catalog.byId.get(node.programId) : undefined
   const url = useFileIcon(program?.icon ? undefined : node.icon)
 
-  if (program) {
-    return (
-      <AppIcon
-        id={program.id}
-        name={program.name}
-        size={size}
-        {...(program.icon ? { picture: program.icon } : {})}
-      />
-    )
-  }
+  if (program) return <AppIcon id={program.id} name={program.name} size={size} />
 
   if (url) {
     return (
@@ -104,11 +95,19 @@ function AdoptButton({ node, icon }: { node: InstalledNode; icon: string | null 
   async function adopt() {
     setState('working')
 
+    // O ícone da linha chega por uma pergunta assíncrona. Quem clica antes
+    // dela responder adotaria sem ícone, então aqui ele é pedido de novo.
+    const picture =
+      icon ??
+      (node.icon
+        ? await bridge.invoke('system:icon', { path: node.icon }).catch(() => null)
+        : null)
+
     const answer = await bridge
       .invoke('catalog:add', {
         name: node.name,
         ...(node.version ? { version: node.version } : {}),
-        ...(icon ? { icon } : {}),
+        ...(picture ? { icon: picture } : {}),
       })
       .catch(() => null)
 
