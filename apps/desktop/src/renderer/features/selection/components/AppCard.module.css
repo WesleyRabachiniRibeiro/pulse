@@ -144,9 +144,11 @@
   border: 1px solid var(--border-soft);
   background: transparent;
   color: var(--tx-2);
-  font-size: 12px;
+  /* Era o caractere ⋯, que centrava pela métrica da fonte. O ícone é um SVG,
+     e precisa do grid para ficar no meio do botão. */
+  display: grid;
+  place-items: center;
   line-height: 1;
-  letter-spacing: 0.06em;
   padding: 0;
   cursor: pointer;
   transition: border-color 0.16s, background 0.16s;

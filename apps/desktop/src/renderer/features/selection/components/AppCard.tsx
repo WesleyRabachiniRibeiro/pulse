@@ -1,4 +1,4 @@
-import { LuBan } from 'react-icons/lu'
+import { LuBan, LuSettings } from 'react-icons/lu'
 import { formatMb } from '@pulse/domain'
 import type { Program } from '@pulse/domain'
 import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
@@ -92,7 +92,7 @@ export function AppCard({
           title="Ajustes deste programa"
           onClick={() => onOpenSettings(program.id)}
         >
-          ⋯
+          <LuSettings size={13} aria-hidden />
         </button>
       </div>
 
