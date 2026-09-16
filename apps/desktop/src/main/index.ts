@@ -1,11 +1,17 @@
 import { app, BrowserWindow, nativeImage, shell } from 'electron'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { APP_ICON } from './icon'
 import { register } from './ipc/register'
 import { composeMain } from './composition-root'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
+
+function appIconPath(): string {
+  const dir = app.isPackaged
+    ? join(process.resourcesPath, 'icons')
+    : join(app.getAppPath(), 'resources', 'icons')
+  return join(dir, 'app.png')
+}
 
 let window: BrowserWindow | null = null
 
@@ -17,7 +23,7 @@ function createWindow(): void {
     minHeight: 700,
     show: false,
     frame: false,
-    icon: nativeImage.createFromDataURL(APP_ICON),
+    icon: nativeImage.createFromPath(appIconPath()),
     backgroundColor: '#0C0A16',
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),
