@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   CATALOG_VERSION,
-  SEED_CATALOG,
   type CatalogPayload,
   type CatalogState,
   type Program,
@@ -68,13 +67,13 @@ function make(
 }
 
 describe('de onde vem o catálogo', () => {
-  it('sem cache e sem rede, fica na semente', async () => {
+  it('sem cache e sem rede, o catálogo fica vazio', async () => {
     const { catalog, service } = make()
 
     await service.load()
 
-    expect(service.currentState().source).toBe('seed')
-    expect(catalog.programs).toEqual(SEED_CATALOG.programs)
+    expect(service.currentState().source).toBe('empty')
+    expect(catalog.programs).toEqual([])
   })
 
   it('a rede, quando responde, substitui e é guardada', async () => {
@@ -97,7 +96,7 @@ describe('de onde vem o catálogo', () => {
 
     await service.load()
 
-    expect(states.map((s) => s.source)).toEqual(['seed', 'cache', 'network'])
+    expect(states.map((s) => s.source)).toEqual(['empty', 'cache', 'network'])
     expect(catalog.byId.has('novo')).toBe(true)
   })
 
@@ -116,8 +115,8 @@ describe('de onde vem o catálogo', () => {
 
     await service.load()
 
-    expect(service.currentState().source).toBe('seed')
-    expect(catalog.programs).toEqual(SEED_CATALOG.programs)
+    expect(service.currentState().source).toBe('empty')
+    expect(catalog.programs).toEqual([])
     expect(written).toEqual([])
   })
 
@@ -125,7 +124,7 @@ describe('de onde vem o catálogo', () => {
     const { service } = make({ body: 'isto não é json' })
 
     await expect(service.load()).resolves.toBeUndefined()
-    expect(service.currentState().source).toBe('seed')
+    expect(service.currentState().source).toBe('empty')
   })
 
   it('catálogo com id repetido é recusado inteiro', async () => {
@@ -139,7 +138,7 @@ describe('de onde vem o catálogo', () => {
 
     await service.load()
 
-    expect(service.currentState().source).toBe('seed')
+    expect(service.currentState().source).toBe('empty')
   })
 
   it('catálogo com padrão de família inválido é recusado inteiro', async () => {
@@ -160,7 +159,7 @@ describe('de onde vem o catálogo', () => {
 
     await service.load()
 
-    expect(service.currentState().source).toBe('seed')
+    expect(service.currentState().source).toBe('empty')
   })
 
   it('catálogo de outra versão do formato é recusado', async () => {
@@ -168,6 +167,6 @@ describe('de onde vem o catálogo', () => {
 
     await service.load()
 
-    expect(service.currentState().source).toBe('seed')
+    expect(service.currentState().source).toBe('empty')
   })
 })

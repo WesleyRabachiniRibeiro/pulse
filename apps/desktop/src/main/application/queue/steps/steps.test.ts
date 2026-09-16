@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { PROGRAM_BY_ID, type Program } from '@pulse/catalog-data'
+import type { Program } from '@pulse/catalog-data'
+import { SAMPLE_BY_ID } from '@pulse/catalog-data/src/samples'
 import type { Settings } from '@pulse/domain'
 import { runSteps, STEP_IDS } from './index'
 import type { StepContext, StepPorts } from './context'
@@ -70,7 +71,7 @@ function fakeContext(ports: StepPorts, program: Program): Spy {
   }
 }
 
-const vscode = PROGRAM_BY_ID.get('vscode') as Program
+const vscode = SAMPLE_BY_ID.get('vscode') as Program
 
 describe('runSteps', () => {
   it('não roda nada quando o ajuste não foi pedido', async () => {
@@ -332,7 +333,7 @@ describe('ajustes do editor', () => {
 })
 
 describe('ferramentas do runtime', () => {
-  const node = PROGRAM_BY_ID.get('node') as Program
+  const node = SAMPLE_BY_ID.get('node') as Program
 
   it('instala tudo numa chamada só, com os argumentos do npm', async () => {
     const ports = fakePorts()

@@ -1,4 +1,5 @@
-import { SEED_CATALOG } from '@pulse/domain'
+import { catalogOf } from '@pulse/domain'
+import { SAMPLE_BUNDLES, SAMPLE_CATEGORIES, SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
 import { describe, expect, it } from 'vitest'
 import type { Run } from '@pulse/domain'
 import { QueueOrchestrator } from './QueueOrchestrator'
@@ -12,6 +13,8 @@ import type { BrowserDefaultSetter } from '../../ports/browser-default-setter'
 import type { AutostartRegistry } from '../../ports/autostart-registry'
 import type { DesktopShortcut } from '../../ports/desktop-shortcut'
 import type { ClipboardWriter } from '../../ports/clipboard-writer'
+
+const SAMPLE_CATALOG = catalogOf(SAMPLE_PROGRAMS, SAMPLE_CATEGORIES, SAMPLE_BUNDLES)
 
 function fakeProcessRunner(overrides: Partial<ProcessRunner> = {}): ProcessRunner {
   return {
@@ -83,7 +86,7 @@ function makeOrchestrator(
   processRunner: ProcessRunner = fakeProcessRunner(),
 ): QueueOrchestrator {
   return new QueueOrchestrator(
-    SEED_CATALOG,
+    SAMPLE_CATALOG,
     processRunner,
     packageInstaller,
     fakePackageRepository(),

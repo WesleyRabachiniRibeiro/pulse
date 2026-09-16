@@ -166,7 +166,7 @@ pulse/
 │       ├── build/icon.ico              # ícone do instalador (versionado, apesar do build/)
 │       └── electron-builder.yml
 ├── packages/
-│   ├── catalog-data/     # os programas e as opções (dados, sem dependência)
+│   ├── catalog-data/     # tipos e opções (dados, sem dependência)
 │   ├── domain/           # regras puras, schemas zod, primitivas de texto e formatação
 │   ├── utils/            # lógica derivada sobre os tipos do domínio
 │   └── ipc-contract/     # schemas zod + tipos dos canais e eventos IPC

@@ -1,7 +1,10 @@
-import { SEED_CATALOG } from '@pulse/domain'
+import { catalogOf } from '@pulse/domain'
+import { SAMPLE_BUNDLES, SAMPLE_CATEGORIES, SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
 import type { Item } from '@pulse/domain'
 import { describe, expect, it } from 'vitest'
 import { canEnqueue, itemPercent, overallPercent, tally } from './installation'
+
+const SAMPLE_CATALOG = catalogOf(SAMPLE_PROGRAMS, SAMPLE_CATEGORIES, SAMPLE_BUNDLES)
 
 function item(overrides: Partial<Item>): Item {
   return {
@@ -61,12 +64,12 @@ describe('overallPercent', () => {
       item({ id: 'chrome', status: 'done' }),
       item({ id: 'firefox', status: 'queued' }),
     ]
-    expect(overallPercent(SEED_CATALOG, items)).toBeGreaterThan(0)
-    expect(overallPercent(SEED_CATALOG, items)).toBeLessThan(100)
+    expect(overallPercent(SAMPLE_CATALOG, items)).toBeGreaterThan(0)
+    expect(overallPercent(SAMPLE_CATALOG, items)).toBeLessThan(100)
   })
 
   it('returns 0 for an empty queue', () => {
-    expect(overallPercent(SEED_CATALOG, [])).toBe(0)
+    expect(overallPercent(SAMPLE_CATALOG, [])).toBe(0)
   })
 })
 

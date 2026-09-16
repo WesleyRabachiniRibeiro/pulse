@@ -48,6 +48,10 @@ function slug(file: string): string {
   return relative(ROOT, file).split('\\').join('/')
 }
 
+function packageOf(source: string): string {
+  return source.split('/').slice(0, 2).join('/')
+}
+
 function ownerOf(path: string): string | null {
   for (const [folder, name] of Object.entries(PACKAGE_OF)) {
     if (path.startsWith(`${folder}/`)) return name
@@ -112,7 +116,7 @@ describe('limites entre pacotes', () => {
       if (!to.startsWith('@pulse/')) continue
 
       const owner = ownerOf(from)
-      const target = RANK[to]
+      const target = RANK[packageOf(to)]
       if (owner === null || target === undefined) continue
 
       const mine = RANK[owner]
@@ -134,7 +138,7 @@ describe('limites entre pacotes', () => {
       const declared = new Set(Object.keys(manifest.dependencies ?? {}))
 
       for (const { from, to } of await edges((f) => ownerOf(f) === name)) {
-        if (to.startsWith('@pulse/') && !declared.has(to)) {
+        if (to.startsWith('@pulse/') && !declared.has(packageOf(to))) {
           broken.push(`${from} importa ${to}, que não está em ${folder}/package.json`)
         }
       }

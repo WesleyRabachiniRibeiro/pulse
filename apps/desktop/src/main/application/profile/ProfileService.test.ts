@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_PROFILE, SEED_CATALOG, type Profile } from '@pulse/domain'
+import { catalogOf, EMPTY_PROFILE, type Profile } from '@pulse/domain'
+import { SAMPLE_BUNDLES, SAMPLE_CATEGORIES, SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
 import { portableOf } from '@pulse/utils'
 import { ProfileService } from './ProfileService'
 import type { FileDialog, SaveRequest } from '../../ports/file-dialog'
 import type { RemoteFetch } from '../../ports/remote-fetch'
+
+const SAMPLE_CATALOG = catalogOf(SAMPLE_PROGRAMS, SAMPLE_CATEGORIES, SAMPLE_BUNDLES)
 
 const mine: Profile = {
   selected: ['chrome', 'steam'],
@@ -32,7 +35,7 @@ function make(
 
   const remote: RemoteFetch = { text: async () => null, ...over.remote }
 
-  const service = new ProfileService(SEED_CATALOG, dialog, remote, { list: async () => [] }, async () =>
+  const service = new ProfileService(SAMPLE_CATALOG, dialog, remote, { list: async () => [] }, async () =>
     over.folder,
   )
 

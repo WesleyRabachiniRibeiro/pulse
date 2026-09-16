@@ -3,8 +3,20 @@ import { describe, expect, it } from 'vitest'
 import type { ProcessRunner, SpawnResult } from '../../ports/process-runner'
 import type { CatalogPackageReader } from '../../ports/catalog-package-reader'
 import type { AutostartReader } from '../../ports/autostart-reader'
-import type { Program } from '@pulse/domain'
+import { CATALOG_VERSION, type CatalogPayload, type Program } from '@pulse/domain'
+import { SAMPLE_BUNDLES, SAMPLE_CATEGORIES, SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
 import { CatalogService } from './CatalogService'
+
+function loadedCatalog(): LiveCatalog {
+  const live = new LiveCatalog()
+  live.adopt({
+    pulse: CATALOG_VERSION,
+    categories: [...SAMPLE_CATEGORIES],
+    programs: [...SAMPLE_PROGRAMS] as CatalogPayload['programs'],
+    bundles: SAMPLE_BUNDLES.map((bundle) => ({ name: bundle.name, ids: [...bundle.ids] })),
+  })
+  return live
+}
 
 function fakeProcessRunner(text: string): ProcessRunner {
   return {
@@ -53,7 +65,7 @@ function fakeFinder(found: { winget: string; name: string; version: string } | n
 function adopting(found: { winget: string; name: string; version: string } | null) {
   const written: Program[][] = []
   const service = new CatalogService(
-    new LiveCatalog(),
+    loadedCatalog(),
     fakePackageReader(),
     fakeAutostartReader(),
     fakeProcessRunner(''),
@@ -141,7 +153,7 @@ describe('adotar um programa do PC', () => {
 describe('CatalogService.listVersions', () => {
   it('returns an empty list for a program with no family', async () => {
     const service = new CatalogService(
-      new LiveCatalog(),
+      loadedCatalog(),
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(''),
@@ -158,7 +170,7 @@ describe('CatalogService.listVersions', () => {
 
   it('parses the winget search table and sorts versions descending', async () => {
     const service = new CatalogService(
-      new LiveCatalog(),
+      loadedCatalog(),
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
@@ -181,7 +193,7 @@ describe('CatalogService.listVersions', () => {
 
   it('flags the catalog default winget id as recommended', async () => {
     const service = new CatalogService(
-      new LiveCatalog(),
+      loadedCatalog(),
       fakePackageReader(),
       fakeAutostartReader(),
       fakeProcessRunner(WINGET_SEARCH_OUTPUT),
@@ -202,7 +214,7 @@ describe('CatalogService.listVersions', () => {
 describe('CatalogService passthroughs', () => {
   it('delegates listInstalled to the package reader', async () => {
     const service = new CatalogService(
-      new LiveCatalog(),
+      loadedCatalog(),
       fakePackageReader(['chrome', 'vscode']),
       fakeAutostartReader(),
       fakeProcessRunner(''),

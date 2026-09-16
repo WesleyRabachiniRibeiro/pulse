@@ -2,7 +2,7 @@ import { withExtras } from '@pulse/utils'
 import {
   CATALOG_VERSION,
   catalogOf,
-  SEED_CATALOG,
+  EMPTY_CATALOG,
   type Catalog,
   type Category,
   type CatalogPayload,
@@ -10,9 +10,9 @@ import {
 } from '@pulse/domain'
 
 export class LiveCatalog implements Catalog {
-  private base: Catalog = SEED_CATALOG
+  private base: Catalog = EMPTY_CATALOG
   private extras: readonly Program[] = []
-  private inner: Catalog = SEED_CATALOG
+  private inner: Catalog = EMPTY_CATALOG
 
   get categories(): Catalog['categories'] {
     return this.inner.categories
