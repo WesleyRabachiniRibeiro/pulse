@@ -1,7 +1,9 @@
 node_modules/
-out/
 dist/
+out/
+build/
+!apps/desktop/build/
 *.log
-.DS_Store
-
 *.tsbuildinfo
+.DS_Store
+.claude/scheduled_tasks.lock

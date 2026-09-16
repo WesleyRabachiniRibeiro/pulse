@@ -1,0 +1,46 @@
+import { normalizeText } from '@pulse/domain'
+import type { ProcessRunner } from '../../ports/process-runner'
+import type { FoundPackage, PackageFinder } from '../../ports/package-finder'
+
+function readRow(line: string): FoundPackage | null {
+  const tokens = line.trim().split(/\s{2,}/)
+  if (tokens.length < 3) return null
+
+  const [name, winget, version] = tokens
+  if (!name || !winget || !version) return null
+  if (!winget.includes('.')) return null
+
+  return { name, winget, version }
+}
+
+export class WingetPackageFinder implements PackageFinder {
+  constructor(private readonly processRunner: ProcessRunner) {}
+
+  async search(name: string): Promise<FoundPackage | null> {
+    const wanted = name.trim()
+    if (!wanted) return null
+
+    const { text } = await this.processRunner
+      .runOnce('winget', [
+        'search',
+        '--name',
+        wanted,
+        '--disable-interactivity',
+        '--accept-source-agreements',
+        '--source',
+        'winget',
+      ])
+      .catch((): { code: number; text: string } => ({ code: -1, text: '' }))
+
+    const rows: FoundPackage[] = []
+    for (const line of text.split(/\r?\n/)) {
+      const row = readRow(line)
+      if (row) rows.push(row)
+    }
+
+    if (rows.length === 0) return null
+
+    const needle = normalizeText(wanted)
+    return rows.find((row) => normalizeText(row.name) === needle) ?? rows[0] ?? null
+  }
+}

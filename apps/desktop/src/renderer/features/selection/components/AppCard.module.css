@@ -1,0 +1,199 @@
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 11px;
+  padding: 8px 9px;
+  transition: border-color 0.16s, background 0.16s;
+}
+
+.card:hover {
+  border-color: var(--border-field);
+}
+
+.card[data-checked='true'][data-installed='false'] {
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--grad-a) 10%, transparent),
+    color-mix(in srgb, var(--grad-b) 7%, transparent)
+  );
+  border-color: var(--border-hover);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.target {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.target:disabled {
+  cursor: default;
+}
+
+.card[data-skeleton='true'] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: default;
+  animation: ia-pulse 1.4s ease-in-out infinite;
+}
+
+.emptyTile,
+.nameBar,
+.metaBar {
+  display: block;
+  background: var(--bg-subtle);
+  border-radius: 5px;
+}
+
+.emptyTile {
+  flex: 0 0 27px;
+  width: 27px;
+  height: 27px;
+  border-radius: 8px;
+}
+
+.nameBar {
+  width: 96px;
+  height: 11px;
+}
+
+.metaBar {
+  width: 64px;
+  height: 9px;
+  margin-top: 5px;
+}
+
+.card[data-installed='true'] {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.card[data-installed='true'] .box {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--ok) 55%, transparent);
+  color: var(--ok);
+}
+
+.card[data-installed='true'] .meta {
+  color: color-mix(in srgb, var(--ok) 75%, var(--tx-4));
+}
+
+.box {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--tx-on);
+}
+
+.card[data-checked='true'][data-installed='false'] .box {
+  background: var(--grad-button);
+  border-color: transparent;
+}
+
+.body {
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tx-5);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid var(--border-soft);
+  background: transparent;
+  color: var(--tx-2);
+  /* Era o caractere ⋯, que centrava pela métrica da fonte. O ícone é um SVG,
+     e precisa do grid para ficar no meio do botão. */
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.16s, background 0.16s;
+}
+
+.settings:hover {
+  border-color: transparent;
+  background: var(--grad-button);
+  color: var(--tx-on);
+}
+
+.badge {
+  margin: 7px 0 1px 28px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--grad-txt-b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card[data-blocked='true'] {
+  border-color: color-mix(in srgb, var(--warning) 32%, transparent);
+  background: color-mix(in srgb, var(--warning) 6%, var(--bg-card));
+}
+
+.card[data-blocked='true'] .box {
+  border-color: color-mix(in srgb, var(--warning) 50%, transparent);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+
+.card[data-blocked='true'] .meta {
+  color: var(--warning);
+}
+
+.tag {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  border-radius: 5px;
+  padding: 3px 5px;
+  white-space: nowrap;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}

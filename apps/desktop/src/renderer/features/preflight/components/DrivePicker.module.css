@@ -1,0 +1,134 @@
+.block {
+  max-width: 760px;
+  margin-top: 24px;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--tx-5);
+}
+
+.list {
+  display: flex;
+  gap: 10px;
+  margin-top: 11px;
+}
+
+.drive {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  padding: 13px 15px;
+  cursor: pointer;
+  color: var(--tx);
+  font-family: inherit;
+  transition: border-color 0.16s, background 0.16s;
+}
+
+.drive:hover:not(:disabled) {
+  border-color: var(--border-hover);
+}
+
+.drive[aria-pressed='true'] {
+  border-color: var(--grad-txt-a);
+  background: color-mix(in srgb, var(--grad-a) 12%, var(--bg-card));
+}
+
+.drive:disabled {
+  cursor: default;
+}
+
+.drive[aria-pressed='true']:disabled {
+  cursor: default;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+}
+
+.letter {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.name {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: var(--tx-6);
+  border: 1px solid var(--border-field);
+  border-radius: 5px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+.space {
+  display: block;
+  font-size: 12.5px;
+  color: var(--tx-2);
+  margin-top: 3px;
+}
+
+.bar {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-wire);
+  margin-top: 9px;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+}
+
+.ghost {
+  cursor: default;
+  animation: ia-pulse 1.4s ease-in-out infinite;
+}
+
+.nameBar,
+.spaceBar {
+  display: block;
+  background: var(--bg-subtle);
+  border-radius: 5px;
+}
+
+.nameBar {
+  width: 96px;
+  height: 15px;
+}
+
+.spaceBar {
+  width: 68px;
+  height: 11px;
+  margin-top: 6px;
+}
+
+.notice {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--tx-5);
+  margin: 11px 0 0;
+  max-width: 66ch;
+}

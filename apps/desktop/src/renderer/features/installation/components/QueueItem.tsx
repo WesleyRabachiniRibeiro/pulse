@@ -1,0 +1,138 @@
+import { type Item, type ItemStatus } from '@pulse/domain'
+import { canCancel, driveLabel, isActive, isWaiting, needsPermission } from '@pulse/utils'
+import { AppIcon } from '@/shared/ui/AppIcon/AppIcon'
+import { ClampedText } from '@/shared/ui/ClampedText/ClampedText'
+import { Stages } from './Stages'
+import { useCatalog } from '@/features/catalog'
+import { openProgram, useCanOpen, useOpening } from '../store/useOpenable'
+import s from './QueueItem.module.css'
+
+const TAG: Record<ItemStatus, string> = {
+  queued: 'NA FILA',
+  downloading: 'BAIXANDO',
+  installing: 'INSTALANDO',
+  configuring: 'AJUSTANDO',
+  waiting: 'PRECISA DE VOCÊ',
+  done: 'CONCLUÍDO',
+  failed: 'FALHOU',
+  canceled: 'CANCELADO',
+}
+
+interface Props {
+  item: Item
+  generalDrive: string
+  onRetry: (id: string) => void
+  onCancel: (id: string) => void
+  onGrant: (id: string) => void
+}
+
+export function QueueItem({ item, generalDrive, onRetry, onCancel, onGrant }: Props) {
+  const catalog = useCatalog()
+  const program = catalog.byId.get(item.id)
+  const name = program?.name ?? item.id
+  const canRetry = item.status === 'failed' || item.status === 'canceled'
+  const canOpen = useCanOpen(item.id)
+  const opening = useOpening(item.id)
+
+  return (
+    <div className={s.card} data-status={item.status}>
+      <div className={s.row}>
+        <AppIcon id={item.id} name={name} size={29} />
+
+        <div className={s.body}>
+          <div className={s.header}>
+            <span className={s.name}>{name}</span>
+            {program && <span className={s.version}>{program.version}</span>}
+            <span className={s.drive} data-general={item.drive === generalDrive}>
+              {driveLabel(item.drive, generalDrive)}
+            </span>
+          </div>
+          <div className={s.detail}>
+            {item.detail}
+            {isActive(item) && item.percent > 0 ? ` · ${item.percent}%` : ''}
+          </div>
+        </div>
+
+        <span className={s.tag}>{TAG[item.status]}</span>
+
+        {canCancel(item) && (
+          <button
+            type="button"
+            className={s.cancel}
+            onClick={() => onCancel(item.id)}
+            disabled={item.canceling}
+            aria-label={`Cancelar ${name}`}
+          >
+            {item.canceling ? 'Cancelando…' : 'Cancelar'}
+          </button>
+        )}
+      </div>
+
+      {(isActive(item) || isWaiting(item)) && (
+        <>
+          {isActive(item) && (
+            <div className={s.track}>
+              {item.percent > 0 ? (
+                <div className={s.bar} style={{ width: `${item.percent}%` }} />
+              ) : (
+                <div className={s.indeterminateBar} />
+              )}
+            </div>
+          )}
+          <Stages item={item} />
+        </>
+      )}
+
+      {needsPermission(item) && (
+        <div className={s.wait}>
+          <span className={s.waitText}>
+            O instalador do {name} precisa de permissão de administrador. Ao conceder, o Windows
+            abre a janela de confirmação e a instalação continua daqui. Os outros programas da fila
+            seguem normalmente.
+          </span>
+          <button type="button" className={s.grant} onClick={() => onGrant(item.id)}>
+            Conceder permissão
+          </button>
+        </div>
+      )}
+
+      {isWaiting(item) && !needsPermission(item) && (
+        <div className={s.wait}>
+          <span className={s.waitText}>
+            Este item só continua depois que você resolver isso na janela da Steam. Os outros
+            programas da fila seguem instalando normalmente.
+          </span>
+        </div>
+      )}
+
+      {item.driveIgnored && (
+        <p className={s.notice}>
+          O instalador deste programa não aceita escolha de disco. Foi para o disco do sistema.
+        </p>
+      )}
+
+      {canRetry && (
+        <div className={s.problem}>
+          <ClampedText text={item.error ?? 'Ficou de fora da instalação.'} className={s.message} />
+          <button type="button" className={s.retry} onClick={() => onRetry(item.id)}>
+            Tentar de novo
+          </button>
+        </div>
+      )}
+
+      {item.status === 'done' && canOpen && (
+        <div className={s.problem}>
+          <span className={s.message}>Instalado e pronto para usar.</span>
+          <button
+            type="button"
+            className={s.retry}
+            disabled={opening}
+            onClick={() => void openProgram(item.id)}
+          >
+            {opening ? 'Abrindo…' : 'Abrir'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

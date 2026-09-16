@@ -1,0 +1,79 @@
+.block {
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--bg-window);
+  overflow: hidden;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.summary:hover {
+  background: var(--bg-card);
+}
+
+.summaryText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--tx-3);
+}
+
+.line {
+  font-size: 13px;
+  color: var(--tx-5);
+}
+
+.line[data-exception='true'] {
+  color: var(--warning);
+}
+
+.action {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--tx-6);
+  flex: 0 0 auto;
+}
+
+.summary:hover .action {
+  color: var(--tx-2);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 14px 16px;
+}
+
+.note {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--tx-6);
+  max-width: 64ch;
+}
+
+.block:not(:last-child) {
+  margin-bottom: 34px;
+}
