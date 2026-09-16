@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CATALOG } from '@pulse/catalog-data'
+import { SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
 import type { RegistryEntry } from '@pulse/domain'
 import {
   buildInstalled,
@@ -28,7 +28,7 @@ describe('o que não é programa da pessoa', () => {
   it('são contados, para a tela dizer quantos escondeu', () => {
     const { nodes, hidden } = buildInstalled(
       [entry({ name: 'Google Chrome' }), entry({ name: 'X', system: true }), entry({ name: 'Y', uninstall: '' })],
-      CATALOG,
+      SAMPLE_PROGRAMS,
     )
     expect(hidden).toBe(2)
     expect(nodes).toHaveLength(1)
@@ -67,7 +67,7 @@ describe('agrupamento', () => {
         entry({ name: 'Python 3.12 (64-bit)', key: 'a', publisher: 'PSF', uninstall: 'MsiExec.exe /X{1}' }),
         entry({ name: 'Python 3.13 (64-bit)', key: 'b', publisher: 'PSF', uninstall: 'MsiExec.exe /X{2}' }),
       ],
-      CATALOG,
+      SAMPLE_PROGRAMS,
     )
 
     expect(nodes).toHaveLength(1)
@@ -81,31 +81,31 @@ describe('agrupamento', () => {
         entry({ name: 'Editor 1.0', key: 'a', publisher: 'A', uninstall: 'MsiExec.exe /X{1}' }),
         entry({ name: 'Editor 2.0', key: 'b', publisher: 'B', uninstall: 'MsiExec.exe /X{2}' }),
       ],
-      CATALOG,
+      SAMPLE_PROGRAMS,
     )
     expect(nodes).toHaveLength(2)
   })
 
   it('programa sozinho continua linha simples', () => {
-    const { nodes } = buildInstalled([entry({ name: 'Google Chrome' })], CATALOG)
+    const { nodes } = buildInstalled([entry({ name: 'Google Chrome' })], SAMPLE_PROGRAMS)
     expect(nodes[0]?.kind).toBe('app')
     expect(nodes[0]?.children).toEqual([])
   })
 
   it('o mesmo registro não aparece duas vezes', () => {
     const twice = entry({ name: 'Google Chrome', key: 'mesma' })
-    expect(buildInstalled([twice, twice], CATALOG).nodes).toHaveLength(1)
+    expect(buildInstalled([twice, twice], SAMPLE_PROGRAMS).nodes).toHaveLength(1)
   })
 })
 
 describe('reconhecer o catálogo', () => {
   it('o que o Pulse conhece ganha o id do programa', () => {
-    const { nodes } = buildInstalled([entry({ name: 'Google Chrome' })], CATALOG)
+    const { nodes } = buildInstalled([entry({ name: 'Google Chrome' })], SAMPLE_PROGRAMS)
     expect(nodes[0]?.programId).toBe('chrome')
   })
 
   it('o que ele não conhece continua na lista, sem id', () => {
-    const { nodes } = buildInstalled([entry({ name: 'Programa Estranho Ltda' })], CATALOG)
+    const { nodes } = buildInstalled([entry({ name: 'Programa Estranho Ltda' })], SAMPLE_PROGRAMS)
     expect(nodes).toHaveLength(1)
     expect(nodes[0]?.programId).toBeUndefined()
   })
@@ -114,7 +114,7 @@ describe('reconhecer o catálogo', () => {
 describe('busca e filtro', () => {
   const { nodes } = buildInstalled(
     [entry({ name: 'Google Chrome' }), entry({ name: 'Programa Estranho', key: 'x' })],
-    CATALOG,
+    SAMPLE_PROGRAMS,
   )
 
   it('separa o que o Pulse conhece do que não conhece', () => {
@@ -134,7 +134,7 @@ describe('busca e filtro', () => {
         entry({ name: 'Python 3.12', key: 'a', publisher: 'PSF', uninstall: 'MsiExec.exe /X{1}' }),
         entry({ name: 'Python 3.13', key: 'b', publisher: 'PSF', uninstall: 'MsiExec.exe /X{2}' }),
       ],
-      CATALOG,
+      SAMPLE_PROGRAMS,
     ).nodes
 
     expect(filterInstalled(grouped, '3.13')).toHaveLength(1)

@@ -1,9 +1,7 @@
 import { z } from 'zod'
-import { BUNDLES, CATALOG, CATEGORIES } from '@pulse/catalog-data'
 import type { Bundle, Category, Program } from '@pulse/catalog-data'
 
 export type { CategoryId, Category, SettingsKind, Program, Bundle } from '@pulse/catalog-data'
-export { CATEGORIES, CATALOG, PROGRAM_BY_ID, BUNDLES } from '@pulse/catalog-data'
 
 export interface Catalog {
   categories: readonly Category[]
@@ -25,7 +23,7 @@ export function catalogOf(
   }
 }
 
-export const SEED_CATALOG: Catalog = catalogOf(CATALOG, CATEGORIES, BUNDLES)
+export const EMPTY_CATALOG: Catalog = catalogOf([], [], [])
 
 export const CATALOG_VERSION = 1
 
@@ -56,7 +54,7 @@ export const catalogPayloadSchema = z.object({
 })
 export type CatalogPayload = z.infer<typeof catalogPayloadSchema>
 
-export const catalogSourceSchema = z.enum(['seed', 'cache', 'network'])
+export const catalogSourceSchema = z.enum(['empty', 'cache', 'network'])
 export type CatalogSource = z.infer<typeof catalogSourceSchema>
 
 export const catalogStateSchema = z.object({

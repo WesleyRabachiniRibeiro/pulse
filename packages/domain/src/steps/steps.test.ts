@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CATALOG } from '@pulse/catalog-data'
+import { SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
 import {
   listStepFor,
   listValue,
@@ -18,8 +18,8 @@ describe('registro de steps', () => {
     for (const step of STEPS) expect(STEP_BY_ID.get(step.id)).toBe(step)
   })
 
-  it('todo programa do catálogo com ajuste declara um step conhecido', () => {
-    for (const program of CATALOG) {
+  it('todo programa de amostra com ajuste declara um step conhecido', () => {
+    for (const program of SAMPLE_PROGRAMS) {
       if (!program.settingsKind) continue
       expect(stepsFor(program).length, `${program.id} ficou sem step`).toBeGreaterThan(0)
     }

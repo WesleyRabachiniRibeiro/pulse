@@ -21,7 +21,7 @@ pnpm workspaces: `apps/desktop` (o app Electron) + quatro pacotes, que só podem
 catalog-data → domain → utils → ipc-contract, apps/desktop
 ```
 
-- `catalog-data` — os programas do catálogo e as opções de configuração. Dados, sem dependência nenhuma.
+- `catalog-data` — os tipos do catálogo e as opções de configuração. Dados, sem dependência nenhuma. O catálogo de programas não mora aqui: ele é publicado em `catalog.json` e baixado ao abrir. `samples.ts` é fixture de teste, fora do `index.ts` de propósito para não entrar no bundle.
 - `domain` — regras puras, schemas zod das entidades, e as primitivas de texto e formatação (`normalizeText`, `formatMb`, `clock`) que as regras usam para montar mensagem.
 - `utils` — lógica derivada sobre os tipos do domínio, compartilhada entre main e renderer: predicados da fila, progresso, agrupamento do resumo.
 - `ipc-contract` — schemas e tipos dos canais de IPC.

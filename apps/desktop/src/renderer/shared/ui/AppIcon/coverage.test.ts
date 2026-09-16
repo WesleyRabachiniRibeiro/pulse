@@ -2,11 +2,11 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { CATALOG } from '@pulse/catalog-data'
 import { TINTS } from './tints'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const assets = join(here, '..', '..', 'assets')
+const published = join(here, '..', '..', '..', '..', '..', '..', '..', 'catalog.json')
 
 function svgIds(folder: string): string[] {
   return readdirSync(join(assets, folder))
@@ -17,13 +17,15 @@ function svgIds(folder: string): string[] {
 const masks = svgIds('icons')
 const logos = svgIds('logos')
 const drawn = new Set([...masks, ...logos])
-const ids = CATALOG.map((p) => p.id)
+const ids: string[] = (
+  JSON.parse(readFileSync(published, 'utf8')) as { programs: { id: string }[] }
+).programs.map((p) => p.id)
 
 const awaiting: string[] = JSON.parse(
   readFileSync(join(assets, 'icons', 'awaiting.json'), 'utf8'),
 ).ids
 
-describe('desenho de cada programa do catálogo', () => {
+describe('desenho de cada programa do catálogo publicado', () => {
   it('só fica sem ícone quem está na lista de espera', () => {
     expect(ids.filter((id) => !drawn.has(id)).sort()).toEqual([...awaiting].sort())
   })

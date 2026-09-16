@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
-import { catalogOf, SEED_CATALOG, type Catalog, type CatalogState } from '@pulse/domain'
+import { catalogOf, EMPTY_CATALOG, type Catalog, type CatalogState } from '@pulse/domain'
 import type { Category, Program } from '@pulse/domain'
 import { bridge } from '@/shared/lib/bridge'
 
-const STARTING: CatalogState = { source: 'seed', checkedAt: null, loading: true }
+const STARTING: CatalogState = { source: 'empty', checkedAt: null, loading: true }
 
 interface CatalogStore {
   catalog: Catalog
@@ -14,7 +14,7 @@ interface CatalogStore {
 }
 
 const useStore = create<CatalogStore>((set) => ({
-  catalog: SEED_CATALOG,
+  catalog: EMPTY_CATALOG,
   state: STARTING,
   set: (catalog) => set({ catalog }),
   setState: (state) => set({ state }),

@@ -8,9 +8,11 @@ import {
   totalSizeMb,
   compareVersions,
 } from './catalog'
-import { BUNDLES } from '@pulse/catalog-data'
-import { SEED_CATALOG, type Program } from '@pulse/domain'
+import { SAMPLE_BUNDLES, SAMPLE_CATEGORIES, SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
+import { catalogOf, type Program } from '@pulse/domain'
 import type { PackageVersion } from '@pulse/domain'
+
+const SAMPLE_CATALOG = catalogOf(SAMPLE_PROGRAMS, SAMPLE_CATEGORIES, SAMPLE_BUNDLES)
 
 function version(overrides: Partial<PackageVersion>): PackageVersion {
   return { winget: 'Example.Package', name: 'Example', version: '1.0', recommended: false, ...overrides }
@@ -18,35 +20,35 @@ function version(overrides: Partial<PackageVersion>): PackageVersion {
 
 describe('installedIds', () => {
   it('matches installed program names against catalog hints', () => {
-    expect(installedIds(SEED_CATALOG, ['Google Chrome', 'Some Unrelated Tool'])).toEqual(['chrome'])
+    expect(installedIds(SAMPLE_CATALOG, ['Google Chrome', 'Some Unrelated Tool'])).toEqual(['chrome'])
   })
 
   it('matches a hint followed by a qualifier in parentheses', () => {
-    expect(installedIds(SEED_CATALOG, ['Google Chrome (64-bit)'])).toEqual(['chrome'])
+    expect(installedIds(SAMPLE_CATALOG, ['Google Chrome (64-bit)'])).toEqual(['chrome'])
   })
 
   it('picks the longest matching hint when a shorter one is also a prefix', () => {
-    expect(installedIds(SEED_CATALOG, ['Claude Code'])).toEqual(['claudecode'])
+    expect(installedIds(SAMPLE_CATALOG, ['Claude Code'])).toEqual(['claudecode'])
   })
 
   it('does not match unrelated program names', () => {
-    expect(installedIds(SEED_CATALOG, ['Editor de Texto da Vovó'])).toEqual([])
+    expect(installedIds(SAMPLE_CATALOG, ['Editor de Texto da Vovó'])).toEqual([])
   })
 })
 
 describe('filterCatalog', () => {
   it('returns the full catalog for an empty term', () => {
-    expect(filterCatalog(SEED_CATALOG, '   ').length).toBeGreaterThan(40)
+    expect(filterCatalog(SAMPLE_CATALOG, '   ').length).toBe(SAMPLE_PROGRAMS.length)
   })
 
   it('matches by category name regardless of accents/case', () => {
-    expect(filterCatalog(SEED_CATALOG, 'midia').some((p) => p.id === 'discord')).toBe(true)
+    expect(filterCatalog(SAMPLE_CATALOG, 'midia').some((p) => p.id === 'discord')).toBe(true)
   })
 })
 
 describe('bundleIsActive', () => {
   it('is active only when selection matches exactly', () => {
-    const essential = BUNDLES.find((b) => b.name === 'Essencial')!
+    const essential = SAMPLE_BUNDLES.find((b) => b.name === 'Essencial')!
     expect(bundleIsActive(essential, new Set(essential.ids))).toBe(true)
     expect(bundleIsActive(essential, new Set([...essential.ids, 'vscode']))).toBe(false)
   })
@@ -54,16 +56,16 @@ describe('bundleIsActive', () => {
 
 describe('totalSizeMb', () => {
   it('sums known program sizes and ignores unknown ids', () => {
-    const chrome = SEED_CATALOG.byId.get('chrome')?.mb ?? 0
+    const chrome = SAMPLE_CATALOG.byId.get('chrome')?.mb ?? 0
     expect(chrome).toBeGreaterThan(0)
-    expect(totalSizeMb(SEED_CATALOG, ['chrome', 'unknown-id'])).toBe(chrome)
+    expect(totalSizeMb(SAMPLE_CATALOG, ['chrome', 'unknown-id'])).toBe(chrome)
   })
 
   it('soma mais de um, e lista vazia dá zero', () => {
     const dois = ['chrome', 'steam']
-    const esperado = dois.reduce((total, id) => total + (SEED_CATALOG.byId.get(id)?.mb ?? 0), 0)
-    expect(totalSizeMb(SEED_CATALOG, dois)).toBe(esperado)
-    expect(totalSizeMb(SEED_CATALOG, [])).toBe(0)
+    const esperado = dois.reduce((total, id) => total + (SAMPLE_CATALOG.byId.get(id)?.mb ?? 0), 0)
+    expect(totalSizeMb(SAMPLE_CATALOG, dois)).toBe(esperado)
+    expect(totalSizeMb(SAMPLE_CATALOG, [])).toBe(0)
   })
 })
 
@@ -99,26 +101,26 @@ describe('meus programas', () => {
   }
 
   it('entram no catálogo depois do publicado', () => {
-    const found = withExtras(SEED_CATALOG, [meu])
+    const found = withExtras(SAMPLE_CATALOG, [meu])
     expect(found.byId.get('meu-app')?.name).toBe('Meu App')
-    expect(found.programs.length).toBe(SEED_CATALOG.programs.length + 1)
+    expect(found.programs.length).toBe(SAMPLE_CATALOG.programs.length + 1)
   })
 
   it('id que já existe no publicado é descartado', () => {
     const sequestro: Program = { ...meu, id: 'chrome', name: 'Não é o Chrome' }
-    const found = withExtras(SEED_CATALOG, [sequestro])
+    const found = withExtras(SAMPLE_CATALOG, [sequestro])
 
     expect(found.byId.get('chrome')?.name).toBe('Google Chrome')
-    expect(found.programs.length).toBe(SEED_CATALOG.programs.length)
+    expect(found.programs.length).toBe(SAMPLE_CATALOG.programs.length)
   })
 
   it('sem nada adicionado, o catálogo é o mesmo objeto', () => {
-    expect(withExtras(SEED_CATALOG, [])).toBe(SEED_CATALOG)
+    expect(withExtras(SAMPLE_CATALOG, [])).toBe(SAMPLE_CATALOG)
   })
 
   it('adotado ganha a categoria MEUS PROGRAMAS, e ela aparece agrupada', () => {
     const adotado: Program = { ...meu, category: 'mine' }
-    const found = withExtras(SEED_CATALOG, [adotado])
+    const found = withExtras(SAMPLE_CATALOG, [adotado])
 
     expect(found.categories.map((c) => c.id)).toContain('mine')
 
@@ -128,8 +130,8 @@ describe('meus programas', () => {
   })
 
   it('adotado em categoria publicada não inventa categoria nova', () => {
-    const found = withExtras(SEED_CATALOG, [meu])
+    const found = withExtras(SAMPLE_CATALOG, [meu])
     expect(found.categories.map((c) => c.id)).not.toContain('mine')
-    expect(found.categories).toEqual(SEED_CATALOG.categories)
+    expect(found.categories).toEqual(SAMPLE_CATALOG.categories)
   })
 })

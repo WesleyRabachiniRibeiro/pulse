@@ -59,7 +59,7 @@ export class CatalogService {
     private readonly finder: PackageFinder,
   ) {}
 
-  private state: CatalogState = { source: 'seed', checkedAt: null, loading: false }
+  private state: CatalogState = { source: 'empty', checkedAt: null, loading: false }
   private readonly listeners = new Set<(state: CatalogState) => void>()
 
   subscribe(listener: (state: CatalogState) => void): () => void {

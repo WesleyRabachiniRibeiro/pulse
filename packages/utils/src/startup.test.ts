@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { SEED_CATALOG } from '@pulse/domain'
+import { catalogOf } from '@pulse/domain'
+import { SAMPLE_BUNDLES, SAMPLE_CATEGORIES, SAMPLE_PROGRAMS } from '@pulse/catalog-data/src/samples'
 import type { StartupEntry } from '@pulse/domain'
 import { tidyStartup, withPrograms } from './startup'
+
+const SAMPLE_CATALOG = catalogOf(SAMPLE_PROGRAMS, SAMPLE_CATEGORIES, SAMPLE_BUNDLES)
 
 function entry(name: string, over: Partial<StartupEntry> = {}): StartupEntry {
   return { name, value: '', enabled: true, ...over }
@@ -32,12 +35,12 @@ describe('entradas de inicialização', () => {
   })
 
   it('o que casa com o catálogo ganha o id do programa', () => {
-    const found = withPrograms(SEED_CATALOG, [entry('Steam', { value: 'C:\Steam\steam.exe' })])
+    const found = withPrograms(SAMPLE_CATALOG, [entry('Steam', { value: 'C:\Steam\steam.exe' })])
     expect(found[0]?.programId).toBe('steam')
   })
 
   it('o que não casa continua na lista, sem id', () => {
-    const found = withPrograms(SEED_CATALOG, [entry('Algum Programa Qualquer')])
+    const found = withPrograms(SAMPLE_CATALOG, [entry('Algum Programa Qualquer')])
     expect(found).toHaveLength(1)
     expect(found[0]?.programId).toBeUndefined()
   })

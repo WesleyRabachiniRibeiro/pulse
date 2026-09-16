@@ -1,5 +1,4 @@
 export type { CategoryId, Category, SettingsKind, Program, Bundle, SettingsOption } from './types'
-export { CATEGORIES, CATALOG, PROGRAM_BY_ID, BUNDLES } from './data'
 export {
   VSCODE_EXTENSIONS,
   TIBIA_CLIENTS,
