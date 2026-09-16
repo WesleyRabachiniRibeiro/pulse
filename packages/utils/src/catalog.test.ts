@@ -55,8 +55,20 @@ describe('bundleIsActive', () => {
 })
 
 describe('totalSizeMb', () => {
+  // O número vem do catálogo, que é atualizado pelo script de manutenção, então
+  // o teste pergunta ao próprio catálogo em vez de fixar um valor que envelhece
+  // a cada versão nova do Chrome.
   it('sums known program sizes and ignores unknown ids', () => {
-    expect(totalSizeMb(SEED_CATALOG, ['chrome', 'unknown-id'])).toBe(118)
+    const chrome = SEED_CATALOG.byId.get('chrome')?.mb ?? 0
+    expect(chrome).toBeGreaterThan(0)
+    expect(totalSizeMb(SEED_CATALOG, ['chrome', 'unknown-id'])).toBe(chrome)
+  })
+
+  it('soma mais de um, e lista vazia dá zero', () => {
+    const dois = ['chrome', 'steam']
+    const esperado = dois.reduce((total, id) => total + (SEED_CATALOG.byId.get(id)?.mb ?? 0), 0)
+    expect(totalSizeMb(SEED_CATALOG, dois)).toBe(esperado)
+    expect(totalSizeMb(SEED_CATALOG, [])).toBe(0)
   })
 })
 

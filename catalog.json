@@ -43,8 +43,8 @@
       "id": "chrome",
       "name": "Google Chrome",
       "winget": "Google.Chrome",
-      "version": "152.0.7977",
-      "mb": 118,
+      "version": "153.0.8010.37",
+      "mb": 153,
       "category": "browsers",
       "hints": [
         "google chrome"
@@ -56,7 +56,7 @@
       "name": "Mozilla Firefox",
       "winget": "Mozilla.Firefox",
       "version": "155.0.1",
-      "mb": 62,
+      "mb": 87,
       "category": "browsers",
       "hints": [
         "mozilla firefox"
@@ -67,8 +67,8 @@
       "id": "brave",
       "name": "Brave",
       "winget": "Brave.Brave",
-      "version": "152.1.94",
-      "mb": 145,
+      "version": "152.1.94.121",
+      "mb": 156,
       "category": "browsers",
       "hints": [
         "brave"
@@ -79,7 +79,7 @@
       "id": "operagx",
       "name": "Opera GX",
       "winget": "Opera.OperaGX",
-      "version": "135.0.5973",
+      "version": "135.0.5973.135",
       "mb": 98,
       "category": "browsers",
       "hints": [
@@ -91,7 +91,7 @@
       "id": "steam",
       "name": "Steam",
       "winget": "Valve.Steam",
-      "version": "2.10.91",
+      "version": "2.10.91.91",
       "mb": 320,
       "category": "games",
       "hints": [
@@ -103,7 +103,7 @@
       "id": "epic",
       "name": "Epic Games",
       "winget": "EpicGames.EpicGamesLauncher",
-      "version": "1.3.193",
+      "version": "1.3.193.0",
       "mb": 210,
       "category": "games",
       "hints": [
@@ -114,7 +114,7 @@
       "id": "minecraft",
       "name": "Minecraft Launcher",
       "winget": "Mojang.MinecraftLauncher",
-      "version": "2.0.0",
+      "version": "2.0.0.0",
       "mb": 45,
       "category": "games",
       "hints": [
@@ -125,8 +125,8 @@
       "id": "riot",
       "name": "Riot Client",
       "winget": "RiotGames.LeagueOfLegends.BR",
-      "version": "138.0.0",
-      "mb": 76,
+      "version": "138.0.0.4786",
+      "mb": 72,
       "category": "games",
       "hints": [
         "riot client",
@@ -138,7 +138,7 @@
       "id": "battlenet",
       "name": "Battle.net",
       "winget": "Blizzard.BattleNet",
-      "version": "1.19.3",
+      "version": "1.19.3.3219",
       "mb": 90,
       "category": "games",
       "hints": [
@@ -160,8 +160,8 @@
       "id": "gog",
       "name": "GOG Galaxy",
       "winget": "GOG.Galaxy",
-      "version": "2.1.8",
-      "mb": 260,
+      "version": "2.1.8.30",
+      "mb": 326,
       "category": "games",
       "hints": [
         "gog galaxy"
@@ -171,7 +171,7 @@
       "id": "hytale",
       "name": "Hytale Launcher",
       "winget": "HypixelStudios.Hytale",
-      "version": "2026.08.28",
+      "version": "2026.09.15-261d405",
       "mb": 90,
       "category": "games",
       "hints": [
@@ -182,7 +182,7 @@
       "id": "eaapp",
       "name": "EA app",
       "winget": "ElectronicArts.EADesktop",
-      "version": "13.783",
+      "version": "13.788.2.6298",
       "mb": 180,
       "category": "games",
       "hints": [
@@ -194,8 +194,8 @@
       "id": "ubisoft",
       "name": "Ubisoft Connect",
       "winget": "Ubisoft.Connect",
-      "version": "173.1.0",
-      "mb": 130,
+      "version": "173.1.0.13333",
+      "mb": 253,
       "category": "games",
       "hints": [
         "ubisoft connect"
@@ -215,8 +215,8 @@
       "id": "radminvpn",
       "name": "Radmin VPN",
       "winget": "Famatech.RadminVPN",
-      "version": "2.0.4899",
-      "mb": 15,
+      "version": "2.0.4899.9",
+      "mb": 46,
       "category": "games",
       "hints": [
         "radmin vpn"
@@ -226,8 +226,8 @@
       "id": "discord",
       "name": "Discord",
       "winget": "Discord.Discord",
-      "version": "1.0.9256",
-      "mb": 92,
+      "version": "1.0.9258",
+      "mb": 139,
       "category": "media",
       "hints": [
         "discord"
@@ -237,7 +237,7 @@
       "id": "spotify",
       "name": "Spotify",
       "winget": "Spotify.Spotify",
-      "version": "1.2.98",
+      "version": "1.3.0.277.g5441bb3e",
       "mb": 140,
       "category": "media",
       "hints": [
@@ -248,7 +248,7 @@
       "id": "telegram",
       "name": "Telegram",
       "winget": "Telegram.TelegramDesktop",
-      "version": "7.2.5",
+      "version": "7.2.8",
       "mb": 55,
       "category": "media",
       "hints": [
@@ -271,7 +271,7 @@
       "id": "teams",
       "name": "Microsoft Teams",
       "winget": "Microsoft.Teams",
-      "version": "26198.304",
+      "version": "26198.304.4946.9672",
       "mb": 130,
       "category": "media",
       "hints": [
@@ -283,7 +283,7 @@
       "name": "Stremio",
       "winget": "Stremio.Stremio",
       "version": "4.4.181",
-      "mb": 90,
+      "mb": 117,
       "category": "media",
       "hints": [
         "stremio"
@@ -305,8 +305,8 @@
       "id": "acrobat",
       "name": "Acrobat Reader",
       "winget": "Adobe.Acrobat.Reader.64-bit",
-      "version": "26.002",
-      "mb": 300,
+      "version": "26.002.21901",
+      "mb": 822,
       "category": "media",
       "hints": [
         "acrobat reader",
@@ -317,7 +317,7 @@
       "id": "adobecc",
       "name": "Adobe Creative Cloud",
       "winget": "Adobe.CreativeCloud",
-      "version": "6.10.0",
+      "version": "6.10.0.252.41",
       "mb": 500,
       "category": "media",
       "hints": [
@@ -341,8 +341,8 @@
       "id": "vscode",
       "name": "VS Code",
       "winget": "Microsoft.VisualStudioCode",
-      "version": "1.136.1",
-      "mb": 108,
+      "version": "1.137.0",
+      "mb": 224,
       "category": "dev",
       "hints": [
         "microsoft visual studio code"
@@ -353,8 +353,8 @@
       "id": "intellij",
       "name": "IntelliJ IDEA CE",
       "winget": "JetBrains.IntelliJIDEA.Community",
-      "version": "2025.2.6",
-      "mb": 890,
+      "version": "2025.2.6.2",
+      "mb": 947,
       "category": "dev",
       "hints": [
         "intellij idea community edition"
@@ -364,8 +364,8 @@
       "id": "gitbash",
       "name": "Git Bash",
       "winget": "Git.Git",
-      "version": "2.55.0",
-      "mb": 66,
+      "version": "2.55.0.3",
+      "mb": 62,
       "category": "dev",
       "hints": [
         "git"
@@ -376,7 +376,7 @@
       "id": "jdk",
       "name": "Java (Temurin)",
       "winget": "EclipseAdoptium.Temurin.21.JDK",
-      "version": "21 LTS",
+      "version": "21.0.12.101",
       "mb": 180,
       "category": "dev",
       "hints": [
@@ -392,7 +392,7 @@
       "name": "Claude",
       "winget": "Anthropic.Claude",
       "version": "1.44121.2",
-      "mb": 130,
+      "mb": 223,
       "category": "dev",
       "hints": [
         "claude"
@@ -402,8 +402,8 @@
       "id": "claudecode",
       "name": "Claude Code",
       "winget": "Anthropic.ClaudeCode",
-      "version": "2.1.258",
-      "mb": 48,
+      "version": "2.1.268",
+      "mb": 211,
       "category": "dev",
       "hints": [
         "claude code"
@@ -413,7 +413,7 @@
       "id": "docker",
       "name": "Docker Desktop",
       "winget": "Docker.DockerDesktop",
-      "version": "4.89.0",
+      "version": "4.91.0",
       "mb": 620,
       "category": "dev",
       "hints": [
@@ -424,7 +424,7 @@
       "id": "node",
       "name": "Node.js",
       "winget": "OpenJS.NodeJS.LTS",
-      "version": "24 LTS",
+      "version": "24.19.0",
       "mb": 30,
       "category": "dev",
       "hints": [
@@ -442,7 +442,7 @@
       "id": "python",
       "name": "Python 3",
       "winget": "Python.Python.3.13",
-      "version": "3.13",
+      "version": "3.13.15",
       "mb": 28,
       "category": "dev",
       "hints": [
@@ -460,7 +460,7 @@
       "id": "vs",
       "name": "Visual Studio",
       "winget": "Microsoft.VisualStudio.Community",
-      "version": "2026",
+      "version": "18.10.1",
       "mb": 1800,
       "category": "dev",
       "hints": [
@@ -472,7 +472,7 @@
       "id": "vim",
       "name": "Vim",
       "winget": "vim.vim",
-      "version": "9.2",
+      "version": "9.2.1061",
       "mb": 12,
       "category": "dev",
       "hints": [
@@ -483,8 +483,8 @@
       "id": "codex",
       "name": "Codex CLI",
       "winget": "OpenAI.Codex",
-      "version": "0.146.1",
-      "mb": 40,
+      "version": "0.152.0",
+      "mb": 98,
       "category": "dev",
       "hints": [
         "codex cli",
@@ -496,7 +496,7 @@
       "name": "Go",
       "winget": "GoLang.Go",
       "version": "1.27.0",
-      "mb": 70,
+      "mb": 61,
       "category": "dev",
       "hints": [
         "go programming language"
@@ -506,7 +506,7 @@
       "id": "postman",
       "name": "Postman",
       "winget": "Postman.Postman",
-      "version": "12.26.5",
+      "version": "12.28.1",
       "mb": 210,
       "category": "dev",
       "hints": [
@@ -518,7 +518,7 @@
       "name": "Insomnia",
       "winget": "Insomnia.Insomnia",
       "version": "13.2.0",
-      "mb": 130,
+      "mb": 586,
       "category": "dev",
       "hints": [
         "insomnia"
@@ -529,7 +529,7 @@
       "name": "Blender",
       "winget": "BlenderFoundation.Blender",
       "version": "5.2.1",
-      "mb": 380,
+      "mb": 348,
       "category": "dev",
       "hints": [
         "blender"
@@ -539,8 +539,8 @@
       "id": "libreoffice",
       "name": "LibreOffice",
       "winget": "TheDocumentFoundation.LibreOffice",
-      "version": "26.8.0",
-      "mb": 380,
+      "version": "26.8.0.3",
+      "mb": 358,
       "category": "office",
       "hints": [
         "libreoffice"
@@ -561,8 +561,8 @@
       "id": "thunderbird",
       "name": "Thunderbird",
       "winget": "Mozilla.Thunderbird",
-      "version": "155.0",
-      "mb": 90,
+      "version": "155.0.1",
+      "mb": 80,
       "category": "office",
       "hints": [
         "mozilla thunderbird",
@@ -573,8 +573,8 @@
       "id": "anki",
       "name": "Anki",
       "winget": "Anki.Anki",
-      "version": "26.08.1",
-      "mb": 130,
+      "version": "26.09",
+      "mb": 192,
       "category": "office",
       "hints": [
         "anki"
@@ -584,8 +584,8 @@
       "id": "notion",
       "name": "Notion",
       "winget": "Notion.Notion",
-      "version": "7.32.1",
-      "mb": 120,
+      "version": "7.34.0",
+      "mb": 104,
       "category": "office",
       "hints": [
         "notion"
@@ -596,7 +596,7 @@
       "name": "VLC",
       "winget": "VideoLAN.VLC",
       "version": "3.0.23",
-      "mb": 42,
+      "mb": 58,
       "category": "media",
       "hints": [
         "vlc media player",
@@ -607,8 +607,8 @@
       "id": "signal",
       "name": "Signal",
       "winget": "OpenWhisperSystems.Signal",
-      "version": "8.26.0",
-      "mb": 190,
+      "version": "8.27.0",
+      "mb": 255,
       "category": "media",
       "hints": [
         "signal"
@@ -618,7 +618,7 @@
       "id": "sevenzip",
       "name": "7-Zip",
       "winget": "7zip.7zip",
-      "version": "26.02",
+      "version": "26.03",
       "mb": 6,
       "category": "utilities",
       "hints": [
@@ -630,7 +630,7 @@
       "name": "ShareX",
       "winget": "ShareX.ShareX",
       "version": "21.0.0",
-      "mb": 40,
+      "mb": 133,
       "category": "utilities",
       "hints": [
         "sharex"
@@ -652,7 +652,7 @@
       "name": "GIMP",
       "winget": "GIMP.GIMP",
       "version": "3.2.4",
-      "mb": 320,
+      "mb": 179,
       "category": "creative",
       "hints": [
         "gimp"
@@ -663,7 +663,7 @@
       "name": "Inkscape",
       "winget": "Inkscape.Inkscape",
       "version": "1.4.4",
-      "mb": 300,
+      "mb": 162,
       "category": "creative",
       "hints": [
         "inkscape"
@@ -673,7 +673,7 @@
       "id": "krita",
       "name": "Krita",
       "winget": "KDE.Krita",
-      "version": "5.3.3",
+      "version": "5.3.3.0",
       "mb": 320,
       "category": "creative",
       "hints": [
@@ -684,7 +684,7 @@
       "id": "figma",
       "name": "Figma",
       "winget": "Figma.Figma",
-      "version": "126.8.16",
+      "version": "126.9.7",
       "mb": 140,
       "category": "creative",
       "hints": [
@@ -695,7 +695,7 @@
       "id": "audacity",
       "name": "Audacity",
       "winget": "Audacity.Audacity",
-      "version": "4.0.0",
+      "version": "4.0.0.262451524",
       "mb": 130,
       "category": "creative",
       "hints": [
@@ -717,8 +717,8 @@
       "id": "malwarebytes",
       "name": "Malwarebytes",
       "winget": "Malwarebytes.Malwarebytes",
-      "version": "5.6.5",
-      "mb": 260,
+      "version": "5.7.0.328",
+      "mb": 416,
       "category": "security",
       "hints": [
         "malwarebytes"
@@ -739,8 +739,8 @@
       "id": "rockstar",
       "name": "Rockstar Games Launcher",
       "winget": "RockstarGames.Launcher",
-      "version": "1.0.109",
-      "mb": 120,
+      "version": "1.0.109.3031",
+      "mb": 106,
       "category": "games",
       "hints": [
         "rockstar games launcher"
@@ -761,7 +761,7 @@
       "id": "corsair",
       "name": "Corsair iCUE",
       "winget": "Corsair.iCUE.5",
-      "version": "5.49.34",
+      "version": "5.51.40",
       "mb": 700,
       "category": "games",
       "hints": [
@@ -773,8 +773,8 @@
       "id": "pycharm",
       "name": "PyCharm CE",
       "winget": "JetBrains.PyCharm.Community",
-      "version": "2025.2.6",
-      "mb": 720,
+      "version": "2025.2.6.1",
+      "mb": 768,
       "category": "dev",
       "hints": [
         "pycharm community edition",
@@ -796,8 +796,8 @@
       "id": "rider",
       "name": "Rider",
       "winget": "JetBrains.Rider",
-      "version": "2026.2.0",
-      "mb": 1600,
+      "version": "2026.2.0.2",
+      "mb": 1825,
       "category": "dev",
       "hints": [
         "jetbrains rider",
@@ -808,8 +808,8 @@
       "id": "androidstudio",
       "name": "Android Studio",
       "winget": "Google.AndroidStudio",
-      "version": "2026.1.4",
-      "mb": 1200,
+      "version": "2026.1.4.7",
+      "mb": 1415,
       "category": "dev",
       "hints": [
         "android studio"
@@ -819,7 +819,7 @@
       "id": "sublimetext",
       "name": "Sublime Text",
       "winget": "SublimeHQ.SublimeText.4",
-      "version": "4",
+      "version": "4.0.0.420000",
       "mb": 40,
       "category": "dev",
       "hints": [
@@ -864,8 +864,8 @@
       "id": "zed",
       "name": "Zed",
       "winget": "ZedIndustries.Zed",
-      "version": "1.18.1",
-      "mb": 130,
+      "version": "1.19.2",
+      "mb": 86,
       "category": "dev",
       "hints": [
         "zed"
@@ -875,8 +875,8 @@
       "id": "dotnet",
       "name": ".NET SDK",
       "winget": "Microsoft.DotNet.SDK.9",
-      "version": "9",
-      "mb": 320,
+      "version": "9.0.318",
+      "mb": 217,
       "category": "dev",
       "hints": [
         "microsoft .net sdk"
@@ -891,7 +891,7 @@
       "name": "Rust",
       "winget": "Rustlang.Rustup",
       "version": "1.29.1",
-      "mb": 20,
+      "mb": 12,
       "category": "dev",
       "hints": [
         "rustup"
@@ -901,8 +901,8 @@
       "id": "postgresql",
       "name": "PostgreSQL",
       "winget": "PostgreSQL.PostgreSQL.17",
-      "version": "17",
-      "mb": 320,
+      "version": "17.11-3",
+      "mb": 356,
       "category": "dev",
       "hints": [
         "postgresql"
@@ -928,8 +928,8 @@
       "id": "mongodb",
       "name": "MongoDB Compass",
       "winget": "MongoDB.Compass.Full",
-      "version": "1.50.0",
-      "mb": 200,
+      "version": "1.50.0.0",
+      "mb": 185,
       "category": "dev",
       "hints": [
         "mongodb compass"
@@ -951,7 +951,7 @@
       "name": "Redis Insight",
       "winget": "RedisInsight.RedisInsight",
       "version": "3.4.2",
-      "mb": 200,
+      "mb": 112,
       "category": "dev",
       "hints": [
         "redis insight",
@@ -962,7 +962,7 @@
       "id": "terraform",
       "name": "Terraform",
       "winget": "Hashicorp.Terraform",
-      "version": "1.15.8",
+      "version": "1.16.2",
       "mb": 90,
       "category": "dev",
       "hints": [
@@ -974,7 +974,7 @@
       "name": "kubectl",
       "winget": "Kubernetes.kubectl",
       "version": "1.37.0",
-      "mb": 55,
+      "mb": 61,
       "category": "dev",
       "hints": [
         "kubectl"
@@ -984,8 +984,8 @@
       "id": "edge",
       "name": "Microsoft Edge",
       "winget": "Microsoft.Edge",
-      "version": "151.0.4129",
-      "mb": 160,
+      "version": "153.0.4234.32",
+      "mb": 203,
       "category": "browsers",
       "hints": [
         "microsoft edge"
@@ -995,7 +995,7 @@
       "id": "office",
       "name": "Microsoft Office",
       "winget": "Microsoft.Office",
-      "version": "16.0.20228",
+      "version": "16.0.20228.20124",
       "mb": 4000,
       "category": "office",
       "hints": [
@@ -1007,8 +1007,8 @@
       "id": "slack",
       "name": "Slack",
       "winget": "SlackTechnologies.Slack",
-      "version": "4.51.191",
-      "mb": 180,
+      "version": "4.52.155",
+      "mb": 158,
       "category": "office",
       "hints": [
         "slack"
@@ -1018,8 +1018,8 @@
       "id": "winrar",
       "name": "WinRAR",
       "winget": "RARLab.WinRAR",
-      "version": "7.23",
-      "mb": 12,
+      "version": "7.23.0",
+      "mb": 6,
       "category": "utilities",
       "hints": [
         "winrar"
@@ -1040,7 +1040,7 @@
       "id": "amazongames",
       "name": "Amazon Games",
       "winget": "Amazon.Games",
-      "version": "3.0.9700",
+      "version": "3.0.9700.3",
       "mb": 130,
       "category": "games",
       "hints": [
@@ -1051,7 +1051,7 @@
       "id": "logitechghub",
       "name": "Logitech G HUB",
       "winget": "Logitech.GHUB",
-      "version": "2026.4",
+      "version": "2026.4.919028",
       "mb": 350,
       "category": "games",
       "hints": [
@@ -1062,7 +1062,7 @@
       "id": "putty",
       "name": "PuTTY",
       "winget": "PuTTY.PuTTY",
-      "version": "0.84",
+      "version": "0.85.0.0",
       "mb": 4,
       "category": "dev",
       "hints": [
@@ -1073,7 +1073,7 @@
       "id": "powershell",
       "name": "PowerShell 7",
       "winget": "Microsoft.PowerShell",
-      "version": "7.6.5",
+      "version": "7.6.6.0",
       "mb": 110,
       "category": "dev",
       "hints": [
@@ -1084,7 +1084,7 @@
       "id": "ohmyposh",
       "name": "Oh My Posh",
       "winget": "JanDeDobbeleer.OhMyPosh",
-      "version": "31.2.1",
+      "version": "31.3.0",
       "mb": 60,
       "category": "dev",
       "hints": [
@@ -1095,8 +1095,8 @@
       "id": "awscli",
       "name": "AWS CLI",
       "winget": "Amazon.AWSCLI",
-      "version": "2.36.40",
-      "mb": 90,
+      "version": "2.36.45",
+      "mb": 47,
       "category": "dev",
       "hints": [
         "aws command line interface"
@@ -1107,7 +1107,7 @@
       "name": "Azure CLI",
       "winget": "Microsoft.AzureCLI",
       "version": "2.90.0",
-      "mb": 130,
+      "mb": 66,
       "category": "dev",
       "hints": [
         "microsoft azure cli"
@@ -1141,7 +1141,7 @@
       "name": "MSI Afterburner",
       "winget": "Guru3D.Afterburner",
       "version": "4.6.6",
-      "mb": 55,
+      "mb": 40,
       "category": "utilities",
       "hints": [
         "msi afterburner"
@@ -1152,7 +1152,7 @@
       "name": "Visual C++ Redistributable",
       "winget": "Microsoft.VCRedist.2015+.x64",
       "version": "14.51.36247.0",
-      "mb": 14,
+      "mb": 18,
       "category": "runtimes",
       "hints": [
         "visual c++ redistributable"
