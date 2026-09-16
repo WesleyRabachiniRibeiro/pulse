@@ -20,8 +20,6 @@ describe('controle parental', () => {
     }
   })
 
-  // Ligado sem PIN não tranca: não há o que conferir, e travar tudo sem saída
-  // seria pior do que não travar.
   it('ligado sem PIN não tranca nada', () => {
     expect(locked({ on: true, blocked: ['steam'] })).toBe(false)
     expect(isBlocked({ on: true, blocked: ['steam'] }, 'steam')).toBe(false)

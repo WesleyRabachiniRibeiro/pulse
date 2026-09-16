@@ -72,8 +72,6 @@ export class ProfileService {
     return this.adopt(body, mode, current)
   }
 
-  // O que veio de fora é limpo contra o catálogo daqui antes de virar perfil, e
-  // o que sobrou de fora é devolvido para a tela poder dizer o que faltou.
   private adopt(raw: string, mode: ImportMode, current: Profile): ImportResult {
     let parsed: unknown
     try {

@@ -31,8 +31,6 @@ export class JsonPreferencesStore implements PreferencesStore {
       await mkdir(dirname(path), { recursive: true })
       await writeFile(path, JSON.stringify(next, null, 2), 'utf8')
     } catch {
-      // sem permissão de escrever em userData: a preferência ainda vale para
-      // esta sessão via cache, só não sobrevive a um reinício do app.
     }
 
     return next

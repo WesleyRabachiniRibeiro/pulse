@@ -21,8 +21,6 @@ const FORMATS: Record<ExportFormat, { label: string; hint: string }> = {
   csv: { label: 'Planilha da lista', hint: '.csv — só os nomes, para conferir ou imprimir' },
 }
 
-// 'ask' não é um modo de importação, é não ter escolhido ainda: a pergunta
-// aparece na hora, com a contagem do que já estava marcado.
 type Choice = ImportMode | 'ask'
 
 const MODES: readonly { id: Choice; label: string }[] = [
@@ -95,8 +93,6 @@ export function ProfileBlock() {
     setNote(`Salvo em ${answer.path ?? 'disco'}`)
   }
 
-  // O que voltou do main já veio limpo contra o catálogo daqui, então é só
-  // aplicar. O que ficou de fora vira aviso, e não silêncio.
   function settle(answer: Answer | null) {
     if (!answer || answer.status === 'failed') return setNote('Não deu para ler esse perfil.')
     if (answer.status === 'canceled') return

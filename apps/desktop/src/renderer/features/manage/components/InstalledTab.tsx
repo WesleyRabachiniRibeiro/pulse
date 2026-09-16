@@ -95,8 +95,6 @@ function AdoptButton({ node, icon }: { node: InstalledNode; icon: string | null 
   async function adopt() {
     setState('working')
 
-    // O ícone da linha chega por uma pergunta assíncrona. Quem clica antes
-    // dela responder adotaria sem ícone, então aqui ele é pedido de novo.
     const picture =
       icon ??
       (node.icon
@@ -346,8 +344,6 @@ export function InstalledTab({ onQueue }: Props) {
     setPicked(allOn ? new Set() : new Set(canPick.map((node) => node.key)))
   }
 
-  // O perfil montado aqui é só a lista: disco e exceções são escolhas da tela
-  // de seleção, e este caminho existe para quem quer partir do PC que já tem.
   async function buildProfile() {
     const ids = (picked.size > 0 ? chosen : selectable(installed))
       .map((node) => node.programId)

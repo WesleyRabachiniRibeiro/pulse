@@ -56,8 +56,6 @@ export function BlockedList({ onDone }: Props) {
     })
   }
 
-  // O que foi marcado só vai para o disco no Pronto: dá para mudar de ideia
-  // percorrendo o catálogo inteiro sem gravar a cada clique.
   async function done() {
     setSaving(true)
     await setParentalBlocked([...blocked])

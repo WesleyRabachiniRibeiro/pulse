@@ -39,8 +39,6 @@ describe('ajustes do Windows', () => {
     }
   })
 
-  // Meio ligado é o Windows em estado inconsistente, e a tela precisa mostrar
-  // desligado para a pessoa conseguir corrigir clicando.
   it('um ajuste de dois valores só conta como ligado com os dois ligados', () => {
     const [a, b] = dark.values
     if (!a || !b) throw new Error('esperava dois valores')

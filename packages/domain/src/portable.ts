@@ -26,8 +26,6 @@ export const FORMAT_FILE: Record<ExportFormat, { name: string; extension: string
   csv: { name: 'Planilha', extension: 'csv' },
 }
 
-// Arquivo de outra versão do formato é recusado inteiro, em vez de lido pela
-// metade: melhor dizer que não dá do que importar algo pela metade.
 export function readPortable(raw: unknown): Portable | null {
   const read = portableSchema.safeParse(raw)
   if (!read.success) return null

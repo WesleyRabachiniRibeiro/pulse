@@ -57,9 +57,6 @@ export function hasSettings(item: Item): boolean {
   return !stepsAreEmpty(item.settings?.steps)
 }
 
-// A assinatura existe para saber se a pessoa mudou de ideia sobre um item que
-// já está na fila. Ela percorre o registro em vez de listar campo por campo,
-// então um step novo passa a contar sozinho.
 function signature(settings: Settings | undefined): string {
   if (!settings) return ''
 
@@ -108,8 +105,6 @@ export function elapsedSeconds(run: Run, now: number = Date.now()): number {
   return secondsSince(run.startedAt, end)
 }
 
-// Programa fora do catálogo pesa um chute, para ele não sumir da barra de
-// progresso como se não custasse nada.
 function weight(catalog: Catalog, item: Item): number {
   return sizeOf(catalog, item.id, 100)
 }

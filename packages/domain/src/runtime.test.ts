@@ -15,8 +15,6 @@ describe('ferramentas de runtime', () => {
     }
   })
 
-  // Um id que não é do catálogo daquele runtime não pode chegar à linha de
-  // comando, nem o de outro runtime.
   it('filtra o que não é do runtime pedido', () => {
     expect(knownPackages('node', ['pnpm', 'ruff', 'inventado'])).toEqual(['pnpm'])
     expect(knownPackages('python', ['pnpm', 'ruff'])).toEqual(['ruff'])

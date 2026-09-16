@@ -1,5 +1,3 @@
-// Sentinels emitidos pelo próprio Run-AsAdmin.ps1 (não são códigos do winget):
-// 1223 é o Windows recusando a elevação na janela do UAC.
 export const REFUSED_BY_USER = 1223
 const START_FAILED = -1224
 const NO_EXIT_CODE = -1225

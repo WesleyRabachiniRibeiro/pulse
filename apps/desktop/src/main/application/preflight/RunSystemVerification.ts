@@ -23,9 +23,6 @@ function pickDrive(drives: readonly Drive[], wanted?: string): Drive | undefined
   return drives.find((d) => d.letter === wanted) ?? drives.find((d) => d.system) ?? drives[0]
 }
 
-// Orquestra as checagens de verificação, publicando resultados parciais
-// conforme chegam. O token descarta a resposta de uma chamada superada por
-// uma mais nova (o botão "verificar de novo" antes da primeira terminar).
 export class RunSystemVerification {
   private readonly listeners = new Set<PartialListener>()
   private readonly driveCache: DriveCache

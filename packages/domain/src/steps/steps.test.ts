@@ -128,8 +128,6 @@ describe('texto que a tela mostra', () => {
     expect(stepForKind(undefined)).toBeUndefined()
   })
 
-  // A tela lê título e descrição do descritor. Um step sem eles desenha um
-  // cabeçalho vazio, e ninguém percebe até abrir aquela tela.
   it('todo step tem título e descrição para a tela mostrar', () => {
     for (const step of STEPS) {
       expect(step.title.trim(), `${step.id} sem título`).not.toBe('')

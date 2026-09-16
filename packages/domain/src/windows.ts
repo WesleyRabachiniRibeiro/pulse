@@ -19,7 +19,6 @@ const EXPLORER = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\
 const THEMES = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize'
 const CONTENT = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager'
 
-// Tudo em HKCU: vale para a pessoa que está usando e não pede administrador.
 export const TWEAKS: readonly Tweak[] = [
   {
     id: 'fileExtensions',
@@ -75,8 +74,6 @@ export function valueIdOf(value: TweakValue): string {
   return `${value.key}\\${value.name}`
 }
 
-// Um ajuste com mais de um valor só conta como ligado com todos ligados: meio
-// ligado é o Windows em estado inconsistente, e a tela deve mostrar desligado.
 export function readTweakState(tweak: Tweak, found: ReadonlyMap<string, number>): boolean {
   return tweak.values.every((value) => found.get(valueIdOf(value)) === value.on)
 }

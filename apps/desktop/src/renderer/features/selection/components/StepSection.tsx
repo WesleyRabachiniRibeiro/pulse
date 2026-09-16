@@ -8,8 +8,6 @@ interface Props {
   children?: ReactNode
 }
 
-// Todo bloco da tela de ajustes abre igual: um rótulo em maiúsculas e um
-// parágrafo explicando o que aquilo faz antes de mostrar as escolhas.
 export function StepSection({ title, description, tour, children }: Props) {
   return (
     <section className={s.section} {...(tour ? { 'data-tour': tour } : {})}>

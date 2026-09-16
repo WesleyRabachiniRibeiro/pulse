@@ -57,8 +57,6 @@ export const useSelection = create<SelectionStore>((set) => ({
   clear: () => set({ selected: new Set<string>(), drives: {}, settings: {} }),
 }))
 
-// A seleção e o perfil guardam a mesma coisa em formatos diferentes: aqui um
-// Set, no arquivo uma lista. Estas duas fazem a tradução nos dois sentidos.
 export function selectionAsProfile(): Profile {
   const { selected, drives, settings } = useSelection.getState()
   return {

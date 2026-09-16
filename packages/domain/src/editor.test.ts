@@ -22,8 +22,6 @@ describe('ajustes do editor', () => {
     expect(editorPatch(['inexistente'])).toEqual({})
   })
 
-  // Esta é a regra que protege o arquivo: só as chaves marcadas mudam, o
-  // resto do que a pessoa ajustou à mão continua exatamente como estava.
   it('o que a pessoa já tinha continua valendo', () => {
     const current = { 'editor.fontFamily': 'Fira Code', 'editor.fontSize': 12 }
     const next = mergeEditorSettings(current, ['bigFont'])

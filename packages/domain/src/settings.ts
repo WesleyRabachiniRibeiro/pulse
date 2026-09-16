@@ -23,8 +23,6 @@ export const settingsSchema = z.object({
 })
 export type Settings = z.infer<typeof settingsSchema>
 
-// O padrão é o chão: o programa só sai dele no que ele mesmo pediu. Um campo
-// que o programa não tocou fica valendo o que a configuração disser.
 export function withDefaults(settings: Settings | undefined, defaults: Defaults): Settings {
   const merged: Settings = { ...settings }
 
@@ -37,8 +35,6 @@ export function withDefaults(settings: Settings | undefined, defaults: Defaults)
   return merged
 }
 
-// Em que um programa foge do padrão. A configuração pergunta por campo, a
-// seleção pergunta por programa, e as duas leem a mesma comparação.
 export function overriddenKeys(
   settings: Settings | undefined,
   defaults: Defaults,
@@ -49,7 +45,6 @@ export function overriddenKeys(
   )
 }
 
-// Quem foge do padrão, para a tela de configuração poder dizer quantos são.
 export function programsOverriding(
   settingsByApp: Readonly<Record<string, Settings>>,
   defaults: Defaults,
@@ -74,8 +69,6 @@ export function categoriesOf(options: readonly SettingsOption[]): string[] {
   return ['Tudo', ...seen]
 }
 
-// Ligar e desligar a inicialização são as duas um pedido, então o que conta
-// como "sem ajuste" é o campo não ter sido tocado, não o valor ser falso.
 export function settingsAreEmpty(settings: Settings | undefined): boolean {
   if (!settings) return true
   return stepsAreEmpty(settings.steps) && settings.autostart === undefined && !settings.packageId

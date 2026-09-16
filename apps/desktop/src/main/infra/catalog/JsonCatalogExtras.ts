@@ -23,7 +23,6 @@ export class JsonCatalogExtras implements CatalogExtras {
       await mkdir(dirname(path), { recursive: true })
       await writeFile(path, `${JSON.stringify(programs, null, 2)}\n`, 'utf8')
     } catch {
-      // sem permissão de escrever: vale nesta sessão e some no reinício.
     }
   }
 

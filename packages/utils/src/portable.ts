@@ -18,8 +18,6 @@ export function profileIsEmpty(profile: Profile): boolean {
   )
 }
 
-// Um perfil vindo de outro PC pode citar programa que saiu do catálogo, disco
-// que não existe aqui, ou ajuste que ficou vazio. Nada disso deve entrar.
 export function cleanProfile(profile: Profile, known: (id: string) => boolean): Profile {
   const settings: Record<string, Settings> = {}
   for (const [id, value] of Object.entries(profile.settings)) {
@@ -65,10 +63,6 @@ export function profileOf(portable: Portable, mode: ImportMode, current: Profile
   })
 }
 
-// Identificador do winget é publicador ponto pacote. O que foge disso é
-// descartado em vez de escapado: o que não parece identificador não tem o que
-// fazer numa linha de comando. Hoje os ids do catálogo cabem nesta forma, mas o
-// catálogo vai passar a aceitar programa vindo de fora.
 const SAFE_WINGET_ID = /^[A-Za-z0-9][A-Za-z0-9._+-]*$/
 
 function wingetIdsOf(catalog: Catalog, ids: readonly string[]): string[] {
@@ -116,13 +110,6 @@ const SCRIPT_HEADER: readonly string[] = [
   '',
 ]
 
-// Este texto não é um script do Pulse: ele nunca roda aqui. É um arquivo que a
-// pessoa leva embora e executa em outra máquina, como a planilha e a lista do
-// winget. Por isso é montado como texto, e não é um `.ps1` versionado em
-// `resources`, que é a regra para tudo que o app executa.
-//
-// CRLF porque o destino é um PowerShell no Windows, aberto no Bloco de Notas
-// com alguma frequência.
 export function scriptOf(catalog: Catalog, ids: readonly string[]): string {
   const lines = wingetIdsOf(catalog, ids).map((winget) => `winget install --id ${winget} ${SCRIPT_ARGS}`)
 
@@ -133,7 +120,6 @@ function csvCell(value: string): string {
   return /[",;\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
 }
 
-// Ponto e vírgula porque o Excel em português usa vírgula como decimal.
 export function csvOf(catalog: Catalog, ids: readonly string[]): string {
   const rows = [['nome', 'identificador', 'categoria', 'tamanho_mb']]
 

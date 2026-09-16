@@ -1,22 +1,13 @@
 import type { Upgrade } from '@pulse/domain'
 
-// `winget upgrade` não tem saída estruturada. O que ele imprime é uma tabela de
-// largura fixa, com cabeçalho traduzido para o idioma do Windows e colunas que
-// mudam de posição conforme o nome mais comprido da lista. Por isso a leitura
-// aqui é heurística, e tem duas passadas: primeiro tenta pelas colunas, e se a
-// tabela não sair como esperado, cai para separar por espaços.
-
 const ID_SHAPE = /^[A-Za-z0-9][\w+-]*(\.[\w+-]+)+$/
 
-// Identificador do winget é publicador ponto pacote, e o publicador começa com
-// letra. Sem isso, um número de versão como 1.2.3 passaria por identificador.
 function looksLikeId(token: string): boolean {
   if (!ID_SHAPE.test(token)) return false
   const first = token.split('.')[0] ?? ''
   return /[A-Za-z]/.test(first)
 }
 
-// Coluna nova começa onde vem caractere depois de dois espaços seguidos.
 function columnStarts(header: string): number[] {
   const starts = [0]
 
@@ -31,9 +22,6 @@ function cells(line: string, starts: readonly number[]): string[] {
   return starts.map((from, i) => line.slice(from, starts[i + 1] ?? line.length).trim())
 }
 
-// Qual coluna é a do identificador não dá para saber pelo cabeçalho, que vem
-// traduzido. Dá para saber pelo conteúdo: a coluna com mais valores que parecem
-// identificador, e valer o dobro quando é um que o catálogo conhece.
 function idColumn(rows: readonly string[][], known: ReadonlySet<string>): number {
   const width = Math.max(0, ...rows.map((row) => row.length))
   let best = -1

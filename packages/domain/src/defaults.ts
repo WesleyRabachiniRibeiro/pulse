@@ -3,9 +3,6 @@ import { z } from 'zod'
 export const scopeSchema = z.enum(['user', 'machine'])
 export type Scope = z.infer<typeof scopeSchema>
 
-// O que vale para todo programa da fila, até que o programa peça diferente.
-// Campo ausente quer dizer "do jeito que o instalador faz", e não um valor
-// falso: é a ausência que a tela mostra como "manter".
 export const defaultsSchema = z.object({
   scope: scopeSchema.optional(),
   locale: z.string().optional(),
@@ -31,16 +28,12 @@ export interface Locale {
   name: string
 }
 
-// O winget recebe a etiqueta BCP 47 em --locale, e só instala nela quem tem o
-// pacote naquele idioma. Quem não tem vem no idioma que vier.
 export const LOCALES: readonly Locale[] = [
   { id: 'pt-BR', name: 'Português' },
   { id: 'en-US', name: 'Inglês' },
   { id: 'es-ES', name: 'Espanhol' },
 ]
 
-// Como o padrão de cada campo se lê na tela do programa, para a linha dizer
-// "PADRÃO: EM SILÊNCIO" em vez de repetir o valor cru.
 const KEPT: Record<DefaultKey, string> = {
   scope: 'do jeito do programa',
   locale: 'do jeito que vier',

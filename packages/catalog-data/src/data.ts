@@ -12,10 +12,6 @@ export const CATEGORIES: readonly Category[] = [
   { id: 'runtimes', name: 'REQUISITOS' },
 ]
 
-// Esta é a semente: o que o app oferece antes de conseguir falar com a rede, e o
-// que sobra quando ela não responde. Ela espelha o catalog.json publicado, e é
-// gerada a partir dele — mexer num sem regerar o outro deixa quem está offline
-// com menos programas do que quem está online.
 export const CATALOG: readonly Program[] = [
   { id: 'chrome', name: 'Google Chrome', winget: 'Google.Chrome', version: '153.0.8010.37', mb: 153, category: 'browsers', hints: ['google chrome'], settingsKind: 'browser' },
   { id: 'firefox', name: 'Mozilla Firefox', winget: 'Mozilla.Firefox', version: '155.0.1', mb: 87, category: 'browsers', hints: ['mozilla firefox'], settingsKind: 'browser' },

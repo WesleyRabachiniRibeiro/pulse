@@ -31,8 +31,6 @@ export class WindowsProgramOpener implements ProgramOpener {
     }
   }
 
-  // openPath devolve uma mensagem de erro quando falha, e string vazia quando
-  // deu certo. Um atalho apagado desde a varredura cai aqui.
   async open(path: string): Promise<boolean> {
     const problem = await shell.openPath(path)
     return problem === ''

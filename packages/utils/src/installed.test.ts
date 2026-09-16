@@ -45,8 +45,6 @@ describe('caminho do desinstalador', () => {
     expect(uninstallerPath('C:\\App\\un.exe -q')).toBe('C:\\App\\un.exe')
   })
 
-  // Vários programas usam o mesmo msiexec, então a pasta dele não diz nada
-  // sobre quem instalou o quê e não pode agrupar.
   it('desinstalador compartilhado não vira pasta de agrupamento', () => {
     expect(uninstallerFolder(entry({ name: 'A', uninstall: 'MsiExec.exe /X{GUID}' }))).toBeNull()
     expect(uninstallerFolder(entry({ name: 'B', uninstall: 'C:\\Windows\\system32\\x.exe' }))).toBeNull()
@@ -58,8 +56,6 @@ describe('caminho do desinstalador', () => {
 })
 
 describe('agrupamento', () => {
-  // "Python 3.12 (64-bit)" e "Python 3.13" são o mesmo produto em versões
-  // diferentes, e viram um grupo em vez de duas linhas soltas.
   it('tira versão e arquitetura para achar o produto', () => {
     expect(stemOf('Python 3.12.4 (64-bit)')).toBe('Python')
     expect(stemOf('Node.js v20.11.0')).toBe('Node.js')

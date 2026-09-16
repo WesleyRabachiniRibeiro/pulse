@@ -11,8 +11,6 @@ import type { ProcessRunner } from '../../ports/process-runner'
 import type { PowerShellRunner } from '../../ports/powershell-runner'
 import type { WindowsTweaks } from '../../ports/windows-tweaks'
 
-// `reg query` imprime o valor como REG_DWORD 0xN. Não existe saída estruturada
-// para ele, então o número sai por casamento de texto, e é só isso.
 const DWORD = /REG_DWORD\s+0x([0-9a-f]+)/i
 
 export class RegistryWindowsTweaks implements WindowsTweaks {
@@ -46,7 +44,6 @@ export class RegistryWindowsTweaks implements WindowsTweaks {
       await this.writeValue(value, on ? value.on : value.off)
     }
 
-    // Algumas chaves só aparecem depois que o Explorador relê o registro.
     if (tweaksTouchingExplorer([id])) {
       await this.powershell
         .runJson<{ refreshed: boolean }>('Update-ExplorerView.ps1')

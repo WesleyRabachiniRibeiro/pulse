@@ -76,8 +76,6 @@ export function ProgramExceptions({
   const driveStrays = chosenDrive !== null && chosenDrive !== generalDrive
   const total = straying.length + (driveStrays ? 1 : 0)
 
-  // Escolher o mesmo que o padrão apaga a exceção em vez de gravar o valor
-  // igual: o programa volta a seguir a Configuração se ela mudar depois.
   function pick(key: DefaultKey, picked: string): void {
     const next: Settings = { ...settings }
     const value = valueFor(key, picked)

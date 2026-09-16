@@ -83,8 +83,6 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
     useTourStore.getState().setContext(inSettings ? 'settings' : 'grid')
   }, [inSettings])
 
-  // Liberar um bloqueado vale até a janela fechar: a lista no disco não muda
-  // porque alguém digitou o PIN uma vez.
   const wall = useMemo(
     () =>
       parental.on && parental.hasPin
@@ -169,7 +167,6 @@ export function Selection({ drive, onGoToInstallation, onGoToConfig }: Props) {
   }, [fresh, catalog])
 
   function pickOrAsk(id: string) {
-    // Desmarcar nunca pede PIN: tirar da fila não precisa de permissão.
     if (wall.has(id) && !selected.has(id)) return setFreeing(id)
     toggle(id)
   }

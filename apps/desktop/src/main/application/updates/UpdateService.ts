@@ -1,9 +1,6 @@
 import type { UpdateState } from '@pulse/domain'
 import type { UpdateChecker } from '../../ports/update-checker'
 
-// O acoplamento com a fila de instalação (não instalar uma atualização
-// sozinha enquanto ela roda) entra só como um predicado — este serviço não
-// conhece QueueOrchestrator, só chama isQueueBusy() sempre que precisa saber.
 export class UpdateService {
   constructor(
     private readonly checker: UpdateChecker,

@@ -44,7 +44,6 @@ describe('abrir um programa instalado', () => {
     expect(await service.openable(['chrome', 'steam'])).toEqual(['chrome'])
   })
 
-  // Varrer o menu Iniciar leva segundos, então não pode acontecer por clique.
   it('varre uma vez só e reaproveita', async () => {
     const fake = fakeOpener()
     const service = new OpenProgram(CATALOG, fake.opener)
@@ -81,7 +80,6 @@ describe('abrir um programa instalado', () => {
     expect(fake.opened()).toEqual([])
   })
 
-  // O atalho pode ter sumido entre a varredura e o clique.
   it('falhar ao abrir joga a varredura fora', async () => {
     const fake = fakeOpener({ open: async () => false })
     const service = new OpenProgram(CATALOG, fake.opener)

@@ -5,7 +5,7 @@ import s from './PinDialog.module.css'
 interface Props {
   purpose: PinPurpose
   extra?: string
-  // Devolve a mensagem de erro, ou null quando o PIN passou.
+
   onDone: (pin: string) => Promise<string | null>
   onClose: () => void
 }

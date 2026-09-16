@@ -78,8 +78,6 @@ export function editorPatch(ids: readonly string[]): Record<string, unknown> {
   return patch
 }
 
-// O que a pessoa já ajustou à mão continua valendo: só as chaves marcadas
-// aqui são sobrescritas.
 export function mergeEditorSettings(
   current: Record<string, unknown>,
   ids: readonly string[],

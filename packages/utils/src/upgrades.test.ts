@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readUpgrades } from './upgrades'
 
-// Saída real do winget em português: tabela de largura fixa, cabeçalho
-// traduzido, e as colunas deslocam conforme o nome mais comprido.
 const PT = [
   'Nome                     ID                        Versão      Disponível  Origem',
   '-------------------------------------------------------------------------------',
@@ -38,8 +36,6 @@ describe('leitura das atualizações do winget', () => {
     expect(readUpgrades(PT)).toEqual(readUpgrades(PT.replace(/\r\n/g, '\n')))
   })
 
-  // O rodapé "2 atualizações disponíveis" está depois da régua e não é linha
-  // de pacote. Sem identificador, ele não vira atualização.
   it('o rodapé não vira atualização', () => {
     expect(readUpgrades(PT).map((u) => u.name)).not.toContain('2 atualizações disponíveis.')
   })
@@ -48,8 +44,6 @@ describe('leitura das atualizações do winget', () => {
     expect(readUpgrades(PT, ['Google.Chrome'])[0]?.wingetId).toBe('Google.Chrome')
   })
 
-  // Um número de versão tem pontos e passaria pela forma de identificador se
-  // não exigíssemos letra no publicador.
   it('número de versão não é confundido com identificador', () => {
     const found = readUpgrades(
       ['Nome      ID        Versão   Disponível', '------------------------------', 'App  1.2.3  1.2.3  1.2.4'].join(
@@ -74,8 +68,6 @@ describe('leitura das atualizações do winget', () => {
     expect(readUpgrades(twice)).toHaveLength(1)
   })
 
-  // Quando a tabela não sai como esperado, a leitura cai para separar por
-  // espaços, que é pior mas ainda acha o que dá.
   it('sem régua, ainda lê separando por espaço', () => {
     const loose = 'Google Chrome Google.Chrome 130.0.1 131.0.2 winget'
     expect(readUpgrades(loose)[0]?.wingetId).toBe('Google.Chrome')

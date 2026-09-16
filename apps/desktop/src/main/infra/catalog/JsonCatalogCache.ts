@@ -20,8 +20,6 @@ export class JsonCatalogCache implements CatalogCache {
       await mkdir(dirname(path), { recursive: true })
       await writeFile(path, JSON.stringify(payload, null, 2), 'utf8')
     } catch {
-      // sem permissão de escrever: o catálogo desta sessão vale, e a próxima
-      // abertura tenta a rede de novo.
     }
   }
 

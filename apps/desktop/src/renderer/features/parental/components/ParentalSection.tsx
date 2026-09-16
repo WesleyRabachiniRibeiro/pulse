@@ -13,8 +13,6 @@ import {
 import { PinDialog } from './PinDialog'
 import s from './ParentalSection.module.css'
 
-// A troca do PIN é em dois passos: o mesmo diálogo pergunta primeiro o de
-// agora e depois o novo, porque as casinhas só cabem um PIN por vez.
 interface Asking {
   purpose: PinPurpose
   step: 'single' | 'current' | 'next'

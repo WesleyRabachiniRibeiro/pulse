@@ -31,8 +31,6 @@ function fakeRunner(over: {
 }
 
 describe('desinstalar pelo winget', () => {
-  // Elevado, o winget recusa remover pacote de escopo de usuário, por isso a
-  // remoção desce para a sessão da pessoa.
   it('elevado, desce para a sessão do usuário', async () => {
     const fake = fakeRunner({ elevated: true })
     const outcome = await new WingetPackageInstaller(fake.runner).uninstall('x', 'X.X', 'X')
@@ -48,8 +46,6 @@ describe('desinstalar pelo winget', () => {
     expect(fake.calls()).toEqual(['direct'])
   })
 
-  // Quem desliga o UAC não tem sessão sem elevação para onde descer. Antes o
-  // Pulse parava aqui e nada saía do PC dessa máquina.
   it('UAC desligado: tenta direto em vez de desistir', async () => {
     const fake = fakeRunner({
       elevated: true,
@@ -63,8 +59,6 @@ describe('desinstalar pelo winget', () => {
     expect(outcome).toEqual({ kind: 'ok' })
   })
 
-  // Tentar direto não é prometer que dá certo: se o winget recusar, é a
-  // mensagem dele que a pessoa lê, e não a do Pulse sobre o UAC.
   it('UAC desligado e winget recusando: o erro é o do winget', async () => {
     const fake = fakeRunner({
       elevated: true,

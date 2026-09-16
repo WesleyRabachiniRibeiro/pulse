@@ -164,8 +164,6 @@ describe('QueueOrchestrator', () => {
   })
 
   it('cancels a queued item before it starts', () => {
-    // PARALLEL_LIMIT is 3, so with a never-resolving install the 4th item
-    // stays genuinely queued instead of being dispatched synchronously.
     const orchestrator = makeOrchestrator(fakePackageInstaller({ install: () => new Promise(() => {}) }))
     orchestrator.start(
       [

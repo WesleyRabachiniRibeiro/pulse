@@ -19,9 +19,6 @@ export type RunRecord = z.infer<typeof runRecordSchema>
 
 export const historySchema = z.array(runRecordSchema)
 
-// O histórico é para consulta, não para auditoria: cinquenta filas cobrem o
-// uso real e o arquivo não cresce sem fim. A mensagem de erro é cortada porque
-// algumas do winget vêm com um despejo inteiro dentro.
 export const HISTORY_LIMIT = 50
 export const ERROR_LIMIT = 300
 

@@ -16,9 +16,6 @@ export class HistoryService {
     return []
   }
 
-  // O orquestrador avisa a cada mudança, e uma fila terminada continua
-  // terminada em todo aviso seguinte. A data de início identifica a fila, então
-  // ela entra no histórico uma vez só.
   async onRunChanged(run: Run): Promise<void> {
     const record = recordOf(run)
     if (!record || this.lastRecorded === record.startedAt) return

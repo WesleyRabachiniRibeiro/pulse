@@ -13,10 +13,6 @@ export interface WingetProgress {
   phase?: 'downloading' | 'installing'
 }
 
-// O winget não tem uma saída estruturada para o progresso de "install" (só
-// "--output json" para consultas de catálogo, não para a instalação em si),
-// então a fase e o percentual só dão para ser lidos de casar texto com a
-// barra de progresso que ele imprime no console, em português ou inglês.
 export function readWingetProgress(line: string): WingetProgress {
   const text = normalizeText(line)
   const progress: WingetProgress = {}

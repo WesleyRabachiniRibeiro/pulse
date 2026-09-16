@@ -19,12 +19,6 @@ function sortDrives(drives: Drive[]): Drive[] {
 export class WindowsDiskSpaceProbe implements DiskSpaceProbe, DriveLister {
   constructor(private readonly powershell: PowerShellRunner) {}
 
-  // Resolve assim que a primeira linha NDJSON chega (lista rápida, sem tipo
-  // de mídia) em vez de esperar o script inteiro terminar — a segunda linha
-  // (mais lenta, enriquecida com SSD/HDD) continua sendo entregue via
-  // onEnriched enquanto o processo ainda está de pé. Esperar as duas antes de
-  // resolver anularia o ganho de responsividade que o Get-Drives.ps1 existe
-  // para dar.
   listDrives(onEnriched?: (drives: Drive[]) => void): Promise<Drive[]> {
     return new Promise((resolve, reject) => {
       let settled = false

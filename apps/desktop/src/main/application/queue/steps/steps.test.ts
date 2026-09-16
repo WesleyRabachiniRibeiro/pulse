@@ -161,8 +161,6 @@ describe('runSteps', () => {
     expect(set).toHaveBeenCalledWith(vscode, false)
   })
 
-  // A espera da Steam é de quinze minutos de relógio real, então estes dois
-  // rodam com o tempo adiantado na mão.
   it('sem conta da Steam conectada, os jogos ficam pendentes', async () => {
     vi.useFakeTimers()
     try {
@@ -251,8 +249,6 @@ describe('runSteps', () => {
     expect(asked).toBe(1)
   })
 
-  // Sem nome nem email não há par de configuração, mas a chave ainda é um
-  // pedido válido por conta própria.
   it('só a chave, sem configuração nenhuma, ainda roda', async () => {
     const ports = fakePorts()
     const { ctx } = fakeContext(ports, vscode)
@@ -297,8 +293,6 @@ describe('ajustes do editor', () => {
     expect(notes.join(' ')).toContain('2 ajustes gravados')
   })
 
-  // O settings.json aceita comentário, que não é JSON. Nesse caso o arquivo
-  // fica como está, e a pessoa precisa saber disso pelo resumo.
   it('arquivo ilegível não é sobrescrito, e o resumo diz', async () => {
     const ports = fakePorts()
     ports.editorSettingsStore.apply = async () => 'unreadable'
@@ -340,8 +334,6 @@ describe('ajustes do editor', () => {
 describe('ferramentas do runtime', () => {
   const node = PROGRAM_BY_ID.get('node') as Program
 
-  // A ordem dos pacotes é a do catálogo do runtime, não a ordem em que a
-  // pessoa marcou, para a linha de comando sair sempre igual.
   it('instala tudo numa chamada só, com os argumentos do npm', async () => {
     const ports = fakePorts()
     let seen: [string, readonly string[]] | null = null
@@ -358,8 +350,6 @@ describe('ferramentas do runtime', () => {
     expect(result.packagesInstalled).toEqual(['typescript', 'pnpm'])
   })
 
-  // Um id que não é do catálogo daquele runtime não pode virar argumento de
-  // linha de comando.
   it('ignora pacote que não é do runtime escolhido', async () => {
     const ports = fakePorts()
     let seen: readonly string[] = []

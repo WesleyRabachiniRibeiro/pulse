@@ -4,7 +4,7 @@ export const PIN_LENGTH = 4
 
 export const parentalSchema = z.object({
   on: z.boolean(),
-  // Guardado embaralhado com sal, nunca o PIN em si.
+
   secret: z.string().optional(),
   blocked: z.array(z.string()),
 })
@@ -20,7 +20,6 @@ export function pinIsValid(digits: string): boolean {
   return new RegExp(`^\\d{${PIN_LENGTH}}$`).test(digits)
 }
 
-// Ligado sem PIN cadastrado não tranca nada: sem segredo não há o que conferir.
 export function locked(parental: Parental): boolean {
   return parental.on && hasPin(parental)
 }

@@ -66,8 +66,6 @@ export interface MainComponents {
   queueOrchestrator: QueueOrchestrator
 }
 
-// Onde o catálogo publicado mora. Trocar isto troca o que o app oferece, sem
-// recompilar nem republicar o instalador.
 const CATALOG_URL =
   'https://raw.githubusercontent.com/WesleyRabachiniRibeiro/pulse/main/catalog.json'
 
@@ -138,7 +136,6 @@ export function composeMain(): MainComponents {
   void catalogService.load()
 
   registerSteam(new SteamService(steamAdapter))
-
 
   registerParental(
     new ParentalService(new PreferencesParentalStore(preferencesStore), new NodePinSealer()),

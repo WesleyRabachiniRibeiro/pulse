@@ -74,8 +74,6 @@ function Shell({ savedDrive }: { savedDrive: string | null }) {
   useWatchAutostart(run?.finishedAt ?? null, pastPreflight)
   useOpenOnFirstVisit()
 
-  // O rail marca quantos programas fogem do padrão, contando cada um uma vez
-  // só mesmo que fuja em mais de um campo.
   const defaults = useDefaults()
   const settingsByApp = useSelection((st) => st.settings)
   const overrides = new Set(
@@ -104,7 +102,6 @@ function Shell({ savedDrive }: { savedDrive: string | null }) {
     if (drive && drive !== savedDrive) void savePreference({ drive })
   }, [drive, savedDrive])
 
-  // O tour ainda pede tela por número; a trilha do TRAIL está na mesma ordem.
   const targetScreen = useTourStore((t) => t.targetScreen)
   const availableList = available.join(',')
 

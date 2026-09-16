@@ -25,8 +25,6 @@ const useStore = create<InventoryStore>((set) => ({
   set: (patch) => set(patch),
 }))
 
-// As quatro leituras saem juntas porque a tela mostra a contagem das quatro
-// abas de uma vez; adiar as outras deixaria três contadores em branco.
 export async function reloadInventory(): Promise<void> {
   if (useStore.getState().busy) return
   useStore.getState().set({ busy: true })

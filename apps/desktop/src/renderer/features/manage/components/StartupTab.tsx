@@ -11,8 +11,6 @@ function StartupItem({ entry }: { entry: StartupEntry }) {
   const [busy, setBusy] = useState(false)
   const program = entry.programId ? catalog.byId.get(entry.programId) : undefined
 
-  // A resposta é a lista relida do registro, então a tela mostra o que o
-  // Windows tem e não o que foi pedido.
   async function toggle() {
     setBusy(true)
     const found = await bridge

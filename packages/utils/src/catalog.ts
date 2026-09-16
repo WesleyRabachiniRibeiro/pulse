@@ -10,12 +10,8 @@ import {
   type PackageVersion,
 } from '@pulse/domain'
 
-// Estimativa grosseira de banda, em megabytes por minuto. Era um 90 solto em
-// dois lugares, com pisos diferentes, e ninguém saberia mexer nos dois.
 export const MB_PER_MINUTE = 90
 
-// O padrão muda com o uso: somar a seleção ignora o que não está no catálogo,
-// enquanto medir progresso chuta um peso para o item não sumir da barra.
 export function sizeOf(catalog: Catalog, id: string, fallbackMb = 0): number {
   return catalog.byId.get(id)?.mb ?? fallbackMb
 }
@@ -34,7 +30,6 @@ export function estimatedMinutes(mb: number): number {
   return minutesFor(mb)
 }
 
-// LTS vem na frente de qualquer número: é a versão que a maioria quer.
 function versionKey({ winget, version }: PackageVersion): number[] {
   if (winget.toUpperCase().endsWith('.LTS')) return [Number.MAX_SAFE_INTEGER]
   const fromId = winget.match(/\d+/g)
@@ -64,8 +59,6 @@ export function filterCatalog(catalog: Catalog, term: string): readonly Program[
   )
 }
 
-// "Google Chrome" casa com a dica "google chrome", mas "Google Chrome Remote
-// Desktop" não pode casar: só vale se o que vem depois for separador.
 const SEPARATORS = [' ', '(', '-', '.', ',']
 
 function hintMatches(name: string, hint: string): boolean {
@@ -95,8 +88,6 @@ export function entryMatchesProgram(
   })
 }
 
-// Quando duas dicas casam com o mesmo nome, a mais longa ganha: entre "visual
-// studio" e "visual studio code", o nome mais específico é o certo.
 export function installedIds(catalog: Catalog, installedNames: readonly string[]): string[] {
   const found = new Set<string>()
 
@@ -150,10 +141,6 @@ export function bundleIsActive(
   return ids.length === selected.size && ids.every((id) => selected.has(id))
 }
 
-// O schema diz se cada registro tem a forma certa. Estas duas perguntas são
-// sobre o conjunto: id repetido quebraria o índice por id, e padrão de família
-// que não compila estoura na tela de versões. Qualquer uma recusa o arquivo
-// inteiro, porque meio catálogo é pior do que nenhum.
 export function readCatalogPayload(raw: unknown): CatalogPayload | null {
   const parsed = catalogPayloadSchema.safeParse(raw)
   if (!parsed.success) return null
@@ -175,16 +162,11 @@ export function readCatalogPayload(raw: unknown): CatalogPayload | null {
   return parsed.data
 }
 
-// O que a pessoa adicionou entra depois do catálogo publicado, e um id que já
-// existe lá é descartado: o publicado manda, senão um programa local
-// sequestraria o nome de um oficial.
 export function withExtras(base: Catalog, extras: readonly Program[]): Catalog {
   const known = new Set(base.programs.map((program) => program.id))
   const mine = extras.filter((program) => !known.has(program.id))
   if (mine.length === 0) return base
 
-  // Sem a categoria, quem foi adotado sumiria de toda tela que agrupa por
-  // categoria, porque elas percorrem a lista de categorias e não a de programas.
   const categories = mine.some((program) => program.category === MINE_CATEGORY.id)
     ? [...base.categories, MINE_CATEGORY]
     : base.categories

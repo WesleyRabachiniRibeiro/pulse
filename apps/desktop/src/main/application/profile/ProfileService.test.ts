@@ -102,8 +102,6 @@ describe('importar de arquivo', () => {
     expect((await service.import('merge', EMPTY_PROFILE)).status).toBe('invalid')
   })
 
-  // Vem de outro PC, então pode citar programa que aqui não existe. Ele não
-  // entra, e a tela recebe a lista do que ficou de fora.
   it('programa fora do catálogo não entra, e é relatado', async () => {
     const alheio = JSON.stringify(
       portableOf({ selected: ['chrome', 'aposentado'], drives: {}, settings: {} }),
@@ -138,8 +136,6 @@ describe('importar de link', () => {
 })
 
 describe('pasta sincronizada', () => {
-  // Sem a pasta, a janela abre onde o Windows quiser; com ela, o perfil cai
-  // sempre no mesmo lugar sem a pessoa navegar.
   it('a pasta escolhida vira o ponto de partida do salvar', async () => {
     const { saved, service } = make({ folder: 'D:\Sync' })
     await service.export('pulse', mine)

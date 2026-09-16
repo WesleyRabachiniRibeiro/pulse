@@ -24,8 +24,6 @@ describe('padrões de instalação', () => {
     expect(merged.locale).toBe('pt-BR')
   })
 
-  // Falso é uma escolha, não ausência: quem pediu "não abrir" não pode ser
-  // sobrescrito pelo padrão que diz "abrir".
   it('falso no programa não é tratado como ausência', () => {
     expect(withDefaults({ autostart: false }, { autostart: true }).autostart).toBe(false)
   })

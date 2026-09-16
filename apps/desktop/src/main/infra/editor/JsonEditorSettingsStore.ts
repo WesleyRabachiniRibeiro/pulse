@@ -30,8 +30,6 @@ export class JsonEditorSettingsStore implements EditorSettingsStore {
     return join(roaming, folder, 'User', 'settings.json')
   }
 
-  // Arquivo ausente ou vazio é um começo válido. Já um arquivo que existe e
-  // não decodifica devolve null, para o chamador não sobrescrever.
   private async readCurrent(path: string): Promise<Record<string, unknown> | null> {
     const raw = await readFile(path, 'utf8').catch(() => null)
     if (raw === null || !raw.trim()) return {}

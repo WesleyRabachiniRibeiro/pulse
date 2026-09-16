@@ -3,9 +3,6 @@ import { useCatalog } from '@/features/catalog'
 import s from './AppIcon.module.css'
 import { TINTS } from './tints'
 
-// Duas pastas, porque são duas técnicas. O ícone de 'icons' é uma silhueta
-// desenhada como máscara e tingida com a cor do programa; o de 'logos' tem
-// cores próprias demais para virar silhueta, então vai como imagem.
 const MASKS = import.meta.glob('../../assets/icons/*.svg', {
   eager: true,
   query: '?url',
@@ -43,18 +40,12 @@ interface Props {
   size?: number
 }
 
-// O ícone é resolvido aqui dentro, e não recebido por quem desenha: quem foi
-// adotado do PC não tem SVG dentro do app e traz o próprio, e deixar isso a
-// cargo de cada chamador fazia o ícone aparecer só na tela que lembrava de
-// passá-lo.
 export function AppIcon({ id, name, size = 34 }: Props) {
   const catalog = useCatalog()
   const mask = MASK_BY_ID[id]
   const tint = TINTS[id] ?? 'var(--tx-3)'
   const style = { '--tint': tint, '--side': `${size}px` } as CSSProperties
 
-  // O logo colorido ganha da máscara; o ícone que o programa adotado trouxe
-  // do PC só entra quando não existe desenho nenhum aqui dentro.
   const picture = LOGO_BY_ID[id] ?? (mask ? undefined : catalog.byId.get(id)?.icon)
 
   if (picture) {

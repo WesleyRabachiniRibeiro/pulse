@@ -26,10 +26,6 @@ function silentCommand(entry: UninstallEntry): string | null {
   return code ? `msiexec.exe /x ${code} /quiet /norestart` : null
 }
 
-// Espelha a fila: depois de instalar/desinstalar/reter, forgetCache() bumpa
-// esta geração para descartar leituras já em voo e forçar a próxima a ir de
-// novo ao registro, sem que duas chamadas concorrentes disparem PowerShell
-// em duplicado (a leitura em andamento é reaproveitada por quem chegar depois).
 export class WingetPackageRepository implements PackageRepository, CatalogPackageReader {
   private generation = 0
   private cached: { at: number; ids: string[] } | null = null
@@ -41,18 +37,11 @@ export class WingetPackageRepository implements PackageRepository, CatalogPackag
     private readonly processRunner: ProcessRunner,
   ) {}
 
-  // Sempre lê "fresco" (sem a janela de reuso de listInstalled), só dedupe
-  // por chamadas concorrentes — a fila usa isInstalled() em polling durante a
-  // desinstalação (disappeared()) e precisa enxergar a mudança assim que sai
-  // do registro, não o valor de até 120s atrás.
   async isInstalled(id: string): Promise<boolean> {
     const ids = await this.readInstalled().catch((): string[] => [])
     return ids.includes(id)
   }
 
-  // `winget upgrade` não aceita --output json: a saída estruturada existe só
-  // para consulta de catálogo, não para esta. Por isso a leitura é de texto, e
-  // a heurística mora em readUpgrades.
   async listUpgrades(): Promise<readonly Upgrade[]> {
     const { text } = await this.processRunner.runOnce('winget', [
       'upgrade',

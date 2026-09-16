@@ -7,8 +7,6 @@ import type { LiveCatalog } from '../application/catalog/LiveCatalog'
 
 const WARM_DELAY_MS = 5000
 
-// O contrato descreve o que trafega, e o domínio o que o app manipula. As duas
-// formas são a mesma coisa com readonly e categoria tipada a mais de um lado.
 function wire(programs: readonly Program[]): IpcOutput<'catalog:mine'> {
   return programs.map((program) => ({ ...program })) as unknown as IpcOutput<'catalog:mine'>
 }

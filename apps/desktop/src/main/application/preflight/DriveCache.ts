@@ -3,11 +3,6 @@ import type { DriveLister } from '../../ports/drive-lister'
 
 const REUSE_MS = 20_000
 
-// Evita competir corridas entre chamadas concorrentes de preflight:drives e
-// preflight:run: enquanto uma leitura está em voo, quem chegar depois recebe
-// a mesma promise em vez de disparar outro PowerShell. Quando a leitura
-// enriquecida (mídia SSD/HDD) chega antes de a chamada corrente terminar,
-// ela é devolvida na hora; senão, fica só disponível via onEnriched/cache.
 export class DriveCache {
   private cached: { at: number; drives: Drive[] } | null = null
   private pending: Promise<Drive[]> | null = null

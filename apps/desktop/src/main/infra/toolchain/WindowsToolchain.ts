@@ -90,8 +90,6 @@ export class WindowsToolchain implements Toolchain {
     }
   }
 
-  // O PATH da sessão é o de quando o Pulse abriu. O do registro é o de agora,
-  // e é ele que enxerga o que acabou de ser instalado.
   private async currentPath(): Promise<string> {
     if (this.cachedPath !== null) return this.cachedPath
 

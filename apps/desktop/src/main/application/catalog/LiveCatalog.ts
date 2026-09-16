@@ -9,9 +9,6 @@ import {
   type Program,
 } from '@pulse/domain'
 
-// Implementa Catalog lendo de dentro, então quem recebeu este objeto continua
-// enxergando o catálogo atual sem saber que ele troca. Sem isso, todo serviço
-// que guardou o valor no construtor ficaria com a semente para sempre.
 export class LiveCatalog implements Catalog {
   private base: Catalog = SEED_CATALOG
   private extras: readonly Program[] = []
@@ -68,8 +65,6 @@ export class LiveCatalog implements Catalog {
     return this.extras
   }
 
-  // A soma é refeita a cada mudança dos dois lados, para nunca existir um
-  // estado em que o catálogo publicado e os programas locais discordam.
   private republish(): void {
     this.inner = withExtras(this.base, this.extras)
   }

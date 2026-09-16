@@ -1,8 +1,6 @@
 import type { Catalog, StartupEntry } from '@pulse/domain'
 import { entryMatchesProgram } from './catalog'
 
-// O mesmo programa costuma aparecer em mais de uma chave do registro. Na tela
-// isso vira linha repetida, então fica a primeira e a lista sai em ordem.
 export function tidyStartup(entries: readonly StartupEntry[]): StartupEntry[] {
   const seen = new Set<string>()
   const kept: StartupEntry[] = []
@@ -21,8 +19,6 @@ export function tidyStartup(entries: readonly StartupEntry[]): StartupEntry[] {
   return kept.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }))
 }
 
-// Casar com o catálogo é o que deixa a tela mostrar o ícone do programa. O que
-// não casa continua na lista: é justamente o que o Pulse não instalou.
 export function withPrograms(catalog: Catalog, entries: readonly StartupEntry[]): StartupEntry[] {
   return entries.map((entry) => {
     for (const program of catalog.programs) {

@@ -27,8 +27,6 @@ export interface StepContext {
   drive: string
   ports: StepPorts
 
-  // O runner não toca no Item: ele conta o que está fazendo e o orquestrador
-  // decide como isso vira estado e evento.
   say(detail: string): void
   waitFor(detail: string): void
   progress(percent: number): void

@@ -7,8 +7,6 @@ import {
   type RunState,
 } from '@pulse/domain'
 
-// Fila que não terminou não vira registro: o histórico conta o que aconteceu,
-// não o que está acontecendo.
 export function recordOf(run: Run): RunRecord | null {
   if (!run.finishedAt) return null
 

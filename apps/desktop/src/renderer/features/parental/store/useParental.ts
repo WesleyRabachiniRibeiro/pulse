@@ -32,8 +32,6 @@ export function useIsBlocked(id: string): boolean {
   return useStore((s) => s.view.on && s.view.hasPin && s.view.blocked.includes(id))
 }
 
-// Só a resposta do main atualiza a tela. Um PIN recusado não mexe em nada,
-// para a tela nunca mostrar um estado que o main não confirmou.
 async function settle(result: Promise<{ ok: boolean; view?: ParentalView }>): Promise<boolean> {
   const { ok, view } = await result.catch(() => ({ ok: false, view: undefined }))
   if (view) useStore.getState().set(view)

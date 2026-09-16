@@ -5,8 +5,6 @@ export interface AutostartEntry {
   state: AutostartDisplayState
 }
 
-// Leitura para exibir estado de autostart na tela do catálogo — não confundir
-// com AutostartRegistry.setAutostart, que é a escrita usada pela fila.
 export interface AutostartReader {
   list(): Promise<AutostartEntry[]>
 }

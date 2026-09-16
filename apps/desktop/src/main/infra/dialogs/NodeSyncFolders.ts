@@ -3,9 +3,6 @@ import { join } from 'node:path'
 import { access } from 'node:fs/promises'
 import type { SyncFolder, SyncFolders } from '../../ports/sync-folders'
 
-// Os três que sincronizam sozinhos e aparecem na pasta do usuário. A do
-// OneDrive vem por variável de ambiente porque o nome muda com a conta
-// corporativa ("OneDrive - Empresa").
 const CANDIDATES: readonly { label: string; from: () => string | undefined }[] = [
   { label: 'OneDrive', from: () => process.env['OneDrive'] },
   { label: 'OneDrive', from: () => join(homedir(), 'OneDrive') },

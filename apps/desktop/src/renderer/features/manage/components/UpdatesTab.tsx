@@ -15,8 +15,6 @@ export function UpdatesTab({ onUpdate }: Props) {
   const loaded = useInventoryLoaded()
   const [copied, setCopied] = useState<string | null>(null)
 
-  // Quem não está no catálogo o Pulse não atualiza, mas o comando resolve —
-  // e ele é comprido demais para alguém digitar de memória.
   async function copyCommand(wingetId: string) {
     await bridge
       .invoke('system:copy', { text: `winget upgrade --id ${wingetId}` })

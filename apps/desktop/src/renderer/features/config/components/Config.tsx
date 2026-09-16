@@ -78,8 +78,6 @@ const ROWS: readonly Row[] = [
 
 const INSTALL_KEYS: readonly DefaultKey[] = ['scope', 'locale', 'interactive']
 
-// Campo ausente é "manter", menos na janela do instalador: lá não escolher é
-// escolher o silêncio, que é como o Pulse sempre instalou.
 function chosenOf(defaults: Defaults, key: DefaultKey): string {
   const value = defaults[key]
   if (value !== undefined) return String(value)

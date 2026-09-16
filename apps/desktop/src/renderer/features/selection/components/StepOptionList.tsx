@@ -12,8 +12,6 @@ interface Props {
   onToggle: (step: AnyStep, id: string) => void
 }
 
-// Cada lista guarda a própria busca e o próprio filtro: um programa pode
-// oferecer mais de uma, e digitar numa não pode mexer na outra.
 export function StepOptionList({ step, programId, chosen, onToggle }: Props) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('Tudo')

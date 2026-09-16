@@ -16,10 +16,6 @@ export type GitConfig = z.infer<typeof gitSchema>
 
 export const DEFAULT_GIT: GitConfig = { name: '', email: '', branch: 'main' }
 
-// core.autocrlf tem três valores e nenhum se chama pelo que faz. 'true'
-// converte nos dois sentidos, 'input' só na hora de gravar, e 'false' não
-// mexe — é a diferença entre um diff limpo e um arquivo inteiro marcado
-// como modificado sem ninguém ter tocado nele.
 export const AUTOCRLF: Record<LineEnding, string> = {
   crlf: 'true',
   lf: 'input',

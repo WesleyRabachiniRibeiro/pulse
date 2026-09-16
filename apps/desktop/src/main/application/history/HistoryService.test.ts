@@ -62,8 +62,6 @@ describe('HistoryService', () => {
     expect(fake.writes).toBe(0)
   })
 
-  // O orquestrador avisa a cada mudança, e uma fila terminada continua
-  // terminada em todo aviso seguinte.
   it('a mesma fila não entra duas vezes, por mais avisos que cheguem', async () => {
     const fake = fakeStore()
     const service = new HistoryService(fake.store)

@@ -103,8 +103,6 @@ export function runtimeToolsFor(programId: string): RuntimeTools | null {
   return RUNTIME_TOOLS[programId] ?? null
 }
 
-// Filtra pelo catálogo do próprio runtime: um id que não é dele não vira
-// argumento de linha de comando.
 export function knownPackages(programId: string, ids: readonly string[]): string[] {
   const tools = runtimeToolsFor(programId)
   if (!tools) return []

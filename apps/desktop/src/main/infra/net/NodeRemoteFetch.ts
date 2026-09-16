@@ -5,8 +5,6 @@ const MAX_BYTES = 2 * 1024 * 1024
 
 export class NodeRemoteFetch implements RemoteFetch {
   async text(url: string): Promise<string | null> {
-    // Só http e https: um link colado pode ser file:// e apontar para qualquer
-    // arquivo da máquina.
     let parsed: URL
     try {
       parsed = new URL(url)

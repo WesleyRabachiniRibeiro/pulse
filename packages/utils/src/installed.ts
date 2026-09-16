@@ -9,8 +9,6 @@ import {
 } from '@pulse/domain'
 import { nameMatchesProgram } from './catalog'
 
-// Desinstaladores que muitos programas compartilham. A pasta deles não diz
-// nada sobre quem instalou o quê, então não serve para agrupar.
 const SHARED_UNINSTALLERS = new Set([
   'msiexec.exe',
   'rundll32.exe',
@@ -24,8 +22,6 @@ const SHARED_UNINSTALLERS = new Set([
 
 const KB_IN_NAME = /\(KB\d{6,}\)/i
 
-// Três coisas não são programa que a pessoa instalou: componente de sistema,
-// atualização do Windows, e entrada sem como desinstalar.
 export function hiddenReason(entry: RegistryEntry): HiddenReason | null {
   if (entry.system === true) return 'system'
   if (KB_IN_NAME.test(entry.name)) return 'update'
@@ -33,8 +29,6 @@ export function hiddenReason(entry: RegistryEntry): HiddenReason | null {
   return null
 }
 
-// O comando de desinstalação vem como linha de comando inteira. O caminho é o
-// que está entre aspas, ou o que vem antes do primeiro argumento.
 export function uninstallerPath(command: string): string | null {
   const text = command.trim()
   if (!text) return null
@@ -73,8 +67,6 @@ function simpleName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
-// Tira versão, arquitetura e parênteses para "Python 3.12 (64-bit)" e
-// "Python 3.13" caírem no mesmo grupo.
 export function stemOf(name: string): string {
   return name
     .replace(/\([^)]*\)/g, ' ')
@@ -85,9 +77,6 @@ export function stemOf(name: string): string {
     .trim()
 }
 
-// O registro guarda o ícone como "caminho,índice", e o caminho pode vir entre
-// aspas. O índice sai primeiro: tirando as aspas antes, a de fechamento fica
-// presa depois da vírgula e sobra no fim do caminho.
 export function iconPath(value: string | undefined): string | null {
   const withoutIndex = (value ?? '').trim().replace(/,-?\d+$/, '')
   const path = withoutIndex.replace(/^"|"$/g, '').trim()
@@ -136,8 +125,6 @@ function byName(a: { name: string }, b: { name: string }): number {
   return a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
 }
 
-// Numa pasta com vários programas, o dono é o que se chama como a pasta, ou o
-// que está instalado na raiz dela.
 function ownerOf(folder: string, members: readonly RegistryEntry[]): RegistryEntry | null {
   const base = folder.split('\\').at(-1) ?? ''
   if (!base) return null
@@ -238,8 +225,6 @@ export function countNodes(nodes: readonly InstalledNode[]): number {
   return nodes.reduce((total, node) => total + 1 + node.children.length, 0)
 }
 
-// Buscar acha pelo nome do filho também, senão um programa dentro de um grupo
-// ficaria invisível.
 export function filterInstalled(
   nodes: readonly InstalledNode[],
   query: string,
@@ -257,8 +242,6 @@ export function filterInstalled(
   })
 }
 
-// Só o que o Pulse reconhece do catálogo pode ser marcado: sem programId não
-// há o que atualizar nem desinstalar pelo nome que ele conhece.
 export function selectable(nodes: readonly InstalledNode[]): InstalledNode[] {
   return nodes.filter((node) => node.programId !== undefined)
 }

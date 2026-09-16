@@ -28,7 +28,6 @@ describe('registro de uma fila', () => {
     expect(record?.items.map((i) => i.drive)).toEqual(['C:', 'C:', 'D:'])
   })
 
-  // Algumas mensagens do winget vêm com um despejo inteiro dentro.
   it('mensagem de erro comprida é cortada', () => {
     const record = recordOf(
       run({

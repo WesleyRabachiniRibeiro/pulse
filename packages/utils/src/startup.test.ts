@@ -8,7 +8,6 @@ function entry(name: string, over: Partial<StartupEntry> = {}): StartupEntry {
 }
 
 describe('entradas de inicialização', () => {
-  // O mesmo programa costuma estar em HKCU e HKLM ao mesmo tempo.
   it('o mesmo nome não vira duas linhas', () => {
     const found = tidyStartup([entry('Steam'), entry('steam'), entry('STEAM')])
     expect(found).toHaveLength(1)
@@ -37,8 +36,6 @@ describe('entradas de inicialização', () => {
     expect(found[0]?.programId).toBe('steam')
   })
 
-  // Programa que o Pulse não instalou é justamente o que mais interessa nesta
-  // aba, então ele fica na lista, só sem ícone.
   it('o que não casa continua na lista, sem id', () => {
     const found = withPrograms(SEED_CATALOG, [entry('Algum Programa Qualquer')])
     expect(found).toHaveLength(1)

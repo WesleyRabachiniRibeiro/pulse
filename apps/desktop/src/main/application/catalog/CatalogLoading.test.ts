@@ -87,7 +87,6 @@ describe('de onde vem o catálogo', () => {
     expect(written).toHaveLength(1)
   })
 
-  // A tela abre com o que já se conhece em vez de esperar a rede.
   it('o cache entra primeiro, e a rede passa por cima', async () => {
     const cached = payload({
       programs: [
@@ -129,8 +128,6 @@ describe('de onde vem o catálogo', () => {
     expect(service.currentState().source).toBe('seed')
   })
 
-  // Id repetido quebraria o índice, e padrão de família que não compila
-  // estoura na tela de versões.
   it('catálogo com id repetido é recusado inteiro', async () => {
     const broken = payload({
       programs: [

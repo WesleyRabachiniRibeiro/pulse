@@ -1,5 +1,3 @@
-// 'mine' não vem do catálogo publicado: é onde o Pulse põe os programas que a
-// própria pessoa adotou do PC dela.
 export type CategoryId =
   | 'browsers'
   | 'games'
@@ -30,11 +28,9 @@ export interface Program {
   hints: readonly string[]
   notice?: string
   settingsKind?: SettingsKind
-  // Declara os ajustes por id. Quem usa isto dispensa settingsKind, que é o
-  // atalho de quando um programa tinha exatamente um tipo de ajuste.
+
   steps?: readonly string[]
-  // Só quem foi adotado do PC traz ícone; o catálogo publicado usa os SVGs
-  // que vêm dentro do app.
+
   icon?: string
   family?: {
     prefix: string

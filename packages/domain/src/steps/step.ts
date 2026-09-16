@@ -13,8 +13,6 @@ export interface StepDescriptor<T> {
   summary: (value: T) => string[]
 }
 
-// O registro guarda descritores de tipos diferentes lado a lado, então o valor
-// só volta a ter tipo quando passa pelo schema do próprio step.
 export interface AnyStep {
   id: string
   title: string

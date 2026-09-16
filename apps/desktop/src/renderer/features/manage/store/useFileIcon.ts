@@ -12,8 +12,6 @@ const useStore = create<IconStore>((set) => ({
   set: (path, url) => set((state) => ({ icons: { ...state.icons, [path]: url } })),
 }))
 
-// Cada caminho é perguntado uma vez só na vida da janela: a lista de
-// instalados repete o mesmo .exe em várias linhas, e extrair ícone é caro.
 const asked = new Set<string>()
 
 export function useFileIcon(path: string | undefined): string | null {

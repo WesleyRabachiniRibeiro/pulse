@@ -86,15 +86,10 @@ export class WingetPackageInstaller implements PackageInstaller {
     const direct = (): Promise<SpawnResult> =>
       this.processRunner.runWinget(`uninstall:${itemId}`, args, () => {})
 
-    // Elevado, o winget recusa desinstalar pacote de escopo de usuário. Como o
-    // Pulse roda como administrador, a remoção sai pela sessão da pessoa.
     let output: SpawnResult = (await this.processRunner.isElevated())
       ? await this.processRunner.runAsInteractiveUser('winget', args)
       : await direct()
 
-    // Quem desliga o UAC não tem sessão sem elevação, então a descida acima é
-    // impossível nessa máquina. Tentar direto ao menos deixa o winget dizer o
-    // que acontece, em vez de o Pulse recusar sozinho.
     if (output.code === NO_UNELEVATED_SESSION) output = await direct()
 
     const blocked = runnerFailure(output.code)
@@ -126,8 +121,6 @@ function installArgs(spec: InstallSpec): string[] {
   if (spec.scope) common.push('--scope', spec.scope)
   if (spec.locale) common.push('--locale', spec.locale)
 
-  // Mostrar a janela do instalador é o oposto de desligar a interação: as duas
-  // opções do winget não convivem no mesmo comando.
   common.push(spec.interactive ? '--interactive' : '--disable-interactivity')
 
   if (spec.fromStore) return [...common, '--source', 'msstore']

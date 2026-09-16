@@ -401,7 +401,6 @@ export class QueueOrchestrator {
     this.emitState()
   }
 
-
   private async install(target: Item): Promise<void> {
     const program = this.catalog.byId.get(target.id)
     if (!program) {
@@ -589,11 +588,6 @@ export class QueueOrchestrator {
     const run = this.queueRepository.get()
     if (!run) return
 
-    // A importação vem antes de pedir o padrão de propósito. Pedir o padrão
-    // lança o navegador, e o Firefox só abre o assistente de importação quando
-    // não há instância rodando: com uma aberta, ele repassa o comando para ela
-    // e ignora o -migration. Invertido, o Pulse acusava o usuário de ter
-    // deixado uma janela aberta que ele mesmo tinha acabado de abrir.
     const addresses: string[] = []
 
     for (const item of run.items) {

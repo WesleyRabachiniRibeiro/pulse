@@ -29,8 +29,6 @@ describe('installedIds', () => {
     expect(installedIds(SEED_CATALOG, ['Claude Code'])).toEqual(['claudecode'])
   })
 
-  // O nome é inventado de propósito: o exemplo anterior era 'Notepad++', que
-  // deixou de servir no dia em que ele entrou no catálogo.
   it('does not match unrelated program names', () => {
     expect(installedIds(SEED_CATALOG, ['Editor de Texto da Vovó'])).toEqual([])
   })
@@ -55,9 +53,6 @@ describe('bundleIsActive', () => {
 })
 
 describe('totalSizeMb', () => {
-  // O número vem do catálogo, que é atualizado pelo script de manutenção, então
-  // o teste pergunta ao próprio catálogo em vez de fixar um valor que envelhece
-  // a cada versão nova do Chrome.
   it('sums known program sizes and ignores unknown ids', () => {
     const chrome = SEED_CATALOG.byId.get('chrome')?.mb ?? 0
     expect(chrome).toBeGreaterThan(0)
@@ -109,8 +104,6 @@ describe('meus programas', () => {
     expect(found.programs.length).toBe(SEED_CATALOG.programs.length + 1)
   })
 
-  // O publicado manda: senão um programa local sequestraria o nome de um
-  // oficial, e a pessoa instalaria outra coisa sem perceber.
   it('id que já existe no publicado é descartado', () => {
     const sequestro: Program = { ...meu, id: 'chrome', name: 'Não é o Chrome' }
     const found = withExtras(SEED_CATALOG, [sequestro])
@@ -123,8 +116,6 @@ describe('meus programas', () => {
     expect(withExtras(SEED_CATALOG, [])).toBe(SEED_CATALOG)
   })
 
-  // As telas percorrem as categorias, não os programas. Sem a categoria, o
-  // adotado entraria no catálogo e mesmo assim não apareceria em lugar nenhum.
   it('adotado ganha a categoria MEUS PROGRAMAS, e ela aparece agrupada', () => {
     const adotado: Program = { ...meu, category: 'mine' }
     const found = withExtras(SEED_CATALOG, [adotado])

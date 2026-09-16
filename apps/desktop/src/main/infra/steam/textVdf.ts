@@ -1,7 +1,3 @@
-// O Steam guarda alguns arquivos em texto VDF (diferente do binário de vdf.ts)
-// sem parser oficial disponível para Node — regex/varredura de chaves é a
-// única saída, então essa técnica fica isolada aqui, testável sem IO real.
-
 export function parseLibraryFolderPaths(vdfText: string): string[] {
   const paths: string[] = []
   for (const found of vdfText.matchAll(/"path"\s+"([^"]+)"/g)) {

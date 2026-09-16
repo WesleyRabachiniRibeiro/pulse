@@ -5,9 +5,6 @@ import type { Bundle, Category, Program } from '@pulse/catalog-data'
 export type { CategoryId, Category, SettingsKind, Program, Bundle } from '@pulse/catalog-data'
 export { CATEGORIES, CATALOG, PROGRAM_BY_ID, BUNDLES } from '@pulse/catalog-data'
 
-// O catálogo passa a ser um valor que circula, em vez de constante que cada
-// arquivo importa. Hoje só existe a semente; depois vem a versão remota e os
-// programas que a pessoa adiciona, e nada disso muda quem consome.
 export interface Catalog {
   categories: readonly Category[]
   programs: readonly Program[]
@@ -45,13 +42,10 @@ export const programSchema = z.object({
   settingsKind: z.enum(['vscode', 'steam', 'git', 'tibia', 'riot', 'vs', 'browser']).optional(),
   steps: z.array(z.string()).optional(),
   family: z.object({ prefix: z.string(), pattern: z.string() }).optional(),
-  // Só os programas que a própria pessoa adotou trazem ícone: o catálogo
-  // publicado usa os SVGs que vêm dentro do app.
+
   icon: z.string().optional(),
 })
 
-// Adotar um programa do PC precisa de uma categoria, e nenhuma das publicadas
-// serve: ela existe para os programas serem dele, e não do catálogo.
 export const MINE_CATEGORY = { id: 'mine', name: 'MEUS PROGRAMAS' } as const
 
 export const catalogPayloadSchema = z.object({

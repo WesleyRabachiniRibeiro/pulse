@@ -7,9 +7,6 @@ const READS_UNTIL_GIVING_UP = 3
 
 type Answer = 'confirmed' | 'refused' | 'timeout'
 
-// A Steam não avisa quando a pessoa decide: o único sinal confiável de aceite é
-// o manifesto do jogo aparecer. A janela aberta serve só para saber que ainda há
-// alguém decidindo, e a carência evita desistir antes de ela abrir.
 async function askFor(steam: SteamGameRequester, appid: string): Promise<Answer> {
   const limit = Date.now() + WAIT_LIMIT_MS
   let withoutDialog = 0

@@ -32,9 +32,6 @@ export type AdoptResult =
   | { status: 'not-found' }
   | { status: 'failed' }
 
-// O id do catálogo sai do id do winget, minúsculo e sem os pontos: 'Valve.Steam'
-// vira 'valve-steam'. Assim dois PCs que adotam o mesmo programa chegam ao
-// mesmo id, e o perfil de um funciona no outro.
 function idFor(winget: string): string {
   return winget.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
@@ -76,8 +73,6 @@ export class CatalogService {
     return { ...this.state }
   }
 
-  // O cache entra primeiro, para a tela abrir com o catálogo mais recente que
-  // já se conhece em vez de esperar a rede. Depois a rede tenta por cima.
   async load(): Promise<void> {
     if (this.state.loading) return
     this.announce({ ...this.state, loading: true })
@@ -100,7 +95,6 @@ export class CatalogService {
       return
     }
 
-    // Rede fora, ou resposta que não passa na validação: fica o que já havia.
     this.announce({ ...this.state, loading: false })
   }
 
@@ -108,8 +102,6 @@ export class CatalogService {
     return this.catalog.myPrograms()
   }
 
-  // Um id que já existe no catálogo publicado é recusado em vez de sobrescrever:
-  // o publicado manda, e a pessoa escolhe outro id.
   async addProgram(program: Program): Promise<boolean> {
     if (this.catalog.hasPublished(program.id)) return false
 
@@ -122,16 +114,10 @@ export class CatalogService {
     return true
   }
 
-  // Adotar é o caminho de quem vê um programa do PC fora do catálogo: o nome
-  // vai ao winget, e só entra o que ele souber instalar. Sem isso o programa
-  // ficaria no catálogo sem como ser instalado em outra máquina.
   async adoptProgram(input: AdoptInput): Promise<AdoptResult> {
     const found = await this.finder.search(input.name)
     if (!found) return { status: 'not-found' }
 
-    // A comparação é pelo id do winget, não pelo id derivado: o Steam publicado
-    // se chama 'steam' e o derivado seria 'valve-steam', então comparar ids
-    // deixaria passar um segundo Steam competindo com o do catálogo.
     const already = this.catalog.programs.find((one) => one.winget === found.winget)
     if (already) return { status: 'exists', id: already.id }
 
@@ -172,8 +158,6 @@ export class CatalogService {
     return this.packageReader.listInstalled(fresh)
   }
 
-  // O winget devolve o identificador dele. Casar com o catálogo é o que deixa
-  // a tela mostrar ícone e nome do Pulse em vez de "Google.Chrome".
   async listUpgrades(): Promise<Upgrade[]> {
     const found = await this.packageReader.listUpgrades()
     const byWinget = new Map(
@@ -186,8 +170,6 @@ export class CatalogService {
     })
   }
 
-  // O que o winget gerencia vira o que dá para desinstalar pelo Pulse. O resto
-  // aparece na lista mesmo assim, porque saber o que está no PC é o ponto.
   async listInstalledTree(): Promise<InstalledTree> {
     const [entries, managed] = await Promise.all([
       this.registryReader.listEntries(),
@@ -225,9 +207,6 @@ export class CatalogService {
       .runOnce('winget', ['search', prefix, '--disable-interactivity', '--source', 'winget'])
       .catch((): { code: number; text: string } => ({ code: -1, text: '' }))
 
-    // O winget não tem uma saída estruturada para "search" com --source winget
-    // em todas as versões (só --output json em builds recentes), então a
-    // tabela de texto ainda precisa ser lida coluna a coluna aqui.
     const versions: PackageVersion[] = []
     for (const line of text.split(/\r?\n/)) {
       const tokens = line.trim().split(/\s+/)

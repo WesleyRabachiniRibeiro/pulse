@@ -26,7 +26,6 @@ import {
   programSchema,
 } from '@pulse/domain'
 
-// O renderer nunca vê o segredo: a visão diz só se existe PIN cadastrado.
 export const parentalViewSchema = z.object({
   on: z.boolean(),
   hasPin: z.boolean(),

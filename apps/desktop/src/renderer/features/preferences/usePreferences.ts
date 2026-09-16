@@ -39,7 +39,6 @@ export async function savePreference(change: Preferences): Promise<void> {
     const saved = await bridge.invoke('prefs:write', change)
     usePreferencesStore.getState().set(saved)
   } catch {
-    /* empty */
   }
 }
 

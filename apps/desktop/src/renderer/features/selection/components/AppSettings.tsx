@@ -47,7 +47,6 @@ interface Props {
   onBack: () => void
 }
 
-
 export function AppSettings({
   program,
   installed,
@@ -181,7 +180,6 @@ export function AppSettings({
             />
           </StepSection>
         )}
-
 
         {has('steamGames') && (
           <StepSection title={step?.title} description={step?.description} tour="aj-kind">

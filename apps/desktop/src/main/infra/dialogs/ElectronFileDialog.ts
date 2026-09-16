@@ -53,7 +53,6 @@ export class ElectronFileDialog implements FileDialog {
     return canceled ? null : (filePaths[0] ?? null)
   }
 
-  // Sem janela pai o diálogo abre solto e some atrás do app.
   private parent(): BrowserWindow {
     const [first] = BrowserWindow.getAllWindows()
     if (!first) throw new Error('[dialog] nenhuma janela aberta')

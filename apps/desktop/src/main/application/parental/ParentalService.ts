@@ -23,8 +23,6 @@ export class ParentalService {
 
     const parental = await this.store.read()
 
-    // Já existe PIN: ligar de volta confere o que está guardado em vez de
-    // aceitar um PIN novo, senão qualquer um destravaria trocando o número.
     if (hasPin(parental) && !this.confirms(parental, pin)) return { ok: false }
 
     const next: Parental = {
@@ -66,7 +64,6 @@ export class ParentalService {
     return this.store.read()
   }
 
-  // Sem PIN cadastrado nada confere, nem string vazia.
   private confirms(parental: Parental, pin: string): boolean {
     const secret = parental.secret
     if (!secret) return false

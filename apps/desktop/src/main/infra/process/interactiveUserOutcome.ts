@@ -1,12 +1,8 @@
-// Com o UAC desligado não existe sessão sem elevação para onde descer, e é
-// esse o caso que vale tentar de outro jeito em vez de desistir.
 export const NO_UNELEVATED_SESSION = -1006
 
 const CREATE_PROCESS_BASE = -2000
 const CREATE_PROCESS_FLOOR = CREATE_PROCESS_BASE - 0xffff
 
-// Traduz as falhas do próprio mecanismo de Run-AsInteractiveUser.ps1, que não
-// vêm do comando pedido (ex.: winget uninstall).
 export function runnerFailure(code: number): string | null {
   if (code === -1007) {
     return 'o comando passou do tempo e não terminou'

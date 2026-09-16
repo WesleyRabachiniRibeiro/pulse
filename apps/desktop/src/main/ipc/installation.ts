@@ -16,8 +16,6 @@ export function registerInstallation(
   preferencesService: PreferencesService,
   openProgram: OpenProgram,
 ): void {
-  // Os padrões descem para o pedido antes de virar item, para que a fila, o
-  // resumo e o histórico mostrem o que de fato vai rodar.
   async function withCurrentDefaults(requests: readonly Request[]): Promise<Request[]> {
     const preferences: Preferences = await preferencesService
       .read()

@@ -11,8 +11,6 @@ interface Props {
   installed?: boolean
 }
 
-// A linha marcável de toda a tela de ajustes: extensões, ajustes do editor,
-// clientes, linguagens, jogos da Steam e as opções do navegador.
 export function CheckOption({
   checked,
   name,

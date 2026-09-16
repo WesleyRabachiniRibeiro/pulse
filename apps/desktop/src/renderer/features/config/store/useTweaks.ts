@@ -54,8 +54,6 @@ export function useTweaksLoaded(): boolean {
   return useStore((s) => s.loaded)
 }
 
-// A resposta é sempre o estado relido do registro, então o que a tela mostra é
-// o que o Windows tem, e não o que a pessoa pediu.
 export async function setTweak(id: string, on: boolean): Promise<void> {
   useStore.getState().mark(id, true)
   const found = await bridge.invoke('system:setTweak', { id, on }).catch(() => null)

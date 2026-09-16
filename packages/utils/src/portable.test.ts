@@ -78,8 +78,6 @@ describe('importar', () => {
     expect(profileOf(portable, 'replace', current).selected).toEqual(['chrome', 'steam'])
   })
 
-  // Um perfil de outro PC pode citar programa que saiu do catálogo. Ele não
-  // entra, mas a pessoa precisa saber o que ficou de fora.
   it('o que não existe aqui é descartado e relatado', () => {
     const vindo: Profile = {
       selected: ['chrome', 'aposentado'],
@@ -96,9 +94,6 @@ describe('importar', () => {
   })
 })
 
-// O catálogo é versionado hoje, mas vai passar a aceitar programa vindo de
-// fora. Um identificador que não parece identificador não pode virar linha de
-// comando, nem no script nem na lista do winget.
 describe('identificador vindo de fora', () => {
   const evil: readonly string[] = [
     "Pacote.Falso'; Remove-Item C:\\ -Recurse",

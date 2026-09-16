@@ -15,7 +15,6 @@ export type { AnyStep, StepDescriptor } from './step'
 export { countLabel } from './label'
 export { browserChoiceSchema, type BrowserChoice } from './browserDefault'
 
-// A ordem é a que a tela mostra e a que o resumo lê, nesta sequência.
 export const STEPS: readonly AnyStep[] = [
   anyStep(vscodeExtensions),
   anyStep(editorTweaks),
@@ -54,16 +53,12 @@ export const STEPS_BY_KIND: Readonly<Record<SettingsKind, readonly StepId[]>> = 
   browser: ['browserDefault'],
 }
 
-// A tela pergunta qual step atende um tipo em vez de saber que 'tibia' guarda
-// em tibiaPages. Título, descrição e texto de busca vêm junto, do descritor.
 export function stepForKind(kind: SettingsKind | undefined): AnyStep | undefined {
   if (!kind) return undefined
   const [first] = STEPS_BY_KIND[kind] ?? []
   return first ? STEP_BY_ID.get(first) : undefined
 }
 
-// Só alguns tipos mostram uma lista para marcar. Git, Steam e navegador têm
-// step, mas a tela desenha outra coisa para eles.
 export function listStepFor(kind: SettingsKind | undefined): AnyStep | undefined {
   const step = stepForKind(kind)
   return step?.options ? step : undefined

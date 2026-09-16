@@ -11,8 +11,6 @@ export class NodePinSealer implements PinSealer {
     return `${salt}:${key}`
   }
 
-  // A comparação é de tempo constante para não vazar, pelo tempo de resposta,
-  // quantos dígitos do PIN já batem.
   matches(secret: string, digits: string): boolean {
     const [salt, key] = secret.split(':')
     if (!salt || !key) return false

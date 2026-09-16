@@ -10,8 +10,6 @@ export class OpenProgram {
     private readonly opener: ProgramOpener,
   ) {}
 
-  // Varrer o menu Iniciar custa segundos, então a tela pergunta por vários de
-  // uma vez e a resposta serve para todos até alguém pedir de novo.
   private async scan(): Promise<Record<string, string>> {
     if (this.shortcuts) return this.shortcuts
     if (!this.looking) {
@@ -35,7 +33,7 @@ export class OpenProgram {
     if (!path) return false
 
     const ok = await this.opener.open(path)
-    // O atalho sumiu entre a varredura e o clique: esquecer força uma nova.
+
     if (!ok) this.shortcuts = null
     return ok
   }

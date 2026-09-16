@@ -22,8 +22,6 @@ const useStore = create<OpenableStore>((set) => ({
     }),
 }))
 
-// A varredura do menu Iniciar é uma só para todos os ids, e o main a guarda,
-// então perguntar de novo depois de uma instalação é barato.
 export function useWatchOpenable(ids: readonly string[], when: unknown): void {
   const key = [...ids].sort().join(',')
 
@@ -57,8 +55,6 @@ export async function openProgram(id: string): Promise<void> {
   const ok = await bridge.invoke('installation:open', { id }).catch(() => false)
   useStore.getState().mark(id, false)
 
-  // O atalho sumiu desde a varredura: tirar da lista some com o botão em vez
-  // de deixar um que não abre nada.
   if (!ok) {
     useStore.getState().set([...useStore.getState().canOpen].filter((one) => one !== id))
   }

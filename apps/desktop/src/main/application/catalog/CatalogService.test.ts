@@ -86,8 +86,6 @@ describe('adotar um programa do PC', () => {
     expect(written).toEqual([])
   })
 
-  // O id sai do id do winget para que dois PCs que adotem o mesmo programa
-  // cheguem ao mesmo id, e um perfil de um funcione no outro.
   it('entra com id derivado do winget e na categoria de quem adotou', async () => {
     const { service, written } = adopting(DROPBOX)
 
@@ -118,8 +116,6 @@ describe('adotar um programa do PC', () => {
     expect(without.written[0]?.[0]).not.toHaveProperty('icon')
   })
 
-  // O publicado manda, e ele é achado pelo id do winget: o Steam do catálogo
-  // se chama 'steam', enquanto o id derivado seria 'valve-steam'.
   it('quem já está no catálogo publicado é recusado', async () => {
     const { service, written } = adopting(STEAM)
 
@@ -175,9 +171,7 @@ describe('CatalogService.listVersions', () => {
       fakeFinder(),
     )
     const versions = await service.listVersions('node')
-    // OpenJS.NodeJS.LTS ganha por ser tratado como "sempre a mais nova"; entre
-    // as outras duas, o ID sem número cai para os dígitos da versão (23.3.0),
-    // que supera o "16" extraído do ID de OpenJS.NodeJS.16.
+
     expect(versions.map((v) => v.winget)).toEqual([
       'OpenJS.NodeJS.LTS',
       'OpenJS.NodeJS',

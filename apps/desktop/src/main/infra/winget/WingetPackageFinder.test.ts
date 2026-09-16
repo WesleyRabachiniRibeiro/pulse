@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { WingetPackageFinder } from './WingetPackageFinder'
 import type { ProcessRunner } from '../../ports/process-runner'
 
-// Saída real de `winget search --name Discord --source winget` nesta máquina,
-// com o cabeçalho e a régua traduzidos que o parser precisa descartar.
 const DISCORD = [
   'Nome                        ID                                  Versão',
   '------------------------------------------------------------------------',
@@ -27,8 +25,6 @@ describe('procurar um pacote no winget', () => {
     })
   })
 
-  // O nome pode ter espaço simples dentro, então a coluna só quebra em dois
-  // espaços ou mais.
   it('não parte o nome que tem espaço', async () => {
     const finder = new WingetPackageFinder(runnerWith(DISCORD))
     expect((await finder.search('Discord Canary (arm64)'))?.winget).toBe(

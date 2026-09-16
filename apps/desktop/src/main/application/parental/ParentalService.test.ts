@@ -17,8 +17,6 @@ function fakeStore(initial: Parental = EMPTY_PARENTAL): ParentalStore & { curren
   }
 }
 
-// Embaralhamento de mentira, previsível, para o teste falar de regra e não de
-// criptografia. A de verdade tem o seu próprio teste.
 const sealer: PinSealer = {
   seal: (digits) => `sealed:${digits}`,
   matches: (secret, digits) => secret === `sealed:${digits}`,
@@ -59,8 +57,6 @@ describe('ParentalService', () => {
     expect(store.current.secret).toBeUndefined()
   })
 
-  // Sem isso qualquer um religaria o controle escolhendo um PIN novo, e com
-  // ele destrancaria tudo em seguida.
   it('religar com PIN errado não troca o PIN guardado', async () => {
     const { store, service } = make({ ...WITH_PIN, on: false })
 

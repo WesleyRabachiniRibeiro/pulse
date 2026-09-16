@@ -8,11 +8,6 @@ function isCode(code: number, ...knownCodes: readonly number[]): boolean {
   return knownCodes.includes(code >>> 0)
 }
 
-// O winget nem sempre devolve um código de saída exclusivo para cada situação
-// (às vezes reaproveita códigos genéricos do Windows/MSI), então o código é o
-// sinal principal, mas quando ele não basta a última linha (em PT ou EN, a
-// depender do idioma do Windows) ainda precisa de casamento de texto.
-
 const ALREADY_INSTALLED_CODES = [0x8a15002b]
 const ALREADY_INSTALLED_TEXT = [
   'nenhuma atualizacao',

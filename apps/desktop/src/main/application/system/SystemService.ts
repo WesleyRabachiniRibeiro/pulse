@@ -38,8 +38,6 @@ export class SystemService {
     return this.tweaks.read()
   }
 
-  // Um ajuste que o registro recusou não vira erro na tela: a resposta é o
-  // estado relido, então a tela mostra o que o Windows realmente tem.
   setTweak(id: string, on: boolean): Promise<readonly TweakState[]> {
     return this.tweaks.write(id, on)
   }

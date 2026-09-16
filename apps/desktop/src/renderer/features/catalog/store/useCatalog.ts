@@ -33,8 +33,6 @@ async function pull(): Promise<void> {
   )
 }
 
-// O main avisa quando a origem muda, e aí o catálogo é relido inteiro. Mandar o
-// catálogo dentro do evento deixaria o payload grande em toda mudança de estado.
 export function useWatchCatalog(): void {
   useEffect(() => {
     const unsubscribe = bridge.on('catalog:event', (state) => {

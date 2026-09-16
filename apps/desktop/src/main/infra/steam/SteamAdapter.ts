@@ -138,7 +138,6 @@ export class SteamAdapter implements SteamGameRequester, SteamLibraryReader {
       const vdf = await readFile(join(steam, 'steamapps', 'libraryfolders.vdf'), 'utf8')
       for (const path of parseLibraryFolderPaths(vdf)) keep(path)
     } catch {
-      // sem libraryfolders.vdf, sobra só a instalação principal
     }
     return [...byKey.values()]
   }

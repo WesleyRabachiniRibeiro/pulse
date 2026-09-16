@@ -16,8 +16,6 @@ interface StepEntry {
   run: StepRunner
 }
 
-// A ordem é a que a pessoa vê acontecer, e ela importa: o Git antes da Steam
-// porque a Steam pode ficar minutos esperando alguém confirmar na janela dela.
 const ORDER: readonly StepEntry[] = [
   { id: 'vscodeExtensions', valueOf: (s) => s.steps?.vscodeExtensions, run: vscodeExtensions },
   { id: 'editorTweaks', valueOf: (s) => s.steps?.editorTweaks, run: editorTweaks },
